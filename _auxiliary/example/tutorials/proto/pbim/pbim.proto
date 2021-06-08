@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+// this proto file is for  im demo
+
+
+// ConnectReq is like handshake
+message ConnectReq {
+    string user_name = 1;
+}
+
+message ConnectRsp {
+    bool is_connect = 1;
+}
+
+// CountReq is for count online member
+message CountReq {
+    string prefix = 1;
+}
+
+message CountRsp {
+    uint32 count = 1;
+}
+
+
+// SendMessageReq send a message
+message SendMessageReq {
+    string message = 1;
+}
+
+// response content.
+// SendMessageRsp usually use for broadcast
+message SendMessageRsp {
+    string message = 1;
+}
+
+// Im is service API for client and server.
+service Im {
+
+    // Connect server for wait message
+    rpc Connect(ConnectReq) returns (ConnectRsp) {}
+
+    // Count online member
+    rpc Count(CountReq) returns (CountRsp) {}
+
+    // SendMessage is the im kernel
+    rpc SendMessage(stream SendMessageReq) returns (stream SendMessageRsp) {}
+}
