@@ -97,6 +97,18 @@ func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parce
 
 func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket) (chan proto.Message, chan error) {
 
+	// interrupt
+	for i := range r.wrappers {
+		err := r.wrappers[i](c)
+		if err != nil {
+			c.Errorf("wrappers err=%v", err)
+			var errs = make(chan error)
+			errs <- err
+			close(errs)
+			return nil, errs
+		}
+	}
+
 	rs, ok := r.rsRoute[c.Method()]
 	if !ok {
 		return nil, nil
@@ -106,6 +118,17 @@ func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket) (chan prot
 }
 
 func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, errs chan error) (chan proto.Message, chan error) {
+	// interrupt
+	for i := range r.wrappers {
+		err := r.wrappers[i](c)
+		if err != nil {
+			c.Errorf("wrappers err=%v", err)
+			var errs = make(chan error)
+			errs <- err
+			close(errs)
+			return nil, errs
+		}
+	}
 
 	rc, ok := r.rcRoute[c.Method()]
 	if !ok {

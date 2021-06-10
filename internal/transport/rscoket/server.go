@@ -135,21 +135,6 @@ func (r *server) Close() {
 	return
 }
 
-func setupFF(router *router.Router) rsocket.OptAbstractSocket {
-	return rsocket.FireAndForget(func(p payload.Payload) {
-
-		var req, rsp = parcel.Payload(p.Data()), parcel.NewPacket()
-		defer func() {
-			parcel.Recycle(req, rsp)
-		}()
-
-		err := router.RRProcess(context.FromMetadata(getMetadata(p)), req, rsp)
-		if err != nil {
-			rlog.Error(err)
-		}
-	})
-}
-
 func setupRequestStream(router *router.Router) rsocket.OptAbstractSocket {
 	return rsocket.RequestStream(func(p payload.Payload) flux.Flux {
 
