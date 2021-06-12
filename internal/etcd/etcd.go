@@ -47,7 +47,6 @@ func NewEtcd(timeout time.Duration, leaseTLL int64, c ...*clientv3.Config) *Etcd
 	if err != nil {
 		panic(err)
 	}
-
 	return s
 }
 

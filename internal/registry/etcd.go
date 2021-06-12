@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"go.etcd.io/etcd/clientv3"
 	"roc/internal/endpoint"
 	"roc/internal/etcd"
 	"roc/internal/namespace"
@@ -14,10 +15,18 @@ type etcdRegistry struct {
 	watch *etcd.Watch
 }
 
-func DefaultEtcdRegistry(opts ...Options) Registry {
+func NewRegistry(opts ...Options) Registry {
 	r := &etcdRegistry{opts: newOpts(opts...)}
+
+	if r.opts.etcdConfig == nil {
+		r.opts.etcdConfig = new(clientv3.Config)
+	}
+
+	if len(r.opts.address) > 0 {
+		r.opts.etcdConfig.Endpoints = r.opts.address
+	}
+
 	r.e = etcd.NewEtcd(r.opts.timeout, r.opts.leaseTLL, r.opts.etcdConfig)
-	r.watch = etcd.NewEtcdWatch(r.opts.schema, r.e.Client())
 	return r
 }
 
@@ -88,10 +97,16 @@ func (s *etcdRegistry) Watch() chan *Action {
 		close(r)
 	}()
 
+	s.watch = etcd.NewEtcdWatch(s.opts.schema, s.e.Client())
 	return r
 }
 
 func (s *etcdRegistry) Close() {
-	s.e.Close()
-	s.watch.Close()
+	if s.e != nil {
+		s.e.Close()
+	}
+
+	if s.watch != nil {
+		s.watch.Close()
+	}
 }

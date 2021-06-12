@@ -65,9 +65,9 @@ func (l *log) Output() output.Outputor {
 }
 
 func (l *log) caller() string {
-	pc, file, line, _ := runtime.Caller(l.opts.call)
+	pc, _, line, _ := runtime.Caller(l.opts.call)
 	funcName := runtime.FuncForPC(pc).Name()
-	return path.Base(file) + "/" + path.Base(funcName) + "." + strconv.Itoa(line)
+	return  path.Base(funcName) + "." + strconv.Itoa(line)
 }
 
 func Close() {

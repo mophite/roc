@@ -134,7 +134,7 @@ func newOpts(opts ...Options) option {
 	}
 
 	if opt.registry == nil {
-		opt.registry = registry.DefaultEtcdRegistry(registry.Schema(namespace.DefaultSchema))
+		opt.registry = registry.NewRegistry(registry.Schema(namespace.DefaultSchema))
 	}
 
 	if opt.cc == nil {
