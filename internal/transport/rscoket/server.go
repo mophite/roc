@@ -122,9 +122,7 @@ func setupRequestResponse(router *router.Router) rsocket.OptAbstractSocket {
 
 		err := router.RRProcess(context.FromMetadata(getMetadata(p)), req, rsp)
 		if err != nil {
-			return mono.JustOneshot(
-				payload.New(router.Error().
-					Encode(parcel.ErrorCodeBadRequest, err), nil))
+			return mono.Error(err)
 		}
 
 		return mono.JustOneshot(payload.New(rsp.Bytes(), nil))
