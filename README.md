@@ -28,7 +28,7 @@
 - install protoc-gen-roc
 
 ```go
-    go install roc/_auxiliary/cmd/protoc-gen-roc
+    go get github.com/go-roc/roc/_auxiliary/cmd/protoc-gen-roc
 ```
 
 - generate proto file to go
