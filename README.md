@@ -28,6 +28,9 @@
 - install protoc-gen-roc
 
 ```go
+    go env -w GO111MODULE=on
+```
+```go
     go get github.com/go-roc/roc/cmd/protoc-gen-roc
 ```
 
