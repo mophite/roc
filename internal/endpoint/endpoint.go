@@ -16,7 +16,7 @@
 package endpoint
 
 import (
-	"github.com/go-roc/roc/internal/namespace"
+	"roc/internal/namespace"
 )
 
 type Endpoint struct {

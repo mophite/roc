@@ -18,7 +18,7 @@ package rlog
 import (
 	"fmt"
 
-	"github.com/go-roc/roc/rlog/log"
+	"roc/rlog/log"
 )
 
 func Debug(msg ...interface{}) {

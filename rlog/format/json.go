@@ -20,8 +20,8 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/go-roc/roc/internal/x/bytesbuffpool"
-	"github.com/go-roc/roc/rlog/common"
+	"roc/internal/x/bytesbuffpool"
+	"roc/rlog/common"
 )
 
 var _ Formatter = &jsonFormat{}

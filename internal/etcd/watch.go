@@ -19,11 +19,11 @@ import (
 	"bytes"
 	"context"
 	"go.etcd.io/etcd/clientv3"
-	"github.com/go-roc/roc/internal/x"
+	"roc/internal/x"
 	"strings"
 
-	"github.com/go-roc/roc/internal/namespace"
-	"github.com/go-roc/roc/rlog"
+	"roc/internal/namespace"
+	"roc/rlog"
 )
 
 type Action struct {

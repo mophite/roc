@@ -16,14 +16,14 @@
 package client
 
 import (
-	"github.com/go-roc/roc/internal/namespace"
+	"roc/internal/namespace"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/go-roc/roc/internal/backoff"
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/context"
+	"roc/internal/backoff"
+	"roc/parcel"
+	"roc/parcel/context"
 )
 
 type Invoke struct {

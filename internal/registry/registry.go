@@ -16,8 +16,8 @@
 package registry
 
 import (
-	"github.com/go-roc/roc/internal/endpoint"
-	"github.com/go-roc/roc/internal/namespace"
+	"roc/internal/endpoint"
+	"roc/internal/namespace"
 )
 
 type Registry interface {

@@ -68,9 +68,9 @@ type roc struct {
 	gen *generator.Generator
 }
 
-// Name returns the name of this plugin, "roc".
+// Name returns the name of this plugin, "github.com/go-roc/roc".
 func (r *roc) Name() string {
-	return "roc"
+	return "github.com/go-roc/roc"
 }
 
 // The names for packages imported in the generated code.

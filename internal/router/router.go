@@ -21,10 +21,10 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/codec"
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/rlog"
+	"roc/parcel"
+	"roc/parcel/codec"
+	"roc/parcel/context"
+	"roc/rlog"
 )
 
 var (

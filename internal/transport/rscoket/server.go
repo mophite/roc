@@ -23,10 +23,10 @@ import (
 	"github.com/rsocket/rsocket-go/rx"
 	"github.com/rsocket/rsocket-go/rx/flux"
 	"github.com/rsocket/rsocket-go/rx/mono"
-	"github.com/go-roc/roc/internal/router"
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/rlog"
+	"roc/internal/router"
+	"roc/parcel"
+	"roc/parcel/context"
+	"roc/rlog"
 	"runtime"
 )
 

@@ -16,7 +16,7 @@
 package simple
 
 import (
-	"github.com/go-roc/roc/internal/x"
+	"roc/internal/x"
 )
 
 // Simple |---TraceId:1     ----->RPC----->       |---TraceId:1

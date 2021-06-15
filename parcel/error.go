@@ -16,9 +16,9 @@
 package parcel
 
 import (
-	"github.com/go-roc/roc/parcel/codec"
+	"roc/parcel/codec"
 
-	"github.com/go-roc/roc/parcel/packet"
+	"roc/parcel/packet"
 )
 
 type ErrorCode = int32

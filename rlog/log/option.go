@@ -16,8 +16,8 @@
 package log
 
 import (
-	"github.com/go-roc/roc/rlog/format"
-	"github.com/go-roc/roc/rlog/output"
+	"roc/rlog/format"
+	"roc/rlog/output"
 )
 
 type Option struct {

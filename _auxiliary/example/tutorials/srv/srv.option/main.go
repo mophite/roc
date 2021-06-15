@@ -17,10 +17,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
-	"github.com/go-roc/roc/_auxiliary/example/tutorials/srv/srv.hello/hello"
-	"github.com/go-roc/roc/internal/registry"
-	"github.com/go-roc/roc/server"
+	"roc/_auxiliary/example/tutorials/proto/pbhello"
+	"roc/_auxiliary/example/tutorials/srv/srv.hello/hello"
+	"roc/internal/registry"
+	"roc/server"
 )
 
 func main() {

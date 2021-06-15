@@ -21,9 +21,9 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"github.com/go-roc/roc/internal/namespace"
-	"github.com/go-roc/roc/internal/x"
-	"github.com/go-roc/roc/internal/x/bytesbuffpool"
+	"roc/internal/namespace"
+	"roc/internal/x"
+	"roc/internal/x/bytesbuffpool"
 )
 
 // RsocketRpcVersion rsocket-rpc version

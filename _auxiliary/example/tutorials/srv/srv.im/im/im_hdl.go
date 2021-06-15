@@ -17,8 +17,8 @@ package im
 
 import (
 	"fmt"
-	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbim"
-	"github.com/go-roc/roc/parcel/context"
+	"roc/_auxiliary/example/tutorials/proto/pbim"
+	"roc/parcel/context"
 )
 
 type Im struct {

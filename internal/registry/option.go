@@ -20,8 +20,8 @@ import (
 
 	"go.etcd.io/etcd/clientv3"
 
-	"github.com/go-roc/roc/internal/endpoint"
-	"github.com/go-roc/roc/internal/namespace"
+	"roc/internal/endpoint"
+	"roc/internal/namespace"
 )
 
 type Option struct {

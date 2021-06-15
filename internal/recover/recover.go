@@ -16,7 +16,7 @@
 package recover
 
 import (
-	"github.com/go-roc/roc/rlog"
+	"roc/rlog"
 )
 
 func Recover(f ...func()) {

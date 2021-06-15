@@ -18,7 +18,7 @@ package main
 import (
 	"time"
 
-	"github.com/go-roc/roc/rlog"
+	"roc/rlog"
 )
 
 func main() {

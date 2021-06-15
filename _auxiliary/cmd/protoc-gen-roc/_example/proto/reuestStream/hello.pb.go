@@ -9,10 +9,10 @@ import (
 	io "io"
 	math "math"
 	math_bits "math/bits"
-	client "github.com/go-roc/roc/client"
-	parcel "github.com/go-roc/roc/parcel"
-	context "github.com/go-roc/roc/parcel/context"
-	server "github.com/go-roc/roc/server"
+	client "roc/client"
+	parcel "roc/parcel"
+	context "roc/parcel/context"
+	server "roc/server"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

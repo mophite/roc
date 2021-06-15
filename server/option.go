@@ -19,19 +19,19 @@ import (
 	"errors"
 	"net"
 	"os"
-	"github.com/go-roc/roc/parcel/codec"
+	"roc/parcel/codec"
 	"strconv"
 
 	"github.com/google/uuid"
 
-	"github.com/go-roc/roc/internal/endpoint"
-	"github.com/go-roc/roc/internal/namespace"
-	"github.com/go-roc/roc/internal/registry"
-	"github.com/go-roc/roc/internal/sig"
-	"github.com/go-roc/roc/internal/transport"
-	rs "github.com/go-roc/roc/internal/transport/rscoket"
-	"github.com/go-roc/roc/internal/x"
-	"github.com/go-roc/roc/parcel"
+	"roc/internal/endpoint"
+	"roc/internal/namespace"
+	"roc/internal/registry"
+	"roc/internal/sig"
+	"roc/internal/transport"
+	rs "roc/internal/transport/rscoket"
+	"roc/internal/x"
+	"roc/parcel"
 )
 
 const SupportPackageIsVersion1 = 1

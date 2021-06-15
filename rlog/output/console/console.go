@@ -19,8 +19,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/go-roc/roc/internal/x/bytesbuffpool"
-	"github.com/go-roc/roc/rlog/common"
+	"roc/internal/x/bytesbuffpool"
+	"roc/rlog/common"
 )
 
 type Console struct {

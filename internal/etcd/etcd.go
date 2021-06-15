@@ -24,8 +24,8 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 
-	"github.com/go-roc/roc/internal/x"
-	"github.com/go-roc/roc/rlog"
+	"roc/internal/x"
+	"roc/rlog"
 )
 
 type Etcd struct {

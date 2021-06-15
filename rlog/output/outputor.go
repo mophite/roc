@@ -18,8 +18,8 @@ package output
 import (
 	"bytes"
 
-	"github.com/go-roc/roc/rlog/common"
-	"github.com/go-roc/roc/rlog/output/console"
+	"roc/rlog/common"
+	"roc/rlog/output/console"
 )
 
 type Outputor interface {

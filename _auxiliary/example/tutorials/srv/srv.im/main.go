@@ -17,10 +17,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbim"
-	"github.com/go-roc/roc/_auxiliary/example/tutorials/srv/srv.im/im"
+	"roc/_auxiliary/example/tutorials/proto/pbim"
+	"roc/_auxiliary/example/tutorials/srv/srv.im/im"
 
-	"github.com/go-roc/roc/server"
+	"roc/server"
 )
 
 func main() {

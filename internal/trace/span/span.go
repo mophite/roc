@@ -16,7 +16,7 @@
 package span
 
 import (
-	"github.com/go-roc/roc/internal/x"
+	"roc/internal/x"
 )
 
 // attention:it's maybe zipkin instead,don't user this for your production Environment.

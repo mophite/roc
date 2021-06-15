@@ -3,8 +3,8 @@
 ![logo](./logo.jpg)
 
 ![GitHub Workflow Status](https://github.com/rsocket/rsocket-go/workflows/Go/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/go-roc/roc)](https://goreportcard.com/report/github.com/go-roc/roc)
-[![Go Reference](https://pkg.go.dev/badge/github.com/go-roc/roc.svg)](https://pkg.go.dev/github.com/go-roc/roc)
+[![Go Report Card](https://goreportcard.com/badge/roc)](https://goreportcard.com/report/roc)
+[![Go Reference](https://pkg.go.dev/badge/roc.svg)](https://pkg.go.dev/roc)
 ![GitHub](https://img.shields.io/github/license/go-roc/roc?logo=rsocket)
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/go-roc/roc?include_prereleases)
 
@@ -28,11 +28,11 @@
 - install protoc-gen-roc
 
 ```go
-    go install github.com/go-roc/roc/_auxiliary/cmd/protoc-gen-roc
+    go install roc/_auxiliary/cmd/protoc-gen-roc
 ```
 
 - generate proto file to go
-  file,like [hello.proto](https://github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello.proto)
+  file,like [hello.proto](https://roc/_auxiliary/example/tutorials/proto/pbhello.proto)
 
 ```go
     protoc --roc_out = plugins = roc:.*.proto
@@ -54,12 +54,14 @@
     rsp, err := h.client.Say(context.Background(), &pbhello.SayReq{Inc: 1}, h.opt)
 ```
 
-### 💞️ see more [example](https://github.com/go-roc/roc/tree/master/_auxiliary/example) for more help.
+### 💞️ see more [example](https://roc/tree/master/_auxiliary/example) for more help.
 
 ### 📫 How to reach me by email ...
 ```email
   1743299@qq.com
 ```
+
+![code](./qr.png)
 
 ### ✨ TODO ✨
 
