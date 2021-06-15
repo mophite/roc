@@ -69,6 +69,13 @@
 - [ ] sidecar
 - [ ] more example
 - [ ] more singleton tests
+- [ ] generate dir
+- [ ] command for request service
+- [ ] sidecar service
+- [ ] config service
+- [ ] broker redirect request service
+- [ ] logger service
+- [ ] simple service GUI
 
 
 
