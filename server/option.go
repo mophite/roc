@@ -1,3 +1,18 @@
+// Copyright (c) 2021 roc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
 package server
 
 import (
@@ -22,23 +37,63 @@ import (
 const SupportPackageIsVersion1 = 1
 
 type option struct {
-	id          string
-	name        string
-	schema      string
-	randPort    *[2]int
-	tcpAddress  string
-	wssAddress  string
-	wssPath     string
-	version     string
-	buffSize    int
-	register    registry.Registry
+
+	//server id can be set,or random
+	//this is the unique identifier of the service
+	id string
+
+	//server name,eg.srv.hello or api.hello
+	name string
+
+	//schema is the namespace in your service collection
+	//it's the root name prefix
+	schema string
+
+	//random port
+	//Random ports make you don’t need to care about specific port numbers,
+	//which are more commonly used in internal services
+	randPort *[2]int
+
+	//socket tcp ip:port address
+	tcpAddress string
+
+	//websocket ip:port address
+	wssAddress string
+
+	//websocket relative path address of websocket
+	wssPath string
+
+	//server version
+	version string
+
+	//buffSize to data tunnel if it's need
+	buffSize int
+
+	//service discovery registry
+	register registry.Registry
+
+	//server transport
 	transporter transport.Server
-	err         parcel.ErrorPackager
-	e           *endpoint.Endpoint
-	signal      []os.Signal
-	wrappers    []parcel.Wrapper
-	exit        []func()
-	cc          codec.Codec
+
+	//error packet
+	//It will affect the format of the data you return
+	err parcel.ErrorPackager
+
+	//service discovery endpoint
+	e *endpoint.Endpoint
+
+	//receive system signal
+	signal []os.Signal
+
+	//wrapper some middleware
+	//it's can be interrupt
+	wrappers []parcel.Wrapper
+
+	//when server exit,will do exit func
+	exit []func()
+
+	//codec packet tool
+	cc codec.Codec
 }
 
 type Options func(*option)

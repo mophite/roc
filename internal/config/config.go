@@ -1,3 +1,18 @@
+// Copyright (c) 2021 roc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
 package config
 
 import (
@@ -11,6 +26,9 @@ import (
 	"sync"
 )
 
+//Configuration Center
+//use etcd,
+
 var gRConfig *config
 
 var _ RConfig = &config{}
@@ -20,24 +38,53 @@ func init() {
 }
 
 type RConfig interface {
+
+	// ConfigListAndSync Get all config and sync to cache
 	ConfigListAndSync() error
+
+	// WithConfig Get config with key
 	WithConfig(key string) ([]byte, error)
+
+	// SetConfig set config with key value
 	SetConfig(key string, value []byte) error
+
+	// Clean clean all config
 	Clean() error
+
+	// Delete remove a config with key
 	Delete(key string) error
+
+	// Watch watch config and update
 	Watch() chan *etcd.Action
+
+	// Backup backup config
 	Backup() error
+
+	// LoadFs2Etcd load a config file to etcd
 	LoadFs2Etcd() error
+
+	// Close close config
 	Close()
 }
 
 type config struct {
-	opts   Option
-	lock   sync.RWMutex
-	data   map[string][]byte
-	close  chan struct{}
+
+	//config option
+	opts Option
+
+	lock sync.RWMutex
+
+	//config data local cache
+	data map[string][]byte
+
+	//close signal
+	close chan struct{}
+
+	//receive etcd callback data
 	action chan *etcd.Action
-	watch  *etcd.Watch
+
+	//watch etcd changed
+	watch *etcd.Watch
 }
 
 func NewConfig(opts ...Options) *config {
@@ -70,7 +117,8 @@ func (c *config) ConfigListAndSync() error {
 		data[k] = v
 	}
 
-	return nil
+	retrun
+	c.Backup()
 }
 
 func (c *config) WithConfig(key string) ([]byte, error) {
@@ -93,6 +141,7 @@ func (c *config) Delete(key string) error {
 func (c *config) Backup() error {
 	for k, v := range c.data {
 		if name := getFsName(k); name != "" {
+			//open or create a local config file
 			fs, err := os.OpenFile(
 				c.opts.backupPath+string(os.PathSeparator)+name,
 				os.O_CREATE|os.O_APPEND|os.O_RDWR|os.O_TRUNC,
@@ -111,6 +160,7 @@ func (c *config) Backup() error {
 	return nil
 }
 
+// LoadFs2Etcd load local config file to etcd
 func (c *config) LoadFs2Etcd() error {
 	c.lock.Lock()
 	defer c.lock.Unlock()

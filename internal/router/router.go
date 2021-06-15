@@ -1,3 +1,18 @@
+// Copyright (c) 2021 roc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
 package router
 
 import (
@@ -18,14 +33,27 @@ var (
 
 type Router struct {
 	sync.Mutex
-	rrRoute     map[string]parcel.Handler
-	rsRoute     map[string]parcel.StreamHandler
-	rcRoute     map[string]parcel.ChannelHandler
-	wrappers    []parcel.Wrapper
+
+	//requestResponse map cache handler
+	rrRoute map[string]parcel.Handler
+
+	//requestStream map cache streamHandler
+	rsRoute map[string]parcel.StreamHandler
+
+	//requestChannel map cache channelHandler
+	rcRoute map[string]parcel.ChannelHandler
+
+	//wrapper middleware
+	wrappers []parcel.Wrapper
+
+	//configurable error message return
 	errorPacket parcel.ErrorPackager
-	cc          codec.Codec
+
+	//codec tool
+	cc codec.Codec
 }
 
+// NewRouter create a new router
 func NewRouter(wrappers []parcel.Wrapper, err parcel.ErrorPackager, c codec.Codec) *Router {
 	return &Router{
 		rrRoute:     make(map[string]parcel.Handler),
@@ -118,7 +146,7 @@ func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket) (chan prot
 }
 
 func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, errs chan error) (chan proto.Message, chan error) {
-	// interrupt
+	// interrupt when occur error
 	for i := range r.wrappers {
 		err := r.wrappers[i](c)
 		if err != nil {
@@ -140,6 +168,7 @@ func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, errs 
 
 func (r *Router) interrupt() parcel.Interceptor {
 	return func(c *context.Context, req proto.Message, fire parcel.Fire) (proto.Message, error) {
+		// interrupt when occur error
 		for i := range r.wrappers {
 			err := r.wrappers[i](c)
 			if err != nil {

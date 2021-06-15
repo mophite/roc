@@ -1,9 +1,23 @@
+// Copyright (c) 2021 roc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
 package rs
 
 import (
 	rc "context"
 	"github.com/jjeffcaii/reactor-go/scheduler"
-	"github.com/rsocket/rsocket-go"
 	"github.com/rsocket/rsocket-go/payload"
 	"github.com/rsocket/rsocket-go/rx"
 	"github.com/rsocket/rsocket-go/rx/flux"
@@ -16,12 +30,24 @@ import (
 )
 
 type server struct {
-	serverName    string
-	tcpAddress    string
-	wssAddress    string
-	buffSize      int
+
+	//given serverName to service discovery to find
+	serverName string
+
+	//tcp socket address
+	tcpAddress string
+
+	//websocket address
+	wssAddress string
+
+	//requestChannel buffSize setting
+	buffSize int
+
+	//rsocket serverBuilder
 	serverBuilder rsocket.ServerBuilder
-	serverStart   rsocket.ToServerStarter
+
+	//rsocket serverStarter
+	serverStart rsocket.ToServerStarter
 }
 
 func (r *server) Address() string {
@@ -45,12 +71,7 @@ func (r *server) Accept(route *router.Router) {
 	r.serverBuilder = rsocket.Receive()
 
 	r.serverBuilder.
-		Scheduler(nil, scheduler.NewElastic(runtime.NumCPU()*2))
-
-	r.serverBuilder.
-		OnStart(func() {
-			// todo
-		})
+		Scheduler(nil, scheduler.NewElastic(runtime.NumCPU()*2)) // setting scheduler goroutine on numCPU*2 to better working
 
 	r.serverBuilder.Resume()
 
@@ -78,6 +99,7 @@ func (r *server) Run() {
 	}
 }
 
+//run tcp socket server
 func (r *server) tcp() {
 	go func() {
 		err := r.serverStart.Transport(
@@ -93,6 +115,7 @@ func (r *server) tcp() {
 
 }
 
+//run websocket server
 func (r *server) wss() {
 	go func() {
 		err := r.serverStart.Transport(
@@ -107,7 +130,8 @@ func (r *server) wss() {
 	}()
 }
 
-func getMetadata(p payload.Payload) []byte {
+// get metadata ignore error
+func mustGetMetadata(p payload.Payload) []byte {
 	b, _ := p.Metadata()
 	return b
 }
@@ -120,7 +144,7 @@ func setupRequestResponse(router *router.Router) rsocket.OptAbstractSocket {
 			parcel.Recycle(req, rsp)
 		}()
 
-		err := router.RRProcess(context.FromMetadata(getMetadata(p)), req, rsp)
+		err := router.RRProcess(context.FromMetadata(mustGetMetadata(p)), req, rsp)
 		if err != nil {
 			return mono.Error(err)
 		}
@@ -138,7 +162,7 @@ func setupRequestStream(router *router.Router) rsocket.OptAbstractSocket {
 
 		var req = parcel.Payload(p.Data())
 
-		rsp, errs := router.RSProcess(context.FromMetadata(getMetadata(p)), req)
+		rsp, errs := router.RSProcess(context.FromMetadata(mustGetMetadata(p)), req)
 
 		parcel.Recycle(req)
 

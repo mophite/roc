@@ -28,35 +28,38 @@
 - install protoc-gen-roc
 
 ```go
-go install github.com/go-roc/roc/_auxiliary/cmd/protoc-gen-roc
+    go install github.com/go-roc/roc/_auxiliary/cmd/protoc-gen-roc
 ```
 
 - generate proto file to go
   file,like [hello.proto](https://github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello.proto)
 
 ```go
- protoc --roc_out = plugins = roc:.*.proto
+    protoc --roc_out = plugins = roc:.*.proto
 ```
 
 - run a roc server
 
 ```go
-var s = server.NewRocServer(server.Namespace("srv.hello"))
-pbhello.RegisterHelloWorldServer(s, &Hello{})
-err := s.Run()
+    var s = server.NewRocServer(server.Namespace("srv.hello"))
+    pbhello.RegisterHelloWorldServer(s, &Hello{})
+    err := s.Run()
 ```
 
 - client rpc to server
 
 ```go
-var opt = client.WithScope("srv.hello")
-var client = pbhello.NewHelloWorldClient(client.NewRocClient())
-rsp, err := h.client.Say(context.Background(), &pbhello.SayReq{Inc: 1}, h.opt)
+    var opt = client.WithScope("srv.hello")
+    var client = pbhello.NewHelloWorldClient(client.NewRocClient())
+    rsp, err := h.client.Say(context.Background(), &pbhello.SayReq{Inc: 1}, h.opt)
 ```
 
 ### 💞️ see more [example](https://github.com/go-roc/roc/tree/master/_auxiliary/example) for more help.
 
-### 📫 How to reach me ...
+### 📫 How to reach me by email ...
+```email
+  1743299@qq.com
+```
 
 ### ✨ TODO ✨
 

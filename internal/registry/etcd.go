@@ -1,3 +1,18 @@
+// Copyright (c) 2021 roc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
 package registry
 
 import (
@@ -9,12 +24,20 @@ import (
 	"roc/rlog"
 )
 
+//etcd implementation of service discovery
 type etcdRegistry struct {
-	opts  Option
-	e     *etcd.Etcd
+
+	//registry option
+	opts Option
+
+	//etcd instance
+	e *etcd.Etcd
+
+	//watch instance
 	watch *etcd.Watch
 }
 
+// NewRegistry create a new registry with etcd
 func NewRegistry(opts ...Options) Registry {
 	r := &etcdRegistry{opts: newOpts(opts...)}
 
@@ -30,10 +53,12 @@ func NewRegistry(opts ...Options) Registry {
 	return r
 }
 
+// Register register one endpoint to etcd
 func (s *etcdRegistry) Register(e *endpoint.Endpoint) error {
 	return s.e.PutWithLease(e.Absolute, x.MustMarshalString(e))
 }
 
+// Next return a endpoint
 func (s *etcdRegistry) Next(scope string) (*endpoint.Endpoint, error) {
 
 	b, err := s.e.GetWithLastKey(namespace.SplicingPrefix(s.opts.schema, scope))
@@ -51,6 +76,7 @@ func (s *etcdRegistry) Next(scope string) (*endpoint.Endpoint, error) {
 	return &e, nil
 }
 
+// List get all endpont from etcd
 func (s *etcdRegistry) List() (services []*endpoint.Endpoint, err error) {
 	b, err := s.e.GetWithList(namespace.SplicingPrefix(s.opts.schema, ""))
 	if err != nil {
@@ -68,6 +94,7 @@ func (s *etcdRegistry) List() (services []*endpoint.Endpoint, err error) {
 	return
 }
 
+// Deregister deregister a endpoint ,remove it from etcd
 func (s *etcdRegistry) Deregister(e *endpoint.Endpoint) error {
 	return s.e.Delete(e.Absolute)
 }

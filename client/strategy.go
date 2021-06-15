@@ -1,3 +1,18 @@
+// Copyright (c) 2021 roc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
 package client
 
 import (
@@ -19,8 +34,14 @@ var (
 )
 
 type Strategy interface {
+
+	//Next Round-robin scheduling
 	Next(scope string) (next *Conn, err error)
+
+	//Straight direct call
 	Straight(scope, address string) (next *Conn, err error)
+
+	//Close Strategy
 	Close()
 }
 
@@ -28,13 +49,24 @@ var _ Strategy = &strategy{}
 
 type strategy struct {
 	sync.Mutex
+
+	//per service & multiple conn
 	connPerService map[string]*pod
-	registry       registry.Registry
-	client         transport.Client
-	action         chan *registry.Action
-	close          chan struct{}
+
+	//discover registry
+	registry registry.Registry
+
+	//transport client
+	client transport.Client
+
+	//registry watch callback action
+	action chan *registry.Action
+
+	//close strategy signal
+	close chan struct{}
 }
 
+// create a strategy
 func newStrategy(registry registry.Registry, client transport.Client) Strategy {
 	s := &strategy{
 		connPerService: make(map[string]*pod),
@@ -43,13 +75,19 @@ func newStrategy(registry registry.Registry, client transport.Client) Strategy {
 		close:          make(chan struct{}),
 	}
 
+	//receive registry watch notify
 	s.action = s.registry.Watch()
 
+	//Synchronize all existing services
 	s.lazySync()
+
+	//handler registry notify
 	go s.notify()
+
 	return s
 }
 
+//get a pod,if is nil ,create a new pod
 func (s *strategy) getOrSet(scope string) (*pod, error) {
 	p, ok := s.connPerService[scope]
 	if !ok || p.count == 0 {
@@ -70,6 +108,7 @@ func (s *strategy) getOrSet(scope string) (*pod, error) {
 	return p, nil
 }
 
+// Next Round-robin next
 func (s *strategy) Next(scope string) (next *Conn, err error) {
 	p, err := s.getOrSet(scope)
 	if err != nil {
@@ -91,6 +130,7 @@ func (s *strategy) Next(scope string) (next *Conn, err error) {
 	return conn, nil
 }
 
+// Straight direct invoke
 func (s *strategy) Straight(scope, address string) (next *Conn, err error) {
 	p, err := s.getOrSet(scope)
 	if err != nil {
@@ -105,6 +145,7 @@ func (s *strategy) Straight(scope, address string) (next *Conn, err error) {
 	return conn, nil
 }
 
+//Synchronize all existing services
 func (s *strategy) lazySync() {
 	s.Lock()
 	defer s.Unlock()
@@ -120,6 +161,7 @@ func (s *strategy) lazySync() {
 	}
 }
 
+//Synchronize one services
 func (s *strategy) sync(e *endpoint.Endpoint) error {
 	p, ok := s.connPerService[e.Scope]
 	if !ok {
@@ -137,6 +179,7 @@ func (s *strategy) sync(e *endpoint.Endpoint) error {
 	return nil
 }
 
+//receive a registry notify callback
 func (s *strategy) notify() {
 
 QUIT:
@@ -151,6 +194,7 @@ QUIT:
 	}
 }
 
+//watch a registry notify
 func (s *strategy) watch(act *registry.Action) {
 	s.Lock()
 	defer s.Unlock()
@@ -166,6 +210,7 @@ func (s *strategy) watch(act *registry.Action) {
 	}
 }
 
+// Close strategy close
 func (s *strategy) Close() {
 	for _, p := range s.connPerService {
 		for _, client := range p.clientsMap {

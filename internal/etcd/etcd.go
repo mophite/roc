@@ -1,3 +1,18 @@
+// Copyright (c) 2021 roc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
 package etcd
 
 import (
@@ -14,21 +29,30 @@ import (
 )
 
 type Etcd struct {
-	lock               sync.RWMutex
-	client             *clientv3.Client
-	leaseId            clientv3.LeaseID
+	lock sync.RWMutex
+
+	//etcd client v3
+	client *clientv3.Client
+
+	//etcd leaseId
+	leaseId clientv3.LeaseID
+
+	//use leaseId to keepalive
 	leaseKeepaliveChan chan *clientv3.LeaseKeepAliveResponse
-	config             *clientv3.Config
-	timeout            time.Duration
-	leaseTLL           int64
+
+	//etcd config
+	config *clientv3.Config
+
+	//timeout setting
+	timeout time.Duration
+
+	//leaseTLL setting
+	leaseTLL int64
 }
 
-func NewEtcd(timeout time.Duration, leaseTLL int64, c ...*clientv3.Config) *Etcd {
-	var config *clientv3.Config
-	if len(c) == 1 && c[0] != nil {
-		config = c[0]
-	}
-
+// NewEtcd create etcd
+// if config is nil,use default config setting
+func NewEtcd(timeout time.Duration, leaseTLL int64, config *clientv3.Config) *Etcd {
 	s := &Etcd{
 		leaseKeepaliveChan: make(chan *clientv3.LeaseKeepAliveResponse),
 		config:             config,
@@ -50,10 +74,12 @@ func NewEtcd(timeout time.Duration, leaseTLL int64, c ...*clientv3.Config) *Etcd
 	return s
 }
 
+// Client get etcd client
 func (s *Etcd) Client() *clientv3.Client {
 	return s.client
 }
 
+// PutWithLease put one key/value to etcd with lease setting
 func (s *Etcd) PutWithLease(key, value string) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
 	defer cancel()
@@ -73,7 +99,7 @@ func (s *Etcd) PutWithLease(key, value string) error {
 	go func() {
 		for {
 			select {
-			case c := <-s.leaseKeepaliveChan: // if leaseKeepaliveChan is nil,lease keeplive stop!
+			case c := <-s.leaseKeepaliveChan: // if leaseKeepaliveChan is nil,lease keepalive stop!
 				if c == nil {
 					rlog.Warnf("etcd leaseKeepalive stop! leaseID: %d prefix:%s value:%s", s.leaseId, key, value)
 					return
@@ -99,6 +125,7 @@ func (s *Etcd) PutWithLease(key, value string) error {
 	return err
 }
 
+// Put put one key/value to etcd with no lease setting
 func (s *Etcd) Put(key, value string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -120,6 +147,7 @@ func (s *Etcd) Put(key, value string) error {
 	return err
 }
 
+// GetWithLastKey get value with last key
 func (s *Etcd) GetWithLastKey(key string) ([]byte, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
@@ -137,6 +165,7 @@ func (s *Etcd) GetWithLastKey(key string) ([]byte, error) {
 	return rsp.Kvs[int(rsp.Count-1)].Value, nil
 }
 
+// GetWithKey get value with key
 func (s *Etcd) GetWithKey(key string) ([]byte, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
@@ -188,6 +217,7 @@ func (s *Etcd) Delete(key string) error {
 	return err
 }
 
+//revoke lease
 func (s *Etcd) revoke() error {
 	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
 	defer cancel()
