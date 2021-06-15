@@ -16,12 +16,12 @@
 package config
 
 import (
-	jsoniter "github.com/json-iterator/go"
-	"io/ioutil"
-	"os"
 	"github.com/go-roc/roc/internal/etcd"
 	"github.com/go-roc/roc/internal/x"
 	"github.com/go-roc/roc/rlog"
+	jsoniter "github.com/json-iterator/go"
+	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 )
@@ -117,8 +117,7 @@ func (c *config) ConfigListAndSync() error {
 		data[k] = v
 	}
 
-	retrun
-	c.Backup()
+	return c.Backup()
 }
 
 func (c *config) WithConfig(key string) ([]byte, error) {
