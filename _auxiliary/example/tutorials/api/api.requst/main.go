@@ -17,7 +17,7 @@ package main
 
 import (
 	"net/http"
-	"roc/_auxiliary/example/tutorials/api/api.requst/hello"
+	"github.com/go-roc/roc/_auxiliary/example/tutorials/api/api.requst/hello"
 )
 
 // open with browser:

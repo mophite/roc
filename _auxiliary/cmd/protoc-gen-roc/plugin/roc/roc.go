@@ -52,10 +52,10 @@ const generatedCodeVersion = 1
 // Paths for packages used by code generated in this file,
 // relative to the import_prefix of the generator.Generator.
 const (
-	contextPkgPath = "roc/parcel/context"
-	clientPkgPath  = "roc/client"
-	serverPkgPath  = "roc/server"
-	parcelPkgPath  = "roc/parcel"
+	contextPkgPath = "github.com/go-roc/roc/parcel/context"
+	clientPkgPath  = "github.com/go-roc/roc/client"
+	serverPkgPath  = "github.com/go-roc/roc/server"
+	parcelPkgPath  = "github.com/go-roc/roc/parcel"
 )
 
 func init() {

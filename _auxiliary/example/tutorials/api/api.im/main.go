@@ -17,9 +17,9 @@ package main
 
 import (
 	"fmt"
-	"roc/_auxiliary/example/tutorials/proto/pbim"
-	"roc/client"
-	"roc/parcel/context"
+	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbim"
+	"github.com/go-roc/roc/client"
+	"github.com/go-roc/roc/parcel/context"
 	"strconv"
 	"sync/atomic"
 )

@@ -16,9 +16,9 @@
 package config
 
 import (
-	"roc/internal/etcd"
-	"roc/internal/namespace"
-	"roc/internal/x"
+	"github.com/go-roc/roc/internal/etcd"
+	"github.com/go-roc/roc/internal/namespace"
+	"github.com/go-roc/roc/internal/x"
 )
 
 type Option struct {

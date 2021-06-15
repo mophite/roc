@@ -20,12 +20,12 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"roc/internal/endpoint"
-	"roc/internal/namespace"
-	"roc/internal/registry"
-	"roc/internal/transport"
-	"roc/internal/x"
-	"roc/rlog"
+	"github.com/go-roc/roc/internal/endpoint"
+	"github.com/go-roc/roc/internal/namespace"
+	"github.com/go-roc/roc/internal/registry"
+	"github.com/go-roc/roc/internal/transport"
+	"github.com/go-roc/roc/internal/x"
+	"github.com/go-roc/roc/rlog"
 )
 
 var (

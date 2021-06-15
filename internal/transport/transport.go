@@ -16,10 +16,10 @@
 package transport
 
 import (
-	"roc/internal/endpoint"
-	"roc/internal/router"
-	"roc/parcel"
-	"roc/parcel/context"
+	"github.com/go-roc/roc/internal/endpoint"
+	"github.com/go-roc/roc/internal/router"
+	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/context"
 )
 
 type Server interface {

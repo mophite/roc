@@ -16,9 +16,9 @@
 package hello
 
 import (
-	"roc/_auxiliary/example/tutorials/proto/pbhello"
-	"roc/client"
-	"roc/parcel/context"
+	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
+	"github.com/go-roc/roc/client"
+	"github.com/go-roc/roc/parcel/context"
 	"sync/atomic"
 	"time"
 )

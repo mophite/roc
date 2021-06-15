@@ -25,10 +25,10 @@ import (
 
 	"github.com/rsocket/rsocket-go/payload"
 
-	"roc/internal/endpoint"
-	"roc/parcel"
-	"roc/parcel/context"
-	"roc/rlog"
+	"github.com/go-roc/roc/internal/endpoint"
+	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/context"
+	"github.com/go-roc/roc/rlog"
 )
 
 //this is rsocket client

@@ -20,8 +20,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"roc/internal/endpoint"
-	"roc/internal/transport"
+	"github.com/go-roc/roc/internal/endpoint"
+	"github.com/go-roc/roc/internal/transport"
 )
 
 // state is mark conn state,conn must safe

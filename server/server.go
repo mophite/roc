@@ -19,16 +19,16 @@ import (
 	"errors"
 	"os"
 	"os/signal"
-	"roc/parcel/codec"
+	"github.com/go-roc/roc/parcel/codec"
 
-	"roc/internal/endpoint"
-	"roc/internal/router"
-	"roc/parcel"
+	"github.com/go-roc/roc/internal/endpoint"
+	"github.com/go-roc/roc/internal/router"
+	"github.com/go-roc/roc/parcel"
 
-	"roc/internal/registry"
-	"roc/internal/transport"
-	"roc/rlog"
-	"roc/rlog/log"
+	"github.com/go-roc/roc/internal/registry"
+	"github.com/go-roc/roc/internal/transport"
+	"github.com/go-roc/roc/rlog"
+	"github.com/go-roc/roc/rlog/log"
 )
 
 type RocServer struct {

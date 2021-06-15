@@ -32,7 +32,7 @@ import (
 	"github.com/gogo/protobuf/vanity"
 	"github.com/gogo/protobuf/vanity/command"
 
-	_ "roc/_auxiliary/cmd/protoc-gen-roc/plugin/roc"
+	_ "github.com/go-roc/roc/_auxiliary/cmd/protoc-gen-roc/plugin/roc"
 )
 
 func main() {
