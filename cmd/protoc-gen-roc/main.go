@@ -15,14 +15,6 @@
 
 package main
 
-// todo generate dir
-// todo command for request service
-// todo sidecar service
-// todo config service
-// todo broker redirect request service
-// todo logger service
-// todo simple service GUI
-
 import (
 	"github.com/gogo/protobuf/vanity"
 	"github.com/gogo/protobuf/vanity/command"
