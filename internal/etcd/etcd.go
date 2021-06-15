@@ -60,7 +60,7 @@ func NewEtcd(timeout time.Duration, leaseTLL int64, config *clientv3.Config) *Et
 		leaseTLL:           leaseTLL,
 	}
 
-	if s.config == nil {
+	if config == nil {
 		s.config = &clientv3.Config{
 			Endpoints: []string{"127.0.0.1:2379"},
 		}

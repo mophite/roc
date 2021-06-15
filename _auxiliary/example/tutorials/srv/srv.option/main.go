@@ -24,7 +24,7 @@ import (
 )
 
 func main() {
-	var opt = registry.Address([]string{"82.157.14.79:2379"})
+	var opt = registry.Address([]string{"127.0.0.1:2379"})
 
 	var s = server.NewRocServer(
 		server.Namespace("srv.hello"),

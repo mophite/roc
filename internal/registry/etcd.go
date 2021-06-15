@@ -41,11 +41,8 @@ type etcdRegistry struct {
 func NewRegistry(opts ...Options) Registry {
 	r := &etcdRegistry{opts: newOpts(opts...)}
 
-	if r.opts.etcdConfig == nil {
-		r.opts.etcdConfig = new(clientv3.Config)
-	}
-
 	if len(r.opts.address) > 0 {
+		r.opts.etcdConfig = new(clientv3.Config)
 		r.opts.etcdConfig.Endpoints = r.opts.address
 	}
 

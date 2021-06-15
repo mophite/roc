@@ -18,6 +18,7 @@ package rs
 import (
 	ctx "context"
 	"github.com/jjeffcaii/reactor-go/scheduler"
+	"github.com/rsocket/rsocket-go"
 	"github.com/rsocket/rsocket-go/rx"
 	"github.com/rsocket/rsocket-go/rx/flux"
 	"time"

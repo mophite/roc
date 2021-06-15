@@ -18,6 +18,7 @@ package rs
 import (
 	rc "context"
 	"github.com/jjeffcaii/reactor-go/scheduler"
+	"github.com/rsocket/rsocket-go"
 	"github.com/rsocket/rsocket-go/payload"
 	"github.com/rsocket/rsocket-go/rx"
 	"github.com/rsocket/rsocket-go/rx/flux"
@@ -146,7 +147,9 @@ func setupRequestResponse(router *router.Router) rsocket.OptAbstractSocket {
 
 		err := router.RRProcess(context.FromMetadata(mustGetMetadata(p)), req, rsp)
 		if err != nil {
-			return mono.Error(err)
+			return mono.JustOneshot(
+				payload.New(router.Error().
+					Encode(parcel.ErrorCodeBadRequest, err), nil))
 		}
 
 		return mono.JustOneshot(payload.New(rsp.Bytes(), nil))
