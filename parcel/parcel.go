@@ -18,7 +18,7 @@ package parcel
 import (
 	"github.com/gogo/protobuf/proto"
 
-	"roc/parcel/context"
+	"github.com/go-roc/roc/parcel/context"
 )
 
 type Handler func(c *context.Context, req *RocPacket, interrupt Interceptor) (rsp proto.Message, err error)

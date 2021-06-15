@@ -18,8 +18,8 @@ package client
 import (
 	"sync"
 
-	"roc/internal/endpoint"
-	"roc/internal/transport"
+	"github.com/go-roc/roc/internal/endpoint"
+	"github.com/go-roc/roc/internal/transport"
 )
 
 type pod struct {

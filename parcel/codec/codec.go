@@ -18,7 +18,7 @@ package codec
 import (
 	"github.com/gogo/protobuf/proto"
 
-	"roc/parcel/codec/protoc"
+	"github.com/go-roc/roc/parcel/codec/protoc"
 )
 
 var DefaultCodec Codec = &protoc.Proto{}

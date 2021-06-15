@@ -17,11 +17,11 @@ package registry
 
 import (
 	"go.etcd.io/etcd/clientv3"
-	"roc/internal/endpoint"
-	"roc/internal/etcd"
-	"roc/internal/namespace"
-	"roc/internal/x"
-	"roc/rlog"
+	"github.com/go-roc/roc/internal/endpoint"
+	"github.com/go-roc/roc/internal/etcd"
+	"github.com/go-roc/roc/internal/namespace"
+	"github.com/go-roc/roc/internal/x"
+	"github.com/go-roc/roc/rlog"
 )
 
 //etcd implementation of service discovery

@@ -18,11 +18,11 @@ package client
 import (
 	"time"
 
-	"roc/internal/namespace"
-	"roc/internal/registry"
-	"roc/internal/transport"
-	rs "roc/internal/transport/rscoket"
-	"roc/parcel/codec"
+	"github.com/go-roc/roc/internal/namespace"
+	"github.com/go-roc/roc/internal/registry"
+	"github.com/go-roc/roc/internal/transport"
+	rs "github.com/go-roc/roc/internal/transport/rscoket"
+	"github.com/go-roc/roc/parcel/codec"
 )
 
 type InvokeOptions func(*InvokeOption)

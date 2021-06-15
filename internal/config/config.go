@@ -19,9 +19,9 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"os"
-	"roc/internal/etcd"
-	"roc/internal/x"
-	"roc/rlog"
+	"github.com/go-roc/roc/internal/etcd"
+	"github.com/go-roc/roc/internal/x"
+	"github.com/go-roc/roc/rlog"
 	"strings"
 	"sync"
 )

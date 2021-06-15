@@ -16,7 +16,7 @@
 package im
 
 import (
-	"roc/_auxiliary/example/tutorials/proto/pbim"
+	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbim"
 	"sync"
 )
 

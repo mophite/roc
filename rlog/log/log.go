@@ -21,9 +21,9 @@ import (
 	"strconv"
 	"time"
 
-	"roc/rlog/common"
-	"roc/rlog/format"
-	"roc/rlog/output"
+	"github.com/go-roc/roc/rlog/common"
+	"github.com/go-roc/roc/rlog/format"
+	"github.com/go-roc/roc/rlog/output"
 )
 
 func init() {

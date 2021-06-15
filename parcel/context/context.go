@@ -17,10 +17,10 @@ package context
 
 import (
 	"fmt"
-	"roc/internal/trace"
-	"roc/internal/trace/simple"
-	"roc/parcel/metadata"
-	"roc/rlog/log"
+	"github.com/go-roc/roc/internal/trace"
+	"github.com/go-roc/roc/internal/trace/simple"
+	"github.com/go-roc/roc/parcel/metadata"
+	"github.com/go-roc/roc/rlog/log"
 )
 
 type Context struct {

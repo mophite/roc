@@ -17,10 +17,10 @@ package hello
 
 import (
 	"net/http"
-	"roc/_auxiliary/example/tutorials/proto/pbhello"
-	"roc/client"
-	"roc/parcel/context"
-	"roc/rlog"
+	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
+	"github.com/go-roc/roc/client"
+	"github.com/go-roc/roc/parcel/context"
+	"github.com/go-roc/roc/rlog"
 )
 
 type Hello struct {

@@ -16,15 +16,15 @@
 package client
 
 import (
-	"roc/parcel"
-	"roc/parcel/codec"
+	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/codec"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
 
-	"roc/internal/registry"
-	"roc/internal/transport"
-	"roc/parcel/context"
+	"github.com/go-roc/roc/internal/registry"
+	"github.com/go-roc/roc/internal/transport"
+	"github.com/go-roc/roc/parcel/context"
 )
 
 type RocClient struct {

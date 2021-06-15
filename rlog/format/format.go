@@ -18,7 +18,7 @@ package format
 import (
 	"bytes"
 
-	"roc/rlog/common"
+	"github.com/go-roc/roc/rlog/common"
 )
 
 const defaultLayout = "2006.01.02.15:04:05.000"
