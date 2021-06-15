@@ -13,7 +13,6 @@ require (
 	github.com/coreos/etcd v3.3.25+incompatible // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/gogo/protobuf v1.3.2
-	github.com/go-roc/roc latest
 	github.com/google/uuid v1.2.0
 	github.com/jjeffcaii/reactor-go v0.5.1
 	github.com/json-iterator/go v1.1.10
