@@ -70,7 +70,7 @@ type roc struct {
 
 // Name returns the name of this plugin, "github.com/go-roc/roc".
 func (r *roc) Name() string {
-	return "github.com/go-roc/roc"
+	return "roc"
 }
 
 // The names for packages imported in the generated code.
