@@ -3,7 +3,7 @@
 ![logo](./logo.jpg)
 
 ![GitHub Workflow Status](https://github.com/rsocket/rsocket-go/workflows/Go/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/roc)](https://goreportcard.com/report/roc)
+[![Go Report Card](https://goreportcard.com/badge/github.com/go-roc/roc)](https://goreportcard.com/report/github.com/go-roc/roc)
 [![Go Reference](https://pkg.go.dev/badge/roc.svg)](https://pkg.go.dev/roc)
 ![GitHub](https://img.shields.io/github/license/go-roc/roc?logo=rsocket)
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/go-roc/roc?include_prereleases)
