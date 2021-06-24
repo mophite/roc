@@ -1,6 +1,6 @@
 # Roc
 
-![logo](./logo.jpg)
+![logo](https://github.com/go-roc/roc/blob/master/_auxiliary/imgs/logo.jpg)
 
 ![GitHub Workflow Status](https://github.com/rsocket/rsocket-go/workflows/Go/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-roc/roc)](https://goreportcard.com/report/github.com/go-roc/roc)
@@ -64,7 +64,7 @@
   1743299@qq.com
 ```
 
-![code](./qr.png)
+![code](https://github.com/go-roc/roc/blob/master/_auxiliary/imgs/qr.png)
 
 ### ✨ TODO ✨
 

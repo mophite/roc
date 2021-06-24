@@ -37,8 +37,6 @@ func NewHello() *Hello {
 	return &Hello{
 		client: pbhello.NewHelloWorldClient(
 			roc.NewService(
-				roc.TCPAddress("127.0.0.1:8899"),
-				roc.Namespace("srv.hello"),
 				roc.EtcdConfig(&clientv3.Config{
 					Endpoints: []string{"82.157.14.79:2379"},
 				}),
