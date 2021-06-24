@@ -47,7 +47,6 @@ func NewService(opts ...Options) *Service {
 	s.opts.server.Accept(s.route)
 
 	s.strategy = newStrategy(s.opts.registry, s.opts.client)
-
 	return s
 }
 

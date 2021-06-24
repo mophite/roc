@@ -38,7 +38,7 @@ func NewHello() *Hello {
 		client: pbhello.NewHelloWorldClient(
 			roc.NewService(
 				roc.EtcdConfig(&clientv3.Config{
-					Endpoints: []string{"82.157.14.79:2379"},
+					Endpoints: []string{"127.0.0.1:2379"},
 				}),
 			),
 		),

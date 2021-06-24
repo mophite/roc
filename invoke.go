@@ -148,7 +148,9 @@ type strategy struct {
 }
 
 // create a strategy
-func newStrategy(registry registry.Registry, client transport.Client) Strategy {
+func newStrategy(
+	registry registry.Registry,
+	client transport.Client) Strategy {
 	s := &strategy{
 		connPerService: make(map[string]*pod),
 		registry:       registry,
@@ -238,7 +240,7 @@ func (s *strategy) lazySync() {
 	}
 
 	for _, e := range es {
-		s.sync(e)
+		_ = s.sync(e)
 	}
 }
 

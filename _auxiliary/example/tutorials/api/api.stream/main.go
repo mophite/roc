@@ -17,14 +17,23 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
-	"github.com/go-roc/roc/client"
-	"github.com/go-roc/roc/parcel/context"
 	"sync/atomic"
+
+	"github.com/coreos/etcd/clientv3"
+
+	"github.com/go-roc/roc"
+	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
+	"github.com/go-roc/roc/parcel/context"
 )
 
-var helloClient = pbhello.NewHelloWorldClient(client.NewRocClient())
-var opt = client.WithName("srv.hello")
+var helloClient = pbhello.NewHelloWorldClient(roc.NewService(
+	roc.TCPAddress("127.0.0.1:8899"),
+	roc.Namespace("srv.im"),
+	roc.EtcdConfig(&clientv3.Config{
+		Endpoints: []string{"127.0.0.1:2379"},
+	}),
+))
+var opt = roc.WithName("srv.hello")
 
 func main() {
 

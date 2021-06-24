@@ -27,10 +27,10 @@ import (
 
 func main() {
 	var s = roc.NewService(
-		roc.TCPAddress("127.0.0.1:8899"),
+		roc.TCPAddress("127.0.0.1:8888"),
 		roc.Namespace("srv.hello"),
 		roc.EtcdConfig(&clientv3.Config{
-			Endpoints: []string{"82.157.14.79:2379"},
+			Endpoints: []string{"127.0.0.1:2379"},
 		}),
 	)
 	pbhello.RegisterHelloWorldServer(s, &hello.Hello{})

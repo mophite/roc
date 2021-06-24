@@ -18,13 +18,21 @@ package main
 import (
 	"fmt"
 
+	"github.com/coreos/etcd/clientv3"
+
 	"github.com/go-roc/roc"
 	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbim"
 	"github.com/go-roc/roc/_auxiliary/example/tutorials/srv/srv.im/im"
 )
 
 func main() {
-	var s = roc.NewService(roc.Namespace("srv.im"))
+	var s = roc.NewService(
+		roc.TCPAddress("127.0.0.1:8899"),
+		roc.Namespace("srv.im"),
+		roc.EtcdConfig(&clientv3.Config{
+			Endpoints: []string{"127.0.0.1:2379"},
+		}),
+	)
 	pbim.RegisterImServer(s, &im.Im{H: im.NewHub()})
 	if err := s.Run(); err != nil {
 		fmt.Println(err)
