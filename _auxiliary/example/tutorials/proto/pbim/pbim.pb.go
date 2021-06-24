@@ -5,14 +5,13 @@ package pbim
 
 import (
 	fmt "fmt"
+	roc "github.com/go-roc/roc"
+	parcel "github.com/go-roc/roc/parcel"
+	context "github.com/go-roc/roc/parcel/context"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
-	client "github.com/go-roc/roc/client"
-	parcel "github.com/go-roc/roc/parcel"
-	context "github.com/go-roc/roc/parcel/context"
-	server "github.com/go-roc/roc/server"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -522,44 +521,43 @@ func encodeVarintPbim(dAtA []byte, offset int, v uint64) int {
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ client.RocClient
-var _ server.RocServer
+var _ roc.Service
 var _ parcel.RocPacket
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the roc package it is being compiled against.
-const _ = server.SupportPackageIsVersion1
+const _ = roc.SupportPackageIsVersion1
 
 type ImClient interface {
 	// Connect server for wait message
-	Connect(c *context.Context, req *ConnectReq, opts ...client.InvokeOptions) (*ConnectRsp, error)
+	Connect(c *context.Context, req *ConnectReq, opts ...roc.InvokeOptions) (*ConnectRsp, error)
 	// Count online member
-	Count(c *context.Context, req *CountReq, opts ...client.InvokeOptions) (*CountRsp, error)
+	Count(c *context.Context, req *CountReq, opts ...roc.InvokeOptions) (*CountRsp, error)
 	// SendMessage is the im kernel
-	SendMessage(c *context.Context, req chan *SendMessageReq, errIn chan error, opts ...client.InvokeOptions) (chan *SendMessageRsp, chan error)
+	SendMessage(c *context.Context, req chan *SendMessageReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SendMessageRsp, chan error)
 }
 
 type imClient struct {
-	c *client.RocClient
+	c *roc.Service
 }
 
-func NewImClient(c *client.RocClient) ImClient {
+func NewImClient(c *roc.Service) ImClient {
 	return &imClient{c}
 }
 
-func (cc *imClient) Connect(c *context.Context, req *ConnectReq, opts ...client.InvokeOptions) (*ConnectRsp, error) {
+func (cc *imClient) Connect(c *context.Context, req *ConnectReq, opts ...roc.InvokeOptions) (*ConnectRsp, error) {
 	rsp := &ConnectRsp{}
 	err := cc.c.InvokeRR(c, "Im.Connect", req, rsp, opts...)
 	return rsp, err
 }
 
-func (cc *imClient) Count(c *context.Context, req *CountReq, opts ...client.InvokeOptions) (*CountRsp, error) {
+func (cc *imClient) Count(c *context.Context, req *CountReq, opts ...roc.InvokeOptions) (*CountRsp, error) {
 	rsp := &CountRsp{}
 	err := cc.c.InvokeRR(c, "Im.Count", req, rsp, opts...)
 	return rsp, err
 }
 
-func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, errIn chan error, opts ...client.InvokeOptions) (chan *SendMessageRsp, chan error) {
+func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SendMessageRsp, chan error) {
 	var in = make(chan []byte)
 	go func() {
 		for b := range req {
@@ -600,7 +598,7 @@ type ImServer interface {
 	SendMessage(c *context.Context, req chan *SendMessageReq, errIn chan error) (chan *SendMessageRsp, chan error)
 }
 
-func RegisterImServer(s *server.RocServer, h ImServer) {
+func RegisterImServer(s *roc.Service, h ImServer) {
 	var r = &imHandler{h: h, s: s}
 	s.RegisterHandler("Im.Connect", r.Connect)
 	s.RegisterHandler("Im.Count", r.Count)
@@ -609,7 +607,7 @@ func RegisterImServer(s *server.RocServer, h ImServer) {
 
 type imHandler struct {
 	h ImServer
-	s *server.RocServer
+	s *roc.Service
 }
 
 func (r *imHandler) Connect(c *context.Context, req *parcel.RocPacket, interrupt parcel.Interceptor) (rsp proto.Message, err error) {

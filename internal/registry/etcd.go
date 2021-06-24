@@ -16,9 +16,9 @@
 package registry
 
 import (
-	"go.etcd.io/etcd/clientv3"
+	"github.com/go-roc/roc/etcd"
+
 	"github.com/go-roc/roc/internal/endpoint"
-	"github.com/go-roc/roc/internal/etcd"
 	"github.com/go-roc/roc/internal/namespace"
 	"github.com/go-roc/roc/internal/x"
 	"github.com/go-roc/roc/rlog"
@@ -41,12 +41,7 @@ type etcdRegistry struct {
 func NewRegistry(opts ...Options) Registry {
 	r := &etcdRegistry{opts: newOpts(opts...)}
 
-	if len(r.opts.address) > 0 {
-		r.opts.etcdConfig = new(clientv3.Config)
-		r.opts.etcdConfig.Endpoints = r.opts.address
-	}
-
-	r.e = etcd.NewEtcd(r.opts.timeout, r.opts.leaseTLL, r.opts.etcdConfig)
+	r.e = etcd.DefaultEtcd
 	return r
 }
 
@@ -73,7 +68,7 @@ func (s *etcdRegistry) Next(scope string) (*endpoint.Endpoint, error) {
 	return &e, nil
 }
 
-// List get all endpont from etcd
+// List get all endpoint from etcd
 func (s *etcdRegistry) List() (services []*endpoint.Endpoint, err error) {
 	b, err := s.e.GetWithList(namespace.SplicingPrefix(s.opts.schema, ""))
 	if err != nil {
@@ -102,6 +97,9 @@ func (s *etcdRegistry) Name() string {
 
 func (s *etcdRegistry) Watch() chan *Action {
 	var r = make(chan *Action)
+
+	s.watch = etcd.NewEtcdWatch(s.opts.schema, s.e.Client())
+
 	go func() {
 		for v := range s.watch.Watch(s.opts.schema) {
 			for _, value := range v.B {
@@ -121,7 +119,6 @@ func (s *etcdRegistry) Watch() chan *Action {
 		close(r)
 	}()
 
-	s.watch = etcd.NewEtcdWatch(s.opts.schema, s.e.Client())
 	return r
 }
 

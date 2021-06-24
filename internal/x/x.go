@@ -16,7 +16,9 @@
 package x
 
 import (
+	"errors"
 	"math/rand"
+	"net"
 	"time"
 	"unsafe"
 
@@ -64,4 +66,22 @@ func RandInt(min, max int) int {
 		return max
 	}
 	return Rand.Intn(max-min) + min
+}
+
+func LocalIp() (string, error) {
+	addr, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+
+	for _, address := range addr {
+		if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				return ipNet.IP.String(), nil
+			}
+
+		}
+	}
+
+	return "", errors.New("cannot find local ip")
 }

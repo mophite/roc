@@ -18,10 +18,7 @@ package registry
 import (
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
-
 	"github.com/go-roc/roc/internal/endpoint"
-	"github.com/go-roc/roc/internal/namespace"
 )
 
 type Option struct {
@@ -29,63 +26,18 @@ type Option struct {
 	//endpoint
 	e *endpoint.Endpoint
 
-	//version prefix
-	version string
-
-	//name prefix
-	name string
-
-	//address prefix
-	address []string
-
 	//timeout setting
 	timeout time.Duration
 
-	//lease setting
-	leaseTLL int64
-
 	//schema prefix
 	schema string
-
-	//clientv3 confi
-	etcdConfig *clientv3.Config
 }
 
 type Options func(option *Option)
 
-func EtcdConfig(c *clientv3.Config) Options {
-	return func(option *Option) {
-		option.etcdConfig = c
-	}
-}
-
-func Name(name string) Options {
-	return func(option *Option) {
-		option.name = name
-	}
-}
-
-func Version(version string) Options {
-	return func(option *Option) {
-		option.version = version
-	}
-}
-
-func Address(address []string) Options {
-	return func(option *Option) {
-		option.address = address
-	}
-}
-
 func Timeout(timeout time.Duration) Options {
 	return func(option *Option) {
 		option.timeout = timeout
-	}
-}
-
-func LeaseTLL(leaseTLL int64) Options {
-	return func(option *Option) {
-		option.leaseTLL = leaseTLL
 	}
 }
 
@@ -106,16 +58,8 @@ func newOpts(opts ...Options) Option {
 		opt.timeout = time.Second * 5
 	}
 
-	if opt.leaseTLL == 0 {
-		opt.leaseTLL = 5
-	}
-
-	if opt.version == "" {
-		opt.version = namespace.DefaultVersion
-	}
-
 	if opt.schema == "" {
-		opt.schema = namespace.DefaultSchema
+		panic("no schema setting")
 	}
 
 	return opt

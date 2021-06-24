@@ -18,9 +18,12 @@ package etcd
 import (
 	"bytes"
 	"context"
-	"go.etcd.io/etcd/clientv3"
-	"github.com/go-roc/roc/internal/x"
 	"strings"
+	"time"
+
+	"github.com/coreos/etcd/clientv3"
+
+	"github.com/go-roc/roc/internal/x"
 
 	"github.com/go-roc/roc/internal/namespace"
 	"github.com/go-roc/roc/rlog"
@@ -48,20 +51,18 @@ type Watch struct {
 }
 
 func NewEtcdWatch(prefix string, client *clientv3.Client) *Watch {
-
 	var w = &Watch{
 		exit:   make(chan struct{}),
 		client: client,
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	go func() {
 		<-w.exit
 		cancel()
 	}()
 
 	w.wc = client.Watch(ctx, prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
-
 	return w
 }
 

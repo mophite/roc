@@ -17,14 +17,14 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/go-roc/roc"
 	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbim"
 	"github.com/go-roc/roc/_auxiliary/example/tutorials/srv/srv.im/im"
-
-	"github.com/go-roc/roc/server"
 )
 
 func main() {
-	var s = server.NewRocServer(server.Namespace("srv.im"))
+	var s = roc.NewService(roc.Namespace("srv.im"))
 	pbim.RegisterImServer(s, &im.Im{H: im.NewHub()})
 	if err := s.Run(); err != nil {
 		fmt.Println(err)

@@ -15,7 +15,6 @@ require (
 	github.com/json-iterator/go v1.1.10
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/rsocket/rsocket-go v0.8.4
-	go.etcd.io/etcd v3.3.25+incompatible
 	go.uber.org/zap v1.16.0 // indirect
 	google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98 // indirect
 )

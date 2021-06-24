@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-package client
+package roc
 
 import (
 	"sync"

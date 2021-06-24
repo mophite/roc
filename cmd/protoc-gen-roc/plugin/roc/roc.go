@@ -53,8 +53,7 @@ const generatedCodeVersion = 1
 // relative to the import_prefix of the generator.Generator.
 const (
 	contextPkgPath = "github.com/go-roc/roc/parcel/context"
-	clientPkgPath  = "github.com/go-roc/roc/client"
-	serverPkgPath  = "github.com/go-roc/roc/server"
+	rocPkgPath     = "github.com/go-roc/roc"
 	parcelPkgPath  = "github.com/go-roc/roc/parcel"
 )
 
@@ -78,8 +77,7 @@ func (r *roc) Name() string {
 // if the name is used by other packages.
 var (
 	contextPkg string
-	clientPkg  string
-	serverPkg  string
+	rocPkg     string
 	parcelPkg  string
 )
 
@@ -110,21 +108,19 @@ func (r *roc) Generate(file *generator.FileDescriptor) {
 	}
 
 	contextPkg = string(r.gen.AddImport(contextPkgPath))
-	clientPkg = string(r.gen.AddImport(clientPkgPath))
-	serverPkg = string(r.gen.AddImport(serverPkgPath))
+	rocPkg = string(r.gen.AddImport(rocPkgPath))
 	parcelPkg = string(r.gen.AddImport(parcelPkgPath))
 
 	r.P("// Reference imports to suppress errors if they are not otherwise used.")
 	r.P("var _ ", contextPkg, ".Context")
-	r.P("var _ ", clientPkg, ".RocClient")
-	r.P("var _ ", serverPkg, ".RocServer")
+	r.P("var _ ", rocPkg, ".Service")
 	r.P("var _ ", parcelPkg, ".RocPacket")
 	r.P()
 
 	// Assert version compatibility.
 	r.P("// This is a compile-time assertion to ensure that this generated file")
 	r.P("// is compatible with the roc package it is being compiled against.")
-	r.P("const _ = ", serverPkg, ".SupportPackageIsVersion", generatedCodeVersion)
+	r.P("const _ = ", rocPkg, ".SupportPackageIsVersion", generatedCodeVersion)
 	r.P()
 
 	for i, service := range file.FileDescriptorProto.Service {
@@ -154,7 +150,7 @@ func (r *roc) generateService(file *generator.FileDescriptor, service *pb.Servic
 	deprecated := service.GetOptions().GetDeprecated()
 
 	r.P()
-	// Client interface.
+	// service interface.
 	if deprecated {
 		r.P("//")
 		r.P(deprecationComment)
@@ -167,9 +163,9 @@ func (r *roc) generateService(file *generator.FileDescriptor, service *pb.Servic
 	r.P("}")
 	r.P()
 
-	// Client structure.
+	// service structure.
 	r.P("type ", unexport(serverName), "Client struct {")
-	r.P("c *", "client.RocClient")
+	r.P("c *", "roc.Service")
 	r.P("}")
 	r.P()
 
@@ -177,12 +173,12 @@ func (r *roc) generateService(file *generator.FileDescriptor, service *pb.Servic
 	if deprecated {
 		r.P(deprecationComment)
 	}
-	r.P("func New", serverName, "Client (c *", "client.RocClient) ", serverName, "Client {")
+	r.P("func New", serverName, "Client (c *", "roc.Service) ", serverName, "Client {")
 	r.P("return &", unexport(serverName), "Client{c}")
 	r.P("}")
 	r.P()
 
-	// Client method implementations.
+	// service method implementations.
 	for _, method := range service.Method {
 		r.generateClientMethod(serverName, method)
 	}
@@ -206,7 +202,7 @@ func (r *roc) generateService(file *generator.FileDescriptor, service *pb.Servic
 	if deprecated {
 		r.P(deprecationComment)
 	}
-	r.P("func Register", serverName, "Server(s *server.RocServer", ", h ", serverType, ") {")
+	r.P("func Register", serverName, "Server(s *roc.Service", ", h ", serverType, ") {")
 	r.P("var r = &", unexport(serverName), "Handler{h:h,s:s}")
 
 	for _, v := range service.Method {
@@ -226,7 +222,7 @@ func (r *roc) generateService(file *generator.FileDescriptor, service *pb.Servic
 
 	r.P("type ", unexport(serverName), "Handler struct{")
 	r.P("h ", serverName, "Server")
-	r.P("s *server.RocServer")
+	r.P("s *roc.Service")
 	r.P("}")
 	r.P()
 
@@ -248,7 +244,7 @@ func (r *roc) generateClientSignature(serverName string, method *pb.MethodDescri
 			reqArg   = ", req *" + r.typeName(method.GetInputType())
 			respName = "*" + r.typeName(method.GetOutputType())
 		)
-		return fmt.Sprintf("%s(c *%s.Context%s, opts ...client.InvokeOptions) (%s, error)", methodName, contextPkg, reqArg, respName)
+		return fmt.Sprintf("%s(c *%s.Context%s, opts ...roc.InvokeOptions) (%s, error)", methodName, contextPkg, reqArg, respName)
 	}
 
 	if method.GetClientStreaming() && !method.GetServerStreaming() {
@@ -256,7 +252,7 @@ func (r *roc) generateClientSignature(serverName string, method *pb.MethodDescri
 			reqArg   = ", req *" + r.typeName(method.GetInputType())
 			respName = "chan *" + r.typeName(method.GetOutputType())
 		)
-		return fmt.Sprintf("%s(c *%s.Context%s, opts ...client.InvokeOptions) (%s, chan error)", methodName, contextPkg, reqArg, respName)
+		return fmt.Sprintf("%s(c *%s.Context%s, opts ...roc.InvokeOptions) (%s, chan error)", methodName, contextPkg, reqArg, respName)
 	}
 
 	if method.GetClientStreaming() && method.GetServerStreaming() {
@@ -264,7 +260,7 @@ func (r *roc) generateClientSignature(serverName string, method *pb.MethodDescri
 			reqArg   = ", req chan *" + r.typeName(method.GetInputType())
 			respName = "chan *" + r.typeName(method.GetOutputType())
 		)
-		return fmt.Sprintf("%s(c *%s.Context%s, errIn chan error,opts ...client.InvokeOptions) (%s, chan error)", methodName, contextPkg, reqArg, respName)
+		return fmt.Sprintf("%s(c *%s.Context%s, errIn chan error,opts ...roc.InvokeOptions) (%s, chan error)", methodName, contextPkg, reqArg, respName)
 	}
 
 	return ""

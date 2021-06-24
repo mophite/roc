@@ -5,14 +5,13 @@ package pbhello
 
 import (
 	fmt "fmt"
+	roc "github.com/go-roc/roc"
+	parcel "github.com/go-roc/roc/parcel"
+	context "github.com/go-roc/roc/parcel/context"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
-	client "github.com/go-roc/roc/client"
-	parcel "github.com/go-roc/roc/parcel"
-	context "github.com/go-roc/roc/parcel/context"
-	server "github.com/go-roc/roc/server"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -208,40 +207,39 @@ func encodeVarintPbhello(dAtA []byte, offset int, v uint64) int {
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ client.RocClient
-var _ server.RocServer
+var _ roc.Service
 var _ parcel.RocPacket
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the roc package it is being compiled against.
-const _ = server.SupportPackageIsVersion1
+const _ = roc.SupportPackageIsVersion1
 
 type HelloWorldClient interface {
 	// requestResponse or fireAndForget.
-	Say(c *context.Context, req *SayReq, opts ...client.InvokeOptions) (*SayRsp, error)
+	Say(c *context.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error)
 	// requestStream.
 	// SayReq is channel params.
-	SayStream(c *context.Context, req *SayReq, opts ...client.InvokeOptions) (chan *SayRsp, chan error)
+	SayStream(c *context.Context, req *SayReq, opts ...roc.InvokeOptions) (chan *SayRsp, chan error)
 	// requestChannel.
 	// SayReq and SayRsp is channel.
-	SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...client.InvokeOptions) (chan *SayRsp, chan error)
+	SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SayRsp, chan error)
 }
 
 type helloWorldClient struct {
-	c *client.RocClient
+	c *roc.Service
 }
 
-func NewHelloWorldClient(c *client.RocClient) HelloWorldClient {
+func NewHelloWorldClient(c *roc.Service) HelloWorldClient {
 	return &helloWorldClient{c}
 }
 
-func (cc *helloWorldClient) Say(c *context.Context, req *SayReq, opts ...client.InvokeOptions) (*SayRsp, error) {
+func (cc *helloWorldClient) Say(c *context.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error) {
 	rsp := &SayRsp{}
 	err := cc.c.InvokeRR(c, "HelloWorld.Say", req, rsp, opts...)
 	return rsp, err
 }
 
-func (cc *helloWorldClient) SayStream(c *context.Context, req *SayReq, opts ...client.InvokeOptions) (chan *SayRsp, chan error) {
+func (cc *helloWorldClient) SayStream(c *context.Context, req *SayReq, opts ...roc.InvokeOptions) (chan *SayRsp, chan error) {
 	data, errs := cc.c.InvokeRS(c, "HelloWorld.SayStream", req, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
@@ -259,7 +257,7 @@ func (cc *helloWorldClient) SayStream(c *context.Context, req *SayReq, opts ...c
 	return rsp, errs
 }
 
-func (cc *helloWorldClient) SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...client.InvokeOptions) (chan *SayRsp, chan error) {
+func (cc *helloWorldClient) SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SayRsp, chan error) {
 	var in = make(chan []byte)
 	go func() {
 		for b := range req {
@@ -302,7 +300,7 @@ type HelloWorldServer interface {
 	SayChannel(c *context.Context, req chan *SayReq, errIn chan error) (chan *SayRsp, chan error)
 }
 
-func RegisterHelloWorldServer(s *server.RocServer, h HelloWorldServer) {
+func RegisterHelloWorldServer(s *roc.Service, h HelloWorldServer) {
 	var r = &helloWorldHandler{h: h, s: s}
 	s.RegisterHandler("HelloWorld.Say", r.Say)
 	s.RegisterStreamHandler("HelloWorld.SayStream", r.SayStream)
@@ -311,7 +309,7 @@ func RegisterHelloWorldServer(s *server.RocServer, h HelloWorldServer) {
 
 type helloWorldHandler struct {
 	h HelloWorldServer
-	s *server.RocServer
+	s *roc.Service
 }
 
 func (r *helloWorldHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt parcel.Interceptor) (rsp proto.Message, err error) {

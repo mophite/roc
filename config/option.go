@@ -16,7 +16,7 @@
 package config
 
 import (
-	"github.com/go-roc/roc/internal/etcd"
+	"github.com/go-roc/roc/etcd"
 	"github.com/go-roc/roc/internal/namespace"
 	"github.com/go-roc/roc/internal/x"
 )

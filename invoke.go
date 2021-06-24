@@ -13,12 +13,13 @@
 //  limitations under the License.
 //
 
-package client
+package roc
 
 import (
 	"errors"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/go-roc/roc/internal/endpoint"
 	"github.com/go-roc/roc/internal/namespace"
@@ -26,7 +27,87 @@ import (
 	"github.com/go-roc/roc/internal/transport"
 	"github.com/go-roc/roc/internal/x"
 	"github.com/go-roc/roc/rlog"
+
+	"github.com/gogo/protobuf/proto"
+
+	"github.com/go-roc/roc/internal/backoff"
+	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/context"
 )
+
+type Invoke struct {
+
+	// strategy clients to invoke
+	strategy Strategy
+
+	// invoke options
+	opts InvokeOption
+}
+
+// create a invoke
+func newInvoke(c *context.Context, method string, service *Service, opts ...InvokeOptions) (*Invoke, error) {
+	invoke := &Invoke{strategy: service.strategy}
+
+	for i := range opts {
+		opts[i](&invoke.opts)
+	}
+
+	// initialize tunnel for requestChannel only
+	if invoke.opts.buffSize == 0 {
+		invoke.opts.buffSize = 10
+	}
+
+	// create metadata
+	var err = c.WithMetadata(
+		invoke.opts.serviceName,
+		method,
+		invoke.opts.trace,
+		map[string]string{
+			namespace.DefaultHeaderVersion: invoke.opts.version,
+			namespace.DefaultHeaderAddress: invoke.opts.address,
+		})
+	return invoke, err
+}
+
+// invokeRR is invokeRequestResponse
+func (i *Invoke) invokeRR(c *context.Context, req, rsp proto.Message, conn *Conn, opts Option) error {
+	// encoding req body to roc packet
+	b, err := opts.cc.Encode(req)
+	if err != nil {
+		return err
+	}
+
+	var request, response = parcel.Payload(b), parcel.NewPacket()
+
+	// defer recycle packet to pool
+	defer func() {
+		parcel.Recycle(response, request)
+	}()
+
+	// send a request by requestResponse
+	err = conn.Client().RR(c, request, response)
+	if err != nil {
+
+		// to retry request with backoff
+		bf := backoff.NewBackoff()
+		for i := 0; i < opts.retry; i++ {
+			time.Sleep(bf.Next(i))
+			if err = conn.Client().RR(c, request, response); err == nil {
+				break
+			}
+		}
+
+		if err != nil {
+			c.Error(err)
+
+			// mark error count to manager conn state
+			conn.growError()
+			return err
+		}
+	}
+
+	return opts.cc.Decode(response.Bytes(), rsp)
+}
 
 var (
 	ErrorNoneServer   = errors.New("server is none to use")
@@ -152,7 +233,7 @@ func (s *strategy) lazySync() {
 
 	es, err := s.registry.List()
 	if err != nil {
-		rlog.Debug(err)
+		rlog.Error(err)
 		return
 	}
 
@@ -219,4 +300,84 @@ func (s *strategy) Close() {
 	}
 
 	s.close <- struct{}{}
+}
+
+type pod struct {
+	sync.Mutex
+
+	//serviceName serviceName
+	serviceName string
+
+	//count the all clients in this pod
+	count int
+
+	//Round-robin call cursor
+	index uint32
+
+	//clients array in pod
+	clients []*Conn
+
+	//clientMap in pod
+	clientsMap map[string]*Conn
+
+	//when client occur a error,handler callback
+	//callback is the server address
+	callback chan string
+}
+
+//create a pod
+func newPod() *pod {
+	return &pod{
+		clients:    make([]*Conn, 0, 10),
+		clientsMap: make(map[string]*Conn),
+		callback:   make(chan string),
+	}
+}
+
+// Add add a client endpoint to pod
+func (p *pod) Add(e *endpoint.Endpoint, client transport.Client) error {
+	conn, err := newConn(e, client, p.callback)
+	if err != nil {
+		return err
+	}
+
+	p.Lock()
+	defer p.Unlock()
+
+	conn.podLength = len(p.clients)
+	p.count += 1
+	p.serviceName = e.Name
+	p.clients = append(p.clients, conn)
+	p.clientsMap[e.Address] = conn
+
+	// watch callback
+	go p.watch()
+
+	// let client's conn working
+	conn.working()
+
+	return nil
+}
+
+// Del delete a client endpoint from pod
+func (p *pod) Del(addr string) {
+	p.Lock()
+	defer p.Unlock()
+
+	conn, ok := p.clientsMap[addr]
+	if ok {
+		conn.Close()
+		p.clients = append(p.clients[:conn.Offset()], p.clients[conn.Offset():]...)
+		delete(p.clientsMap, addr)
+	}
+}
+
+//watch callback server address to delete
+func (p *pod) watch() {
+	for {
+		select {
+		case address := <-p.callback:
+			p.Del(address)
+		}
+	}
 }

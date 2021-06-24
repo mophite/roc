@@ -17,14 +17,22 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/coreos/etcd/clientv3"
+
+	"github.com/go-roc/roc"
 	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
 	"github.com/go-roc/roc/_auxiliary/example/tutorials/srv/srv.hello/hello"
-
-	"github.com/go-roc/roc/server"
 )
 
 func main() {
-	var s = server.NewRocServer(server.Namespace("srv.hello"))
+	var s = roc.NewService(
+		roc.TCPAddress("127.0.0.1:8899"),
+		roc.Namespace("srv.hello"),
+		roc.EtcdConfig(&clientv3.Config{
+			Endpoints: []string{"82.157.14.79:2379"},
+		}),
+	)
 	pbhello.RegisterHelloWorldServer(s, &hello.Hello{})
 	if err := s.Run(); err != nil {
 		fmt.Println(err)

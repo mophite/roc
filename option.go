@@ -1,29 +1,13 @@
-// Copyright (c) 2021 roc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-//  You may obtain a copy of the License at
-//
-//      https://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing, software
-//  distributed under the License is distributed on an "AS IS" BASIS,
-//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  See the License for the specific language governing permissions and
-//  limitations under the License.
-//
-
-package server
+package roc
 
 import (
-	"errors"
-	"net"
 	"os"
-	"github.com/go-roc/roc/parcel/codec"
 	"strconv"
+	"time"
 
-	"github.com/google/uuid"
+	"github.com/coreos/etcd/clientv3"
 
+	"github.com/go-roc/roc/etcd"
 	"github.com/go-roc/roc/internal/endpoint"
 	"github.com/go-roc/roc/internal/namespace"
 	"github.com/go-roc/roc/internal/registry"
@@ -32,12 +16,12 @@ import (
 	rs "github.com/go-roc/roc/internal/transport/rscoket"
 	"github.com/go-roc/roc/internal/x"
 	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/codec"
 )
 
 const SupportPackageIsVersion1 = 1
 
-type option struct {
-
+type Option struct {
 	//server id can be set,or random
 	//this is the unique identifier of the service
 	id string
@@ -69,11 +53,8 @@ type option struct {
 	//buffSize to data tunnel if it's need
 	buffSize int
 
-	//service discovery registry
-	register registry.Registry
-
 	//server transport
-	transporter transport.Server
+	server transport.Server
 
 	//error packet
 	//It will affect the format of the data you return
@@ -92,56 +73,78 @@ type option struct {
 	//when server exit,will do exit func
 	exit []func()
 
-	//codec packet tool
+	// connect server within connectTimeout
+	// if out of ranges,will be timeout
+	connectTimeout time.Duration
+
+	// keepalive setting,the period for requesting heartbeat to stay connected
+	keepaliveInterval time.Duration
+
+	// keepalive setting,the longest time the connection can survive
+	keepaliveLifetime time.Duration
+
+	// transport client
+	client transport.Client
+
+	//service discover registry
+	registry registry.Registry
+
+	//for requestResponse try to retry request
+	retry int
+
+	//data encoding or decoding
 	cc codec.Codec
+
+	etcdConfig *clientv3.Config
 }
 
-type Options func(*option)
+type Options func(option *Option)
+
+// EtcdConfig setting global etcd config first
+func EtcdConfig(e *clientv3.Config) Options {
+	return func(option *Option) {
+		option.etcdConfig = e
+	}
+}
 
 func Codec(cc codec.Codec) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.cc = cc
 	}
 }
 
 func BuffSize(buffSize int) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.buffSize = buffSize
 	}
 }
 
 func Wrapper(wrappers ...parcel.Wrapper) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.wrappers = append(option.wrappers, wrappers...)
 	}
 }
 
 func Exit(exit ...func()) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.exit = exit
 	}
 }
 
 func Signal(signal ...os.Signal) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.signal = signal
 	}
 }
 
-func Transport(transport transport.Server) Options {
-	return func(option *option) {
-		option.transporter = transport
-	}
-}
-
 func E(e *endpoint.Endpoint) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.e = e
 	}
 }
 
 func Port(port [2]int) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		if port[0] > port[1] {
 			panic("port index 0 must more than 1")
 		}
@@ -155,53 +158,81 @@ func Port(port [2]int) Options {
 }
 
 func Error(err parcel.ErrorPackager) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.err = err
 	}
 }
 
 func WssAddress(address, path string) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.wssAddress = address
 		option.wssPath = path
 	}
 }
 
 func Id(id string) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.id = id
 	}
 }
 
 func Namespace(name string) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.name = name
 	}
 }
 
 func TCPAddress(address string) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.tcpAddress = address
 	}
 }
 
 func Version(version string) Options {
-	return func(option *option) {
+	return func(option *Option) {
 		option.version = version
 	}
 }
 
-func Registry(registry registry.Registry) Options {
-	return func(option *option) {
-		option.register = registry
+// ConnectTimeout set connect timeout
+func ConnectTimeout(connectTimeout time.Duration) Options {
+	return func(option *Option) {
+		option.connectTimeout = connectTimeout
 	}
 }
 
-func newOpts(opts ...Options) option {
-	opt := option{}
+// KeepaliveInterval set keepalive interval
+func KeepaliveInterval(keepaliveInterval time.Duration) Options {
+	return func(option *Option) {
+		option.keepaliveInterval = keepaliveInterval
+	}
+}
+
+// KeepaliveLifetime set keepalive life time
+func KeepaliveLifetime(keepaliveLifetime time.Duration) Options {
+	return func(option *Option) {
+		option.keepaliveLifetime = keepaliveLifetime
+	}
+}
+
+func newOpts(opts ...Options) Option {
+	opt := Option{}
 
 	for i := range opts {
 		opts[i](&opt)
+	}
+
+	if opt.etcdConfig == nil {
+		opt.etcdConfig = &clientv3.Config{
+			Endpoints:   []string{"127.0.0.1:2379"},
+			DialTimeout: time.Second * 5,
+		}
+	}
+
+	// init etcd.DefaultEtcd
+	err := etcd.NewEtcd(time.Second*5, 300, opt.etcdConfig)
+	if err != nil {
+		panic("etcdConfig occur error:" + err.Error())
 	}
 
 	if opt.name == "" {
@@ -210,10 +241,10 @@ func newOpts(opts ...Options) option {
 
 	if opt.id == "" {
 		//todo change to git commit id+timestamp
-		opt.id = uuid.New().String()
+		opt.id = x.NewUUID()
 	}
 
-	ip, err := LocalIp()
+	ip, err := x.LocalIp()
 	if err != nil {
 		panic(err)
 	}
@@ -246,8 +277,8 @@ func newOpts(opts ...Options) option {
 		opt.err = parcel.DefaultErrorPacket
 	}
 
-	if opt.transporter == nil {
-		opt.transporter = rs.NewServer(
+	if opt.server == nil {
+		opt.server = rs.NewServer(
 			opt.tcpAddress,
 			opt.wssAddress,
 			opt.name,
@@ -255,9 +286,7 @@ func newOpts(opts ...Options) option {
 		)
 	}
 
-	if opt.register == nil {
-		opt.register = registry.NewRegistry(registry.Schema(opt.schema))
-	}
+	opt.registry = registry.NewRegistry(registry.Schema(opt.schema))
 
 	if opt.e == nil {
 		opt.e = &endpoint.Endpoint{
@@ -282,23 +311,27 @@ func newOpts(opts ...Options) option {
 		opt.cc = codec.DefaultCodec
 	}
 
+	//set connect timeout or default
+	if opt.connectTimeout <= 0 {
+		opt.connectTimeout = time.Second * 5
+	}
+
+	if opt.keepaliveLifetime <= 0 {
+		opt.keepaliveLifetime = time.Second * 600
+	}
+
+	if opt.keepaliveInterval <= 0 {
+		opt.keepaliveInterval = time.Second * 5
+	}
+
+	if opt.client == nil {
+		//default is rsocket
+		opt.client = rs.NewClient(
+			opt.connectTimeout,
+			opt.keepaliveInterval,
+			opt.keepaliveLifetime,
+		)
+	}
+
 	return opt
-}
-
-func LocalIp() (string, error) {
-	addr, err := net.InterfaceAddrs()
-	if err != nil {
-		return "", err
-	}
-
-	for _, address := range addr {
-		if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-			if ipNet.IP.To4() != nil {
-				return ipNet.IP.String(), nil
-			}
-
-		}
-	}
-
-	return "", errors.New("cannot find local ip")
 }

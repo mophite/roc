@@ -17,21 +17,24 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/coreos/etcd/clientv3"
+
+	"github.com/go-roc/roc"
 	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
 	"github.com/go-roc/roc/_auxiliary/example/tutorials/srv/srv.hello/hello"
-	"github.com/go-roc/roc/internal/registry"
-	"github.com/go-roc/roc/server"
 )
 
 func main() {
-	var opt = registry.Address([]string{"127.0.0.1:2379"})
 
-	var s = server.NewRocServer(
-		server.Namespace("srv.hello"),
-		server.TCPAddress("127.0.0.1:8089"),
-		server.Registry(registry.NewRegistry(opt)),
+	var s = roc.NewService(
+		roc.Namespace("srv.hello"),
+		roc.TCPAddress("127.0.0.1:8089"),
+		roc.EtcdConfig(&clientv3.Config{
+			Endpoints: []string{"82.157.14.79:2379"},
+		}),
 	)
-	pbhello.RegisterHelloWorldServer(s, &hello.Hello{})
+	pbhello.RegisterHelloWorldServer(s, &hello.Hello{Service: s})
 	if err := s.Run(); err != nil {
 		fmt.Println(err)
 	}

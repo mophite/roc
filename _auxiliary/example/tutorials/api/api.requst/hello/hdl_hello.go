@@ -17,21 +17,35 @@ package hello
 
 import (
 	"net/http"
+
+	"github.com/coreos/etcd/clientv3"
+
+	"github.com/go-roc/roc"
 	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
-	"github.com/go-roc/roc/client"
 	"github.com/go-roc/roc/parcel/context"
 	"github.com/go-roc/roc/rlog"
 )
 
 type Hello struct {
-	opt    client.InvokeOptions
+	opt    roc.InvokeOptions
 	client pbhello.HelloWorldClient
 }
 
 // NewHello new Hello and initialize it for rpc client
 // opt is configurable when request.
 func NewHello() *Hello {
-	return &Hello{client: pbhello.NewHelloWorldClient(client.NewRocClient()), opt: client.WithName("srv.hello")}
+	return &Hello{
+		client: pbhello.NewHelloWorldClient(
+			roc.NewService(
+				roc.TCPAddress("127.0.0.1:8899"),
+				roc.Namespace("srv.hello"),
+				roc.EtcdConfig(&clientv3.Config{
+					Endpoints: []string{"82.157.14.79:2379"},
+				}),
+			),
+		),
+		opt: roc.WithName("srv.hello"),
+	}
 }
 
 func (h *Hello) SayHandler(w http.ResponseWriter, r *http.Request) {

@@ -16,15 +16,16 @@
 package hello
 
 import (
-	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
-	"github.com/go-roc/roc/client"
-	"github.com/go-roc/roc/parcel/context"
 	"sync/atomic"
 	"time"
+
+	"github.com/go-roc/roc"
+	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
+	"github.com/go-roc/roc/parcel/context"
 )
 
 type Hello struct {
-	Client *client.RocClient
+	Service *roc.Service
 }
 
 func (h *Hello) SayStream(c *context.Context, req *pbhello.SayReq) (chan *pbhello.SayRsp, chan error) {

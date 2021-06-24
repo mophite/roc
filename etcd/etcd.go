@@ -21,12 +21,13 @@ import (
 	"sync"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
+	"github.com/coreos/etcd/clientv3"
 
 	"github.com/go-roc/roc/internal/x"
 	"github.com/go-roc/roc/rlog"
 )
+
+var DefaultEtcd *Etcd
 
 type Etcd struct {
 	lock sync.RWMutex
@@ -50,28 +51,30 @@ type Etcd struct {
 	leaseTLL int64
 }
 
-// NewEtcd create etcd
+// NewEtcd init etcd
 // if config is nil,use default config setting
-func NewEtcd(timeout time.Duration, leaseTLL int64, config *clientv3.Config) *Etcd {
-	s := &Etcd{
-		leaseKeepaliveChan: make(chan *clientv3.LeaseKeepAliveResponse),
-		config:             config,
-		timeout:            timeout,
-		leaseTLL:           leaseTLL,
-	}
+func NewEtcd(timeout time.Duration, leaseTLL int64, config *clientv3.Config) error {
+
+	//let DefaultEtcd nil first is requirement
+	DefaultEtcd = nil
+
+	DefaultEtcd = new(Etcd)
+
+	DefaultEtcd.leaseKeepaliveChan = make(chan *clientv3.LeaseKeepAliveResponse)
+	DefaultEtcd.config = config
+	DefaultEtcd.timeout = timeout
+	DefaultEtcd.leaseTLL = leaseTLL
 
 	if config == nil {
-		s.config = &clientv3.Config{
-			Endpoints: []string{"127.0.0.1:2379"},
+		DefaultEtcd.config = &clientv3.Config{
+			Endpoints:   []string{"127.0.0.1:2379"},
+			DialTimeout: time.Second * 5,
 		}
 	}
 
 	var err error
-	s.client, err = clientv3.New(*s.config)
-	if err != nil {
-		panic(err)
-	}
-	return s
+	DefaultEtcd.client, err = clientv3.New(*DefaultEtcd.config)
+	return err
 }
 
 // Client get etcd client
@@ -79,49 +82,60 @@ func (s *Etcd) Client() *clientv3.Client {
 	return s.client
 }
 
+// PutTimeout put one key/value to etcd with lease setting
+func (s *Etcd) PutTimeout(key, value string, leaseTLL int64) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
+	defer cancel()
+
+	if leaseTLL <= 0 {
+		leaseTLL = s.leaseTLL
+	}
+
+	rsp, err := clientv3.NewLease(s.client).Grant(ctx, leaseTLL)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.client.Put(context.TODO(), key, value, clientv3.WithLease(rsp.ID))
+	return err
+}
+
 // PutWithLease put one key/value to etcd with lease setting
+// use just one leaseId control all whit lease key/value data
 func (s *Etcd) PutWithLease(key, value string) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
 	defer cancel()
 
-	rsp, err := clientv3.NewLease(s.client).Grant(ctx, s.leaseTLL)
-	if err != nil {
-		return err
-	}
+	//if no leaseId,setting lease
+	if s.leaseId <= 0 {
+		rsp, err := clientv3.NewLease(s.client).Grant(ctx, s.leaseTLL)
+		if err != nil {
+			return err
+		}
 
-	s.leaseId = rsp.ID
+		s.leaseId = rsp.ID
 
-	ch, err := s.client.KeepAlive(context.TODO(), rsp.ID)
-	if err != nil {
-		return err
-	}
+		ch, err := s.client.KeepAlive(context.TODO(), rsp.ID)
+		if err != nil {
+			return err
+		}
 
-	go func() {
-		for {
-			select {
-			case c := <-s.leaseKeepaliveChan: // if leaseKeepaliveChan is nil,lease keepalive stop!
-				if c == nil {
-					rlog.Warnf("etcd leaseKeepalive stop! leaseID: %d prefix:%s value:%s", s.leaseId, key, value)
-					return
+		go func() {
+			for {
+				select {
+				case c := <-s.leaseKeepaliveChan: // if leaseKeepaliveChan is nil,lease keepalive stop!
+					if c == nil {
+						rlog.Warnf("etcd leaseKeepalive stop! leaseID: %d prefix:%s value:%s", s.leaseId, key, value)
+						return
+					}
 				}
 			}
-		}
-	}()
+		}()
 
-	s.leaseKeepaliveChan <- <-ch
-	_, err = s.client.Put(context.TODO(), key, value, clientv3.WithLease(s.leaseId))
-	if err != nil {
-		switch err {
-		case context.Canceled:
-			rlog.Fatalf("ctx is canceled by another routine: %v", err)
-		case context.DeadlineExceeded:
-			rlog.Fatalf("ctx is attached with a deadline is exceeded: %v", err)
-		case rpctypes.ErrEmptyKey:
-			rlog.Fatalf("client-side error: %v", err)
-		default:
-			rlog.Fatalf("bad cluster endpoints, which are not etcd servers: %v", err)
-		}
+		s.leaseKeepaliveChan <- <-ch
 	}
+
+	_, err := s.client.Put(context.TODO(), key, value, clientv3.WithLease(s.leaseId))
 	return err
 }
 
@@ -131,19 +145,6 @@ func (s *Etcd) Put(key, value string) error {
 	defer s.lock.Unlock()
 
 	_, err := s.client.Put(context.Background(), key, value)
-	if err != nil {
-		switch err {
-		case context.Canceled:
-			rlog.Fatalf("ctx is canceled by another routine: %v", err)
-		case context.DeadlineExceeded:
-			rlog.Fatalf("ctx is attached with a deadline is exceeded: %v", err)
-		case rpctypes.ErrEmptyKey:
-			rlog.Fatalf("client-side error: %v", err)
-		default:
-			rlog.Fatalf("bad cluster endpoints, which are not etcd servers: %v", err)
-		}
-	}
-
 	return err
 }
 
@@ -219,9 +220,12 @@ func (s *Etcd) Delete(key string) error {
 
 //revoke lease
 func (s *Etcd) revoke() error {
-	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
-	defer cancel()
-	_, err := s.client.Revoke(ctx, s.leaseId)
+	var err error
+	if s.leaseId > 0 {
+		ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
+		defer cancel()
+		_, err = s.client.Revoke(ctx, s.leaseId)
+	}
 	return err
 }
 
