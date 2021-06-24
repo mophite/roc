@@ -28,38 +28,53 @@
 - install protoc-gen-roc
 
 ```go
-    go env -w GO111MODULE=on
-```
-```go
-    go get github.com/go-roc/roc/cmd/protoc-gen-roc
+    go env -w GO111MODULE = on
 ```
 
-- generate proto file to go
-  file,like [hello.proto](https://roc/_auxiliary/example/tutorials/proto/pbhello.proto)
+```go
+    go get github.com/go -roc/roc/cmd/protoc-gen-roc
+```
+
+- generate proto file to go file,like [hello.proto](https://roc/_auxiliary/example/tutorials/proto/pbhello.proto)
 
 ```go
     protoc --roc_out = plugins = roc:.*.proto
 ```
 
-- run a roc server
+- run a roc service
 
 ```go
-    var s = server.NewRocServer(server.Namespace("srv.hello"))
-    pbhello.RegisterHelloWorldServer(s, &Hello{})
-    err := s.Run()
-```
+package main
 
-- client rpc to server
+import (
+	"fmt"
 
-```go
-    var opt = client.WithScope("srv.hello")
-    var client = pbhello.NewHelloWorldClient(client.NewRocClient())
-    rsp, err := h.client.Say(context.Background(), &pbhello.SayReq{Inc: 1}, h.opt)
+	"github.com/coreos/etcd/clientv3"
+
+	"github.com/go-roc/roc"
+	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
+	"github.com/go-roc/roc/_auxiliary/example/tutorials/srv/srv.hello/hello"
+)
+
+func main() {
+	var s = roc.NewService(
+		roc.TCPAddress("127.0.0.1:8888"),
+		roc.Namespace("srv.hello"),
+		roc.EtcdConfig(&clientv3.Config{
+			Endpoints: []string{"127.0.0.1:2379"},
+		}),
+	)
+	pbhello.RegisterHelloWorldServer(s, &hello.Hello{})
+	if err := s.Run(); err != nil {
+		fmt.Println(err)
+	}
+}
 ```
 
 ### 💞️ see more [example](https://roc/tree/master/_auxiliary/example) for more help.
 
 ### 📫 How to reach me by email ...
+
 ```email
   1743299@qq.com
 ```
