@@ -51,9 +51,17 @@ type Option struct {
 	//localFile switch
 	//if true,will load local config.json to
 	localFile bool
+
+	f []func() error
 }
 
 type Options func(option *Option)
+
+func Config(f ...func() error) Options {
+	return func(option *Option) {
+		option.f = f
+	}
+}
 
 func Private(private string) Options {
 	return func(option *Option) {

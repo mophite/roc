@@ -104,7 +104,7 @@ type Option struct {
 
 type Options func(option *Option)
 
-func ConfigOption( opts ...config.Options) Options {
+func ConfigOption(opts ...config.Options) Options {
 	return func(option *Option) {
 		option.configOpt = opts
 	}
@@ -239,12 +239,15 @@ func newOpts(opts ...Options) Option {
 		}
 	}
 
-	config.NewConfig(opt.configOpt...)
-
 	// init etcd.DefaultEtcd
 	err := etcd.NewEtcd(time.Second*5, 300, opt.etcdConfig)
 	if err != nil {
-		panic("etcdConfig occur error:" + err.Error())
+		panic("etcdConfig occur error: " + err.Error())
+	}
+
+	err = config.NewConfig(opt.configOpt...)
+	if err != nil {
+		panic("config NewConfig occur error: " + err.Error())
 	}
 
 	if opt.name == "" {

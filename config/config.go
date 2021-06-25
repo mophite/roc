@@ -74,6 +74,16 @@ func NewConfig(opts ...Options) error {
 
 	go gRConfig.update()
 
+	if len(gRConfig.opts.f) > 0 {
+		for i := range gRConfig.opts.f {
+			err := gRConfig.opts.f[i]()
+			if err != nil {
+				rlog.Error(err)
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
