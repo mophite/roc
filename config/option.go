@@ -21,6 +21,11 @@ import (
 	"github.com/go-roc/roc/internal/x"
 )
 
+var (
+	defaultPublicPrefix  = "public"
+	defaultPrivatePrefix = "private"
+)
+
 type Option struct {
 
 	//etcd
@@ -132,13 +137,19 @@ func newOpts(opts ...Options) Option {
 		opt.backupPath = "./config.json"
 	}
 
-	opt.private = x.GetProjectName()
+	if opt.private == "" {
+		opt.private = x.GetProjectName()
+	}
+
+	defaultPrivatePrefix = opt.private
 
 	opt.private = opt.schema + "/" + opt.private + "/"
 
 	if opt.public == "" {
 		opt.public = "public"
 	}
+
+	defaultPublicPrefix = opt.public
 
 	opt.public = opt.schema + "/" + opt.public + "/"
 
@@ -149,4 +160,12 @@ func newOpts(opts ...Options) Option {
 	}
 
 	return opt
+}
+
+func GetPublic() string {
+	return defaultPublicPrefix
+}
+
+func GetPrivate() string {
+	return defaultPrivatePrefix
 }
