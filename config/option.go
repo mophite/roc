@@ -16,88 +16,118 @@
 package config
 
 import (
-	"github.com/go-roc/roc/etcd"
-	"github.com/go-roc/roc/internal/namespace"
-	"github.com/go-roc/roc/internal/x"
+    "github.com/go-roc/roc/etcd"
+    "github.com/go-roc/roc/internal/namespace"
+    "github.com/go-roc/roc/internal/x"
 )
 
 type Option struct {
 
-	//etcd
-	e *etcd.Etcd
+    //etcd
+    e *etcd.Etcd
 
-	//enableDynamic switch
-	enableDynamic bool
+    //disableDynamic switch
+    disableDynamic bool
 
-	//config schema on etcd
-	schema string
+    //config schema on etcd
+    //schema usually is global config dir
+    schema string
 
-	//prefix on etcd
-	prefix string
+    //private config on etcd
+    private string
 
-	//config version
-	version string
+    //global config on etcd
+    global string
 
-	//backup path
-	backupPath string
+    //global prefix
+    prefix string
+
+    //config version
+    version string
+
+    //backup file path
+    backupPath string
+
+    //backup file name
+    backupName string
+
+    //localFile switch
+    //if true,will load local config.json to
+    localFile bool
 }
 
 type Options func(option *Option)
 
-func EnableDynamic() Options {
-	return func(option *Option) {
-		option.enableDynamic = true
-	}
+func DisableDynamic() Options {
+    return func(option *Option) {
+        option.disableDynamic = true
+    }
 }
 
 func Schema(schema string) Options {
-	return func(option *Option) {
-		option.schema = schema
-	}
+    return func(option *Option) {
+        option.schema = schema
+    }
 }
 
 func Version(version string) Options {
-	return func(option *Option) {
-		option.version = version
-	}
+    return func(option *Option) {
+        option.version = version
+    }
 }
 
 func Backup(path string) Options {
-	return func(option *Option) {
-		option.backupPath = path
-	}
+    return func(option *Option) {
+        option.backupPath = path
+    }
 }
 
 func Prefix(prefix string) Options {
-	return func(option *Option) {
-		option.prefix = prefix
-	}
+    return func(option *Option) {
+        option.private = prefix
+    }
 }
 
 func newOpts(opts ...Options) Option {
-	opt := Option{}
+    opt := Option{}
 
-	for i := range opts {
-		opts[i](&opt)
-	}
+    for i := range opts {
+        opts[i](&opt)
+    }
 
-	if opt.schema == "" {
-		opt.schema = namespace.DefaultConfigSchema
-	}
+    if opt.schema == "" {
+        opt.schema = namespace.DefaultConfigSchema
+    }
 
-	if opt.version == "" {
-		opt.version = namespace.DefaultVersion
-	}
+    if opt.version == "" {
+        opt.version = namespace.DefaultVersion
+    }
 
-	opt.schema += "." + opt.version
+    opt.schema += "/" + opt.version
 
-	if opt.backupPath == "" {
-		opt.backupPath = "./"
-	}
+    if opt.backupPath == "" {
+        opt.backupPath = "./"
+    }
 
-	if opt.prefix == "" {
-		opt.prefix = x.GetProjectName()
-	}
+    if opt.backupName == "" {
+        opt.backupName = "config.json"
+    }
 
-	return opt
+    opt.private = x.GetProjectName()
+
+    opt.private = opt.schema + "/" + opt.private + "/"
+
+    if opt.global == "" {
+        opt.global = "global"
+    }
+
+    opt.global = opt.schema + "/" + opt.global + "/"
+
+    opt.e = etcd.DefaultEtcd
+
+    if opt.prefix == "" {
+        opt.prefix = "roc"
+    }
+
+    return opt
 }

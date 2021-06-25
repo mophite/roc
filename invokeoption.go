@@ -35,7 +35,7 @@ func WithTracing(t string) InvokeOptions {
 	}
 }
 
-// BuffSize set buff size for requestChannel
+// InvokeBuffSize set buff size for requestChannel
 func InvokeBuffSize(buffSize int) InvokeOptions {
 	return func(invokeOption *InvokeOption) {
 		invokeOption.buffSize = buffSize

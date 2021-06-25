@@ -16,337 +16,244 @@
 package config
 
 import (
-	"io/ioutil"
-	"os"
-	"strings"
-	"sync"
+    "fmt"
+    "io/ioutil"
+    "os"
+    "strings"
+    "sync"
 
-	jsoniter "github.com/json-iterator/go"
-
-	"github.com/go-roc/roc/etcd"
-	"github.com/go-roc/roc/internal/x"
-	"github.com/go-roc/roc/rlog"
+    "github.com/coreos/etcd/clientv3"
+    "github.com/go-roc/roc/etcd"
+    "github.com/go-roc/roc/internal/namespace"
+    "github.com/go-roc/roc/internal/x"
+    "github.com/go-roc/roc/rlog"
 )
 
 //Configuration Center
 //use etcd,
-
 var gRConfig *config
-
-var _ RConfig = &config{}
-
-func init() {
-	gRConfig = NewConfig()
-}
-
-type RConfig interface {
-
-	// ConfigListAndSync Get all config and sync to cache
-	ConfigListAndSync() error
-
-	// WithConfig Get config with key
-	WithConfig(key string) ([]byte, error)
-
-	// SetConfig set config with key value
-	SetConfig(key string, value []byte) error
-
-	// Clean clean all config
-	Clean() error
-
-	// Delete remove a config with key
-	Delete(key string) error
-
-	// Watch watch config and update
-	Watch() chan *etcd.Action
-
-	// Backup backup config
-	Backup() error
-
-	// LoadFs2Etcd load a config file to etcd
-	LoadFs2Etcd() error
-
-	// Close close config
-	Close()
-}
 
 type config struct {
 
-	//config option
-	opts Option
+    //config option
+    opts Option
 
-	lock sync.RWMutex
+    lock sync.RWMutex
 
-	//config data local cache
-	data map[string][]byte
+    //config data local cache
+    data map[string][]byte
 
-	//close signal
-	close chan struct{}
+    //close signal
+    close chan struct{}
 
-	//receive etcd callback data
-	action chan *etcd.Action
+    //receive etcd callback data
+    action chan *etcd.Action
 
-	//watch etcd changed
-	watch *etcd.Watch
+    //watch etcd changed
+    watch *etcd.Watch
+
+    cache map[string]interface{}
 }
 
-func NewConfig(opts ...Options) *config {
-	c := &config{
-		opts:  newOpts(),
-		data:  make(map[string][]byte),
-		close: make(chan struct{}),
-	}
+func NewConfig(opts ...Options) error {
+    gRConfig = &config{
+        opts:  newOpts(),
+        data:  make(map[string][]byte),
+        cache: make(map[string]interface{}),
+        close: make(chan struct{}),
+    }
 
-	c.watch = etcd.NewEtcdWatch(c.opts.schema, c.opts.e.Client())
-	c.action = c.watch.Watch(c.opts.schema)
+    gRConfig.watch = etcd.NewEtcdWatch(gRConfig.opts.schema, gRConfig.opts.e.Client())
+    gRConfig.action = gRConfig.watch.Watch(gRConfig.opts.schema)
 
-	go c.run()
+    err := gRConfig.configListAndSync()
+    if err != nil {
+        rlog.Error(err)
+        return err
+    }
 
-	return c
+    go gRConfig.update()
+
+    return nil
 }
 
-func (c *config) ConfigListAndSync() error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+func (c *config) configListAndSync() error {
+    c.lock.Lock()
+    defer c.lock.Unlock()
 
-	data, err := c.opts.e.GetWithList(c.opts.schema)
-	if err != nil {
-		return err
-	}
+    globalData, err := c.opts.e.GetWithList(c.opts.global, clientv3.WithPrefix())
+    if err == nil {
+        for k, v := range globalData {
+            c.data[getFsName(k)] = v
+        }
+    }
 
-	rlog.Infof("update config |data=%v", x.MustMarshalString(data))
+    privateData, err := c.opts.e.GetWithList(c.opts.private, clientv3.WithPrefix())
+    if err == nil {
+        for k, v := range privateData {
 
-	for k, v := range data {
-		data[k] = v
-	}
+            //cover global config
+            if _, ok := c.data[getFsName(k)]; ok {
+                c.data[getFsName(k)] = v
+                continue
+            }
 
-	return c.Backup()
+            c.data[getFsName(k)] = v
+        }
+    }
+
+    return c.backup()
 }
 
-func (c *config) WithConfig(key string) ([]byte, error) {
-	return c.opts.e.GetWithKey(c.opts.schema + "/" + key)
+func (c *config) backup() error {
+    fs, err := os.OpenFile(
+        c.opts.backupPath+c.opts.backupName,
+        os.O_CREATE|os.O_RDWR|os.O_TRUNC,
+        os.ModePerm,
+    )
+
+    if err != nil {
+        return err
+    }
+
+    var data = make(map[string]interface{})
+    for k, v := range c.data {
+        var tmp = make(map[string]interface{})
+        err = x.Jsoniter.Unmarshal(v, &tmp)
+        if err != nil {
+            continue
+        }
+        data[k] = tmp
+    }
+
+    b, err := x.Jsoniter.Marshal(data)
+    if err != nil {
+        return err
+    }
+
+    fs.Write(b)
+
+    fs.Close()
+
+    return nil
 }
 
-func (c *config) SetConfig(key string, value []byte) error {
-	return c.opts.e.Put(key, string(value))
-}
+// loadLocalFile load local config file to etcd
+func (c *config) loadLocalFile() error {
+    c.lock.Lock()
+    defer c.lock.Unlock()
 
-// Clean clean all config,avoid using Clean if it is not necessary
-func (c *config) Clean() error {
-	return c.opts.e.Delete(c.opts.schema)
-}
+    fs, err := os.Open(c.opts.backupPath + c.opts.backupName)
+    if err != nil {
+        return err
+    }
+    fd, err := ioutil.ReadAll(fs)
+    if err != nil {
+        return err
+    }
 
-func (c *config) Delete(key string) error {
-	return c.opts.e.Delete(c.opts.schema + "/" + key)
-}
-
-func (c *config) Backup() error {
-	for k, v := range c.data {
-		if name := getFsName(k); name != "" {
-			//open or create a local config file
-			fs, err := os.OpenFile(
-				c.opts.backupPath+string(os.PathSeparator)+name,
-				os.O_CREATE|os.O_APPEND|os.O_RDWR|os.O_TRUNC,
-				os.ModePerm)
-			if err != nil {
-				rlog.Error(err)
-				continue
-			}
-
-			_, _ = fs.Write(v)
-
-			_ = fs.Close()
-		}
-	}
-
-	return nil
-}
-
-// LoadFs2Etcd load local config file to etcd
-func (c *config) LoadFs2Etcd() error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	dir, err := ioutil.ReadDir(c.opts.backupPath)
-	if err != nil {
-		return err
-	}
-
-	for _, v := range dir {
-		if v.IsDir() {
-			continue
-		}
-
-		b, err := ioutil.ReadFile(c.opts.backupPath + v.Name())
-		if err != nil {
-			rlog.Error(err)
-			continue
-		}
-
-		c.data[c.opts.schema+v.Name()] = b
-
-		err = c.SetConfig(c.opts.schema+v.Name(), b)
-		if err != nil {
-			rlog.Error(err)
-		}
-	}
-
-	return nil
+    return x.Jsoniter.Unmarshal(fd, &c.data)
 }
 
 func getFsName(s string) string {
-	array := strings.Split(s, "/")
-	if len(array) > 0 {
-		return array[len(array)-1]
-	}
+    isGlobal := strings.Contains(s, gRConfig.opts.global)
+    array := strings.Split(s, "/")
 
-	return ""
+    if len(array) > 0 {
+        s = array[len(array)-1]
+    }
+
+    if isGlobal {
+        s = gRConfig.opts.prefix + "." + s
+    }
+
+    return s
 }
 
-// Watch watching and update all config
-func (c *config) Watch() chan *etcd.Action {
-	var r = make(chan *etcd.Action)
-	go func() {
-		for action := range c.action {
-			r <- action
-		}
+func (c *config) update() {
+    if !c.opts.disableDynamic {
+        for {
+            select {
+            case data := <-c.action:
+                // sync config all
+                c.lock.Lock()
 
-		close(r)
-	}()
+                fmt.Println("=====::", data.Act)
+                switch data.Act {
+                case namespace.WatcherCreate:
+                    for k, v := range data.B {
 
-	return r
-}
+                        var key = getFsName(k)
 
-func (c *config) run() {
-	if c.opts.enableDynamic {
-		for {
-			select {
-			case <-c.Watch():
-				// sync config all
-				c.lock.Lock()
-				err := c.ConfigListAndSync()
-				if err != nil {
-					rlog.Error(err)
-				}
+                        if _, ok := c.data[key]; !ok {
+                            c.data[key] = v
+                            if f, ok := c.cache[key]; ok {
+                                err := Decode2Config(key, f)
+                                if err != nil {
+                                    rlog.Error(err)
+                                }
+                            }
+                        } else {
+                            rlog.Warnf("same config warning: %s", key)
+                        }
+                    }
 
-				c.lock.Unlock()
+                case namespace.WatcherUpdate:
+                    for k, v := range data.B {
 
-			case <-c.close:
-				return
-			}
-		}
-	}
+                        var key = getFsName(k)
+
+                        if _, ok := c.data[key]; ok {
+                            c.data[key] = v
+                            if f, ok := c.cache[key]; ok {
+                                err := Decode2Config(key, f)
+                                if err != nil {
+                                    rlog.Error(err)
+                                }
+                            }
+                        } else {
+                            rlog.Warnf("config not exist: %s", key)
+                        }
+                    }
+
+                case namespace.WatcherDelete:
+                    for k, _ := range data.B {
+
+                        var key = getFsName(k)
+                        if _, ok := c.data[key]; ok {
+                            delete(c.data, key)
+                            delete(c.cache, key)
+                        }
+                    }
+                }
+
+                c.lock.Unlock()
+
+            case <-c.close:
+                return
+            }
+        }
+    }
 }
 
 func (c *config) Close() {
-	c.lock.Lock()
-	c.data = nil
-	c.lock.Unlock()
-	c.close <- struct{}{}
+    c.lock.Lock()
+    c.data = nil
+    c.lock.Unlock()
+    c.close <- struct{}{}
 }
 
-func RocConfig() *config {
-	return gRConfig
+func getDataBytes(key string) []byte {
+    return gRConfig.data[key]
 }
 
-func getDataBytes(args ...string) ([]byte, string) {
-	var name, key string
-	if len(args) == 1 {
-		key = args[0]
-		name = gRConfig.opts.schema + gRConfig.opts.prefix
-	}
+func Decode2Config(key string, v interface{}) error {
+    err := x.Jsoniter.Unmarshal(getDataBytes(key), v)
+    if err != nil {
+        return err
+    }
 
-	if len(args) == 2 {
-		key = args[1]
-		name = args[0]
-	}
+    gRConfig.cache[key] = v
 
-	return gRConfig.data[name], key
-}
-
-func GetAny(args ...string) jsoniter.Any {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetAny no data error")
-	}
-	return x.Jsoniter.Get(b, key)
-}
-
-func GetString(args ...string) string {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		return ""
-	}
-	return x.Jsoniter.Get(b, key).ToString()
-}
-
-func GetInt(args ...string) int {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetInt no data error")
-	}
-	return x.Jsoniter.Get(b, key).ToInt()
-}
-
-func GetInt32(args ...string) int32 {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetInt no data error")
-	}
-	return x.Jsoniter.Get(b, key).ToInt32()
-}
-
-func GetInt64(args ...string) int64 {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetInt no data error")
-	}
-	return x.Jsoniter.Get(b, key).ToInt64()
-}
-
-func GetUint(args ...string) uint {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetInt no data error")
-	}
-	return x.Jsoniter.Get(b, key).ToUint()
-}
-
-func GetUint32(args ...string) uint32 {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetInt no data error")
-	}
-	return x.Jsoniter.Get(b, key).ToUint32()
-}
-
-func GetUint64(args ...string) uint64 {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetInt no data error")
-	}
-	return x.Jsoniter.Get(b, key).ToUint64()
-}
-
-func GetFloat32(args ...string) float32 {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetFloat32 no data error")
-	}
-	return x.Jsoniter.Get(b, key).ToFloat32()
-}
-
-func GetFloat64(args ...string) float64 {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetFloat64 no data error")
-	}
-	return x.Jsoniter.Get(b, key).ToFloat64()
-}
-
-func GetBool(args ...string) bool {
-	b, key := getDataBytes(args...)
-	if len(b) == 0 {
-		panic("config GetBool no data error")
-	}
-	return x.Jsoniter.Get(b, key).ToBool()
+    return nil
 }

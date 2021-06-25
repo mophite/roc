@@ -22,11 +22,11 @@ import (
 )
 
 // open with browser:
-// http://localhost:8080/say
+// http://localhost:9999/say
 func main() {
 	h := hello.NewHello()
 	http.HandleFunc("/say", h.SayHandler)
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":9999", nil)
 	if err != nil {
 		panic(err)
 	}

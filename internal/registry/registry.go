@@ -16,40 +16,43 @@
 package registry
 
 import (
-	"github.com/go-roc/roc/internal/endpoint"
-	"github.com/go-roc/roc/internal/namespace"
+    "github.com/go-roc/roc/internal/endpoint"
+    "github.com/go-roc/roc/internal/namespace"
 )
 
 type Registry interface {
 
-	// Watcher watch the remote like etcd,who's data change
-	Watcher
+    // Watcher watch the remote like etcd,who's data change
+    Watcher
 
-	// Register register a endpoint to etcd or other
-	Register(e *endpoint.Endpoint) error
+    // Register register a endpoint to etcd or other
+    Register(e *endpoint.Endpoint) error
 
-	// Deregister deregister a endpoint from etcd or other
-	Deregister(e *endpoint.Endpoint) error
+    // Deregister deregister a endpoint from etcd or other
+    Deregister(e *endpoint.Endpoint) error
 
-	// Next get one endpoint
-	Next(scope string) (*endpoint.Endpoint, error)
+    // Next get one endpoint
+    Next(scope string) (*endpoint.Endpoint, error)
 
-	// List get all endpoint
-	List() ([]*endpoint.Endpoint, error)
+    // List get all endpoint
+    List() ([]*endpoint.Endpoint, error)
 
-	// Name return the tool's name like "etcd"
-	Name() string
+    // Name return the tool's name like "etcd"
+    Name() string
 
-	// Close close registry
-	Close()
+    // Close close registry
+    Close()
 }
 
 type Watcher interface {
-	Watch() chan *Action
+    Watch() chan *Action
 }
 
 // Action watch data change content
 type Action struct {
-	Act namespace.WatcherAction
-	E   *endpoint.Endpoint
+    Act namespace.WatcherAction
+    E   *endpoint.Endpoint
+
+    //etcd key
+    Key string
 }

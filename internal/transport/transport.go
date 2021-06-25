@@ -59,6 +59,7 @@ type Client interface {
 	Close()
 }
 
+// CallOptions todo call server Options
 type CallOptions func(option *CallOption)
 
 type CallOption struct {
