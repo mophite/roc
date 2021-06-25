@@ -24,12 +24,12 @@ func TestGlobal(t *testing.T) {
     const data = `{ "name":"roc", "age":17 }`
     const testKey = "test"
 
-    err := gRConfig.opts.e.Put(gRConfig.opts.global+testKey, data)
+    err := gRConfig.opts.e.Put(gRConfig.opts.public+testKey, data)
     if err != nil {
         t.Fatal(err)
     }
 
-    //get global config
+    //get public config
     var r result
     err = json.Unmarshal(getDataBytes(gRConfig.opts.prefix+".test"), &r)
     if err != nil {
@@ -41,7 +41,7 @@ func TestGlobal(t *testing.T) {
     }
 
     d := `{ "name":"roc", "age":18 }`
-    //cover global
+    //cover public
     err = gRConfig.opts.e.Put(gRConfig.opts.private+testKey, d)
     if err != nil {
         t.Fatal(err)
@@ -62,7 +62,7 @@ func TestDecode(t *testing.T) {
     const data = `{ "name":"roc", "age":17 }`
     const testKey = "test"
 
-    err := gRConfig.opts.e.Put(gRConfig.opts.global+testKey, data)
+    err := gRConfig.opts.e.Put(gRConfig.opts.public+testKey, data)
     if err != nil {
         t.Fatal(err)
     }
@@ -75,8 +75,8 @@ func TestDecode(t *testing.T) {
     t.Log(r)
 
     d := `{ "name":"roc", "age":20 }`
-    //cover global
-    err = gRConfig.opts.e.Put(gRConfig.opts.global+testKey, d)
+    //cover public
+    err = gRConfig.opts.e.Put(gRConfig.opts.public+testKey, d)
     if err != nil {
         t.Fatal(err)
     }

@@ -30,16 +30,16 @@ type Option struct {
 	disableDynamic bool
 
 	//config schema on etcd
-	//schema usually is global config dir
+	//schema usually is public config dir
 	schema string
 
 	//private config on etcd
 	private string
 
-	//global config on etcd
-	global string
+	//public config on etcd
+	public string
 
-	//global prefix
+	//public prefix
 	prefix string
 
 	//config version
@@ -61,9 +61,9 @@ func Private(private string) Options {
 	}
 }
 
-func Global(global string) Options {
+func Public(public string) Options {
 	return func(option *Option) {
-		option.global = global
+		option.public = public
 	}
 }
 
@@ -128,11 +128,11 @@ func newOpts(opts ...Options) Option {
 
 	opt.private = opt.schema + "/" + opt.private + "/"
 
-	if opt.global == "" {
-		opt.global = "global"
+	if opt.public == "" {
+		opt.public = "public"
 	}
 
-	opt.global = opt.schema + "/" + opt.global + "/"
+	opt.public = opt.schema + "/" + opt.public + "/"
 
 	opt.e = etcd.DefaultEtcd
 

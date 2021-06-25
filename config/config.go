@@ -81,7 +81,7 @@ func (c *config) configListAndSync() error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	globalData, err := c.opts.e.GetWithList(c.opts.global, clientv3.WithPrefix())
+	globalData, err := c.opts.e.GetWithList(c.opts.public, clientv3.WithPrefix())
 	if err == nil {
 		for k, v := range globalData {
 			c.data[getFsName(k)] = v
@@ -92,7 +92,7 @@ func (c *config) configListAndSync() error {
 	if err == nil {
 		for k, v := range privateData {
 
-			//cover global config
+			//cover public config
 			if _, ok := c.data[getFsName(k)]; ok {
 				c.data[getFsName(k)] = v
 				continue
@@ -156,7 +156,7 @@ func (c *config) loadLocalFile() error {
 }
 
 func getFsName(s string) string {
-	isGlobal := strings.Contains(s, gRConfig.opts.global)
+	isGlobal := strings.Contains(s, gRConfig.opts.public)
 	array := strings.Split(s, "/")
 
 	if len(array) > 0 {
