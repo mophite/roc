@@ -21,11 +21,6 @@ import (
 	"github.com/go-roc/roc/internal/x"
 )
 
-var (
-	defaultPublicPrefix  = "public"
-	defaultPrivatePrefix = "private"
-)
-
 type Option struct {
 
 	//etcd
@@ -57,12 +52,14 @@ type Option struct {
 	//if true,will load local config.json to
 	localFile bool
 
+	//f will be run after config already setup
 	f []func() error
 }
 
 type Options func(option *Option)
 
-func Config(f ...func() error) Options {
+//Chaos is config already setup and do Chaos functions
+func Chaos(f ...func() error) Options {
 	return func(option *Option) {
 		option.f = f
 	}
@@ -141,31 +138,25 @@ func newOpts(opts ...Options) Option {
 		opt.private = x.GetProjectName()
 	}
 
-	defaultPrivatePrefix = opt.private
-
 	opt.private = opt.schema + "/" + opt.private + "/"
 
 	if opt.public == "" {
 		opt.public = "public"
 	}
 
-	defaultPublicPrefix = opt.public
-
 	opt.public = opt.schema + "/" + opt.public + "/"
 
 	opt.e = etcd.DefaultEtcd
 
 	if opt.prefix == "" {
-		opt.prefix = "roc"
+		opt.prefix = "roc."
 	}
 
 	return opt
 }
 
-func GetPublic() string {
-	return defaultPublicPrefix
-}
-
-func GetPrivate() string {
-	return defaultPrivatePrefix
+//if use public config or link public config
+//prefix will be link like roc.test
+func GetPrefix() string {
+	return gRConfig.opts.prefix
 }

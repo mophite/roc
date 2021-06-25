@@ -1,90 +1,102 @@
 package config
 
 import (
-    "encoding/json"
-    "testing"
-    "time"
+	"encoding/json"
+	"testing"
+	"time"
 
-    _ "github.com/go-roc/roc/etcd/mock"
+	_ "github.com/go-roc/roc/etcd/mock"
 )
 
 func init() {
-    err := NewConfig()
-    if err != nil {
-        panic(err)
-    }
+	err := NewConfig()
+	if err != nil {
+		panic(err)
+	}
 }
 
 type result struct {
-    Name string `json:"name"`
-    Age  int    `json:"age"`
+	Name string `json:"name"`
+	Age  int    `json:"age"`
 }
 
 func TestGlobal(t *testing.T) {
-    const data = `{ "name":"roc", "age":17 }`
-    const testKey = "test"
+	const data = `{ "name":"roc", "age":17 }`
+	var testKey = "test"
 
-    err := gRConfig.opts.e.Put(gRConfig.opts.public+testKey, data)
-    if err != nil {
-        t.Fatal(err)
-    }
+	//key: /public/roc.test
+	err := gRConfig.opts.e.Put(gRConfig.opts.public+gRConfig.opts.prefix+testKey, data)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    //get public config
-    var r result
-    err = json.Unmarshal(getDataBytes(gRConfig.opts.prefix+".test"), &r)
-    if err != nil {
-        t.Fatal(err)
-    }
+	//get public config
+	var r result
+	//key roc.test
+	err = json.Unmarshal(getDataBytes(gRConfig.opts.prefix+"test"), &r)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    if r.Name != "roc" {
-        t.Fatal("not equal")
-    }
+	if r.Name != "roc" {
+		t.Fatal("not equal")
+	}
 
-    d := `{ "name":"roc", "age":18 }`
-    //cover public
-    err = gRConfig.opts.e.Put(gRConfig.opts.private+testKey, d)
-    if err != nil {
-        t.Fatal(err)
-    }
+	var r1 result
+	d := `{ "name":"roc", "age":18 }`
+	//cover public
+	//key: /private/roc.test
+	err = gRConfig.opts.e.Put(gRConfig.opts.private+gRConfig.opts.prefix+testKey, d)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    err = json.Unmarshal(getDataBytes(gRConfig.opts.prefix+".test"), &r)
-    if err != nil {
-        t.Fatal(err)
-    }
+	time.Sleep(time.Second)
 
-    if r.Age != 18 {
-        t.Fatal("not equal")
-    }
+	//key: roc.test
+	err = json.Unmarshal(getDataBytes(gRConfig.opts.prefix+"test"), &r1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if r1.Age != 18 {
+		t.Fatal("not equal")
+	}
 }
 
 func TestDecode(t *testing.T) {
+	const data = `{ "name":"roc", "age":17 }`
+	var testKey = "test"
 
-    const data = `{ "name":"roc", "age":17 }`
-    const testKey = "test"
+	//key: /public/roc.test
+	err := gRConfig.opts.e.Put(gRConfig.opts.public+gRConfig.opts.prefix+testKey, data)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    err := gRConfig.opts.e.Put(gRConfig.opts.public+testKey, data)
-    if err != nil {
-        t.Fatal(err)
-    }
+	//get public config
+	var r result
+	//key roc.test
+	err = Decode2Config(gRConfig.opts.prefix+"test", &r)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    var r result
-    err = Decode2Config(gRConfig.opts.prefix+".test", &r)
-    if err != nil {
-        t.Fatal(err)
-    }
-    t.Log(r)
+	if r.Name != "roc" {
+		t.Fatal("not equal")
+	}
 
-    d := `{ "name":"roc", "age":20 }`
-    //cover public
-    err = gRConfig.opts.e.Put(gRConfig.opts.public+testKey, d)
-    if err != nil {
-        t.Fatal(err)
-    }
+	d := `{ "name":"roc", "age":18 }`
+	//cover public
+	//key: /private/roc.test
+	err = gRConfig.opts.e.Put(gRConfig.opts.private+gRConfig.opts.prefix+testKey, d)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    time.Sleep(time.Second * 2)
-    t.Log(r)
+	time.Sleep(time.Second)
 
-    if r.Age != 20 {
-        t.Fatal("not equal")
-    }
+	if r.Age != 18 {
+		t.Fatal("not equal")
+	}
 }

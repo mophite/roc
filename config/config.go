@@ -91,9 +91,9 @@ func (c *config) configListAndSync() error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	globalData, err := c.opts.e.GetWithList(c.opts.public, clientv3.WithPrefix())
+	publicData, err := c.opts.e.GetWithList(c.opts.public, clientv3.WithPrefix())
 	if err == nil {
-		for k, v := range globalData {
+		for k, v := range publicData {
 			c.data[getFsName(k)] = v
 		}
 	}
@@ -101,13 +101,7 @@ func (c *config) configListAndSync() error {
 	privateData, err := c.opts.e.GetWithList(c.opts.private, clientv3.WithPrefix())
 	if err == nil {
 		for k, v := range privateData {
-
 			//cover public config
-			if _, ok := c.data[getFsName(k)]; ok {
-				c.data[getFsName(k)] = v
-				continue
-			}
-
 			c.data[getFsName(k)] = v
 		}
 	}
@@ -166,15 +160,10 @@ func (c *config) loadLocalFile() error {
 }
 
 func getFsName(s string) string {
-	isGlobal := strings.Contains(s, gRConfig.opts.public)
 	array := strings.Split(s, "/")
 
 	if len(array) > 0 {
 		s = array[len(array)-1]
-	}
-
-	if isGlobal {
-		s = gRConfig.opts.prefix + "." + s
 	}
 
 	return s
@@ -211,7 +200,6 @@ func (c *config) update() {
 					for k, v := range data.B {
 
 						var key = getFsName(k)
-
 						if _, ok := c.data[key]; ok {
 							c.data[key] = v
 							if f, ok := c.cache[key]; ok {
@@ -256,6 +244,7 @@ func getDataBytes(key string) []byte {
 	return gRConfig.data[key]
 }
 
+// decode data to config and config will be updated when etcd watch change.
 func Decode2Config(key string, v interface{}) error {
 	err := x.Jsoniter.Unmarshal(getDataBytes(key), v)
 	if err != nil {
