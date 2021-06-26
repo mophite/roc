@@ -48,13 +48,17 @@ func NewHello() *Hello {
 
 func (h *Hello) SayHandler(w http.ResponseWriter, r *http.Request) {
 	_ = r.ParseForm()
-	rsp, err := h.client.Say(context.Background(), &pbhello.SayReq{Inc: 1}, h.opt)
+	rsp, err := h.client.Say(
+		context.Background(),
+		&pbhello.SayReq{Inc: 1},
+		//roc.WithAddress("srv.hello","127.0.0.1:8888"))
+		roc.WithName("srv.hello"))
 	if err != nil {
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	rlog.Info("FROM helloe server: ", rsp.Inc)
+	rlog.Info("FROM hello server: ", rsp.Inc)
 
 	w.Write([]byte("succuess"))
 }

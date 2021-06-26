@@ -16,272 +16,269 @@
 package rs
 
 import (
-    rc "context"
-    "runtime"
+	rc "context"
+	"runtime"
 
-    "github.com/go-roc/roc/internal/router"
-    "github.com/go-roc/roc/parcel"
-    "github.com/go-roc/roc/parcel/context"
-    "github.com/go-roc/roc/rlog"
-    "github.com/jjeffcaii/reactor-go/scheduler"
-    "github.com/rsocket/rsocket-go"
-    "github.com/rsocket/rsocket-go/payload"
-    "github.com/rsocket/rsocket-go/rx"
-    "github.com/rsocket/rsocket-go/rx/flux"
-    "github.com/rsocket/rsocket-go/rx/mono"
+	"github.com/jjeffcaii/reactor-go/scheduler"
+	"github.com/rsocket/rsocket-go"
+	"github.com/rsocket/rsocket-go/payload"
+	"github.com/rsocket/rsocket-go/rx"
+	"github.com/rsocket/rsocket-go/rx/flux"
+	"github.com/rsocket/rsocket-go/rx/mono"
+
+	"github.com/go-roc/roc/internal/router"
+	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/context"
+	"github.com/go-roc/roc/rlog"
 )
 
 type server struct {
 
-    //given serverName to service discovery to find
-    serverName string
+	//given serverName to service discovery to find
+	serverName string
 
-    //tcp socket address
-    tcpAddress string
+	//tcp socket address
+	tcpAddress string
 
-    //websocket address
-    wssAddress string
+	//websocket address
+	wssAddress string
 
-    //requestChannel buffSize setting
-    buffSize int
+	//requestChannel buffSize setting
+	buffSize int
 
-    //rsocket serverBuilder
-    serverBuilder rsocket.ServerBuilder
+	//rsocket serverBuilder
+	serverBuilder rsocket.ServerBuilder
 
-    //rsocket serverStarter
-    serverStart rsocket.ToServerStarter
+	//rsocket serverStarter
+	serverStart rsocket.ToServerStarter
 }
 
 func (r *server) Address() string {
-    return "[tcp: " + r.tcpAddress + "] [wss: " + r.wssAddress + "]"
+	return "[tcp: " + r.tcpAddress + "] [wss: " + r.wssAddress + "]"
 }
 
 func (r *server) String() string {
-    return "rsocket"
+	return "rsocket"
 }
 
 func NewServer(tcpAddress, wssAddress, serverName string, buffSize int) *server {
-    return &server{
-        serverName: serverName,
-        tcpAddress: tcpAddress,
-        wssAddress: wssAddress,
-        buffSize:   buffSize,
-    }
+	return &server{
+		serverName: serverName,
+		tcpAddress: tcpAddress,
+		wssAddress: wssAddress,
+		buffSize:   buffSize,
+	}
 }
 
 func (r *server) Accept(route *router.Router) {
-    r.serverBuilder = rsocket.Receive()
+	r.serverBuilder = rsocket.Receive()
 
-    r.serverBuilder.
-        Scheduler(
-        nil,
-        scheduler.NewElastic(runtime.NumCPU()*2),
-	) // setting scheduler goroutine on numCPU*2 to better working
+	r.serverBuilder.Scheduler(nil, scheduler.NewElastic(runtime.NumCPU()*2)) // setting scheduler goroutine on numCPU*2 to better working
 
-    r.serverBuilder.Resume()
+	r.serverBuilder.Resume()
 
-    r.serverStart = r.serverBuilder.
-        Acceptor(
-            func(
-                ctx rc.Context,
-                setup payload.SetupPayload,
-                sendingSocket rsocket.CloseableRSocket,
-            ) (rsocket.RSocket, error) {
-                return rsocket.NewAbstractSocket(
-                    setupRequestResponse(route),
-                    setupRequestStream(route),
-                    setupRequestChannel(route, r.buffSize),
-                ), nil
-            },
-	)
+	r.serverStart = r.serverBuilder.
+		Acceptor(
+			func(
+				ctx rc.Context,
+				setup payload.SetupPayload,
+				sendingSocket rsocket.CloseableRSocket,
+			) (rsocket.RSocket, error) {
+				return rsocket.NewAbstractSocket(
+					setupRequestResponse(route),
+					setupRequestStream(route),
+					setupRequestChannel(route, r.buffSize),
+				), nil
+			},
+		)
 }
 
 func (r *server) Run() {
-    if r.tcpAddress != "" {
-        r.tcp()
-    }
+	if r.tcpAddress != "" {
+		r.tcp()
+	}
 
-    if r.wssAddress != "" {
-        r.wss()
-    }
+	if r.wssAddress != "" {
+		r.wss()
+	}
 }
 
 //run tcp socket server
 func (r *server) tcp() {
-    go func() {
-        err := r.serverStart.Transport(
-            rsocket.
-                TCPServer().
-                SetAddr(r.tcpAddress).
-                Build(),
+	go func() {
+		err := r.serverStart.Transport(
+			rsocket.
+				TCPServer().
+				SetAddr(r.tcpAddress).
+				Build(),
 		).Serve(rc.TODO())
 
-        if err != nil {
-            rlog.Errorf("tcp server start err=%v", err)
-        }
-    }()
+		if err != nil {
+			rlog.Errorf("tcp server start err=%v", err)
+		}
+	}()
 
 }
 
 //run websocket server
 func (r *server) wss() {
-    go func() {
-        err := r.serverStart.Transport(
-            rsocket.
-                WebsocketServer().
-                SetAddr(r.wssAddress).
-                Build(),
+	go func() {
+		err := r.serverStart.Transport(
+			rsocket.
+				WebsocketServer().
+				SetAddr(r.wssAddress).
+				Build(),
 		).Serve(rc.TODO())
 
-        if err != nil {
-            rlog.Errorf("wss server start err=%v", err)
-        }
-    }()
+		if err != nil {
+			rlog.Errorf("wss server start err=%v", err)
+		}
+	}()
 }
 
 // get metadata ignore error
 func mustGetMetadata(p payload.Payload) []byte {
-    b, _ := p.Metadata()
-    return b
+	b, _ := p.Metadata()
+	return b
 }
 
 func setupRequestResponse(router *router.Router) rsocket.OptAbstractSocket {
-    return rsocket.RequestResponse(
-        func(p payload.Payload) mono.Mono {
+	return rsocket.RequestResponse(
+		func(p payload.Payload) mono.Mono {
 
-            var req, rsp = parcel.Payload(p.Data()), parcel.NewPacket()
-            defer func() {
-                parcel.Recycle(req, rsp)
-            }()
+			var req, rsp = parcel.Payload(p.Data()), parcel.NewPacket()
+			defer func() {
+				parcel.Recycle(req, rsp)
+			}()
 
-            err := router.RRProcess(context.FromMetadata(mustGetMetadata(p)), req, rsp)
-            if err != nil {
-                return mono.JustOneshot(
-                    payload.New(
-                        router.Error().
-                            Encode(parcel.ErrorCodeBadRequest, err), nil,
+			err := router.RRProcess(context.FromMetadata(mustGetMetadata(p)), req, rsp)
+			if err != nil {
+				return mono.JustOneshot(
+					payload.New(
+						router.Error().
+							Encode(parcel.ErrorCodeBadRequest, err), nil,
 					),
 				)
-            }
+			}
 
-            return mono.JustOneshot(payload.New(rsp.Bytes(), nil))
-        },
+			return mono.JustOneshot(payload.New(rsp.Bytes(), nil))
+		},
 	)
 }
 
 func (r *server) Close() {
-    return
+	return
 }
 
 func setupRequestStream(router *router.Router) rsocket.OptAbstractSocket {
-    return rsocket.RequestStream(
-        func(p payload.Payload) flux.Flux {
+	return rsocket.RequestStream(
+		func(p payload.Payload) flux.Flux {
 
-            var req = parcel.Payload(p.Data())
+			var req = parcel.Payload(p.Data())
 
-            rsp, errs := router.RSProcess(context.FromMetadata(mustGetMetadata(p)), req)
+			rsp, errs := router.RSProcess(context.FromMetadata(mustGetMetadata(p)), req)
 
-            parcel.Recycle(req)
+			parcel.Recycle(req)
 
-            f := flux.Create(
-                func(ctx rc.Context, sink flux.Sink) {
-                QUIT:
-                    for {
-                        select {
-                        case b, ok := <-rsp:
-                            if ok {
-                                data, err := router.Codec().Encode(b)
-                                if err != nil {
-                                    rlog.Error(err)
-                                    break
-                                }
-                                sink.Next(payload.New(data, nil))
-                            } else {
-                                break QUIT
-                            }
-                        case e := <-errs:
-                            if e != nil {
-                                rlog.Error(e)
-                                break QUIT
-                            }
-                        }
-                    }
+			f := flux.Create(
+				func(ctx rc.Context, sink flux.Sink) {
+				QUIT:
+					for {
+						select {
+						case b, ok := <-rsp:
+							if ok {
+								data, err := router.Codec().Encode(b)
+								if err != nil {
+									rlog.Error(err)
+									break
+								}
+								sink.Next(payload.New(data, nil))
+							} else {
+								break QUIT
+							}
+						case e := <-errs:
+							if e != nil {
+								rlog.Error(e)
+								break QUIT
+							}
+						}
+					}
 
-                    sink.Complete()
-                },
+					sink.Complete()
+				},
 			)
 
-            return f
-        },
+			return f
+		},
 	)
 }
 
 func setupRequestChannel(router *router.Router, buffSize int) rsocket.OptAbstractSocket {
-    return rsocket.RequestChannel(
-        func(f flux.Flux) flux.Flux {
-            var (
-                errs = make(chan error)
-                req  = make(chan *parcel.RocPacket, buffSize)
-            )
-
-            f.SubscribeOn(scheduler.Parallel()).
-                DoFinally(
-                    func(s rx.SignalType) {
-                        //todo handler rx.SignalType
-                        close(req)
-                        close(errs)
-                    },
-			).
-                Subscribe(
-                    rc.Background(),
-                    rx.OnNext(
-                        func(p payload.Payload) error {
-                            req <- parcel.Payload(payload.Clone(p).Data())
-                            return nil
-                        },
-					),
-                    rx.OnError(
-                        func(e error) {
-                            errs <- e
-                        },
-					),
-                )
-
-            return flux.Create(
-                func(ctx rc.Context, sink flux.Sink) {
-
-                    var meta []byte
-                    for b := range req {
-                        meta = b.Bytes()
-                        break
-                    }
-
-                    rsp, outErrs := router.RCProcess(context.FromMetadata(meta), req, errs)
-
-                QUIT:
-                    for {
-                        select {
-                        case b, ok := <-rsp:
-                            if ok {
-                                data, e := router.Codec().Encode(b)
-                                if e != nil {
-                                    rlog.Error(e)
-                                    break
-                                }
-                                sink.Next(payload.New(data, nil))
-                            } else {
-                                break QUIT
-                            }
-                        case e := <-outErrs:
-                            if e != nil {
-                                rlog.Error(e)
-                                break QUIT
-                            }
-                        }
-                    }
-                    sink.Complete()
-                },
+	return rsocket.RequestChannel(
+		func(f flux.Flux) flux.Flux {
+			var (
+				errs = make(chan error)
+				req  = make(chan *parcel.RocPacket, buffSize)
 			)
-        },
+
+			f.SubscribeOn(scheduler.Parallel()).
+				DoFinally(
+					func(s rx.SignalType) {
+						//todo handler rx.SignalType
+						close(req)
+						close(errs)
+					},
+				).
+				Subscribe(
+					rc.Background(),
+					rx.OnNext(
+						func(p payload.Payload) error {
+							req <- parcel.Payload(payload.Clone(p).Data())
+							return nil
+						},
+					),
+					rx.OnError(
+						func(e error) {
+							errs <- e
+						},
+					),
+				)
+
+			return flux.Create(
+				func(ctx rc.Context, sink flux.Sink) {
+
+					var meta []byte
+					for b := range req {
+						meta = b.Bytes()
+						break
+					}
+
+					rsp, outErrs := router.RCProcess(context.FromMetadata(meta), req, errs)
+
+				QUIT:
+					for {
+						select {
+						case b, ok := <-rsp:
+							if ok {
+								data, e := router.Codec().Encode(b)
+								if e != nil {
+									rlog.Error(e)
+									break
+								}
+								sink.Next(payload.New(data, nil))
+							} else {
+								break QUIT
+							}
+						case e := <-outErrs:
+							if e != nil {
+								rlog.Error(e)
+								break QUIT
+							}
+						}
+					}
+					sink.Complete()
+				},
+			)
+		},
 	)
 }
