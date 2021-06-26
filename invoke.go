@@ -282,8 +282,9 @@ QUIT:
     for {
         select {
         case act := <-s.action:
-            s.update(act)
             rlog.Debug("update endpoint.Endpoint was changed", x.MustMarshalString(act))
+
+            s.update(act)
         case <-s.close:
             break QUIT
         }
@@ -296,7 +297,7 @@ func (s *strategy) update(act *registry.Action) {
     defer s.Unlock()
 
     switch act.Act {
-    case namespace.WatcherCreate:
+    case namespace.WatcherCreate, namespace.WatcherUpdate:
         _ = s.sync(act.E)
     case namespace.WatcherDelete:
         p, ok := s.connPerService[act.E.Scope]
@@ -351,15 +352,18 @@ func newPod() *pod {
 
 // Add add a client endpoint to pod
 func (p *pod) Add(e *endpoint.Endpoint, client transport.Client) error {
+
+    p.Lock()
+    defer p.Unlock()
+
     conn, err := newConn(e, client, p.callback)
     if err != nil {
         return err
     }
 
-    p.Lock()
-    defer p.Unlock()
+    //setting conn array cursor
+    conn.cursor = len(p.clients)
 
-    conn.podLength = len(p.clients)
     p.count += 1
     p.serviceName = e.Name
     p.clients = append(p.clients, conn)
@@ -382,8 +386,10 @@ func (p *pod) Del(addr string) {
     conn, ok := p.clientsMap[addr]
     if ok {
         conn.Close()
-        p.clients = append(p.clients[:conn.Offset()], p.clients[conn.Offset():]...)
+        p.clients = append(p.clients[:conn.cursor], p.clients[conn.cursor+1:]...)
         delete(p.clientsMap, addr)
+        p.count -= 1
+        p.index -= 1
     }
 }
 

@@ -1,17 +1,17 @@
-package rsync
+package main
 
 import (
     "fmt"
-    "testing"
     "time"
 
     _ "github.com/go-roc/roc/etcd/mock"
+    "github.com/go-roc/roc/rsync"
 )
 
-func TestAcquire(t *testing.T) {
+func main() {
     const key = "test"
     go func() {
-        err := Acquire(
+        err := rsync.Acquire(
             key, 30, 3, func() error {
                 fmt.Println("do something!")
                 time.Sleep(time.Second * 10)
@@ -20,17 +20,17 @@ func TestAcquire(t *testing.T) {
         )
 
         if err != nil {
-            t.Error(err)
+            panic(err)
         }
     }()
 
-    err := Acquire(
+    err := rsync.Acquire(
         key, 30, 3, func() error {
             fmt.Println("do something!")
             return nil
         },
     )
     if err != nil {
-        t.Fatal(err)
+        panic(err)
     }
 }

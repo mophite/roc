@@ -154,9 +154,3 @@ func newOpts(opts ...Options) Option {
 
 	return opt
 }
-
-//if use public config or link public config
-//prefix will be link like roc.test
-func GetPrefix() string {
-	return gRConfig.opts.prefix
-}

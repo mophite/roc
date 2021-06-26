@@ -37,12 +37,17 @@ func (s *stringFormat) Layout() string {
 
 func (s *stringFormat) Format(detail *common.Detail) *bytes.Buffer {
 	b := bytesbuffpool.Get()
+
 	b.WriteString("[" + detail.Level + "] ")
-	b.WriteString(detail.Timestamp + " ")
+
 	if detail.Line != "" {
 		b.WriteString(detail.Line + " ")
 	}
+
+	b.WriteString(detail.Timestamp + " ")
+
 	b.WriteString(detail.Content)
+
 	return b
 }
 

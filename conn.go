@@ -16,131 +16,129 @@
 package roc
 
 import (
-	"sync"
-	"sync/atomic"
-	"time"
+    "sync"
+    "sync/atomic"
+    "time"
 
-	"github.com/go-roc/roc/internal/endpoint"
-	"github.com/go-roc/roc/internal/transport"
+    "github.com/go-roc/roc/internal/endpoint"
+    "github.com/go-roc/roc/internal/transport"
 )
 
 // state is mark conn state,conn must safe
 type state = uint32
 
 const (
-	// StateBlock block is unavailable state
-	StateBlock state = 0x01 + iota
-	// StateReady ready is unavailable state
-	StateReady
+    // StateBlock block is unavailable state
+    StateBlock state = 0x01 + iota
+    // StateReady ready is unavailable state
+    StateReady
 
-	// StateWorking is available state
-	StateWorking
+    // StateWorking is available state
+    StateWorking
 
-	// errCountDelta is record the number of connection failures
-	errCountDelta = 3
+    // errCountDelta is record the number of connection failures
+    errCountDelta = 3
 )
 
 // Conn include transport client
 //
 type Conn struct {
-	sync.Mutex
+    sync.Mutex
 
-	// count clients for pod
-	podLength int
+    cursor int
 
-	// conn state
-	state state
+    // conn state
+    state state
 
-	// current conn occur error count
-	errCount uint32
+    // current conn occur error count
+    errCount uint32
 
-	// client object
-	client transport.Client
+    // client object
+    client transport.Client
 }
 
 // error safe grow one
 func (c *Conn) growErrorCount() uint32 {
-	return atomic.AddUint32(&c.errCount, 1)
+    return atomic.AddUint32(&c.errCount, 1)
 }
 
 // swap state to working
 func (c *Conn) working() {
-	atomic.SwapUint32(&c.state, StateWorking)
+    atomic.SwapUint32(&c.state, StateWorking)
 }
 
 // swap state to block
 func (c *Conn) block() {
-	atomic.SwapUint32(&c.state, StateBlock)
+    atomic.SwapUint32(&c.state, StateBlock)
 }
 
 // swap state to ready
 func (c *Conn) ready() {
-	atomic.SwapUint32(&c.state, StateReady)
+    atomic.SwapUint32(&c.state, StateReady)
 }
 
 // get state
 func (c *Conn) getState() state {
-	return atomic.LoadUint32(&c.state)
+    return atomic.LoadUint32(&c.state)
 }
 
 // judge state is working
 func (c *Conn) isWorking() bool {
-	return c.getState() == StateWorking
+    return c.getState() == StateWorking
 }
 
 // judge state is block
 func (c *Conn) isBlock() bool {
-	return c.getState() == StateBlock
+    return c.getState() == StateBlock
 }
 
 // grow error and let the error conn retry working util conn is out of serviceName
 func (c *Conn) growError() {
-	c.Lock()
-	defer c.Unlock()
+    c.Lock()
+    defer c.Unlock()
 
-	if c.growErrorCount() > errCountDelta && !c.isBlock() {
-		// let conn block
-		c.block()
-		go func() {
-			select {
-			case <-time.After(time.Second * 3):
-				// let conn working
-				// if conn is out of serviceName,this is not effect
-				c.working()
-			}
-		}()
-	}
+    if c.growErrorCount() > errCountDelta && !c.isBlock() {
+        // let conn block
+        c.block()
+        go func() {
+            select {
+            case <-time.After(time.Second * 3):
+                // let conn working
+                // if conn is out of serviceName,this is not effect
+                c.working()
+            }
+        }()
+    }
 }
 
 // newConn is create a conn
 // closeCallBack is the conn client occur error and callback
 func newConn(e *endpoint.Endpoint, client transport.Client, closeCallback chan string) (*Conn, error) {
-	err := client.Dial(e, closeCallback)
-	if err != nil {
-		return nil, err
-	}
+    err := client.Dial(e, closeCallback)
+    if err != nil {
+        return nil, err
+    }
 
-	c := &Conn{client: client}
+    c := &Conn{client: client}
 
-	// change state to ready
-	c.ready()
+    // change state to ready
+    c.ready()
 
-	return c, nil
-}
-
-// Offset get podLength
-func (c *Conn) Offset() int {
-	return c.podLength
+    return c, nil
 }
 
 // Client get client
 func (c *Conn) Client() transport.Client {
-	return c.client
+    return c.client
 }
 
 // Close close client
 func (c *Conn) Close() {
-	c.block()
-	c.Client().Close()
-	c.client = nil
+    c.block()
+
+    //client.Close will be close wrong connection what you don't want
+    //because rsocket is duplex conn
+    //c.Client().Close()
+    c.block()
+    c.client = nil
 }
