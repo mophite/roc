@@ -25,7 +25,7 @@ import (
     "time"
 
     "github.com/go-roc/roc/rlog/common"
-    bytesbuffpoolgithub.com/go-roc/roc/x/bytesbuffpool"
+    "github.com/go-roc/roc/x/bytesbuffpool"
 )
 
 const fileNameFormat = "2006.01.02.15:04:05.000"
