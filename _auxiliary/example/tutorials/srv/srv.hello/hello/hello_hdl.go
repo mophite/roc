@@ -82,6 +82,6 @@ func (h *Hello) SayChannel(c *context.Context, req chan *pbhello.SayReq, errIn c
 
 func (h *Hello) Say(c *context.Context, req *pbhello.SayReq) (rsp *pbhello.SayRsp, err error) {
 	//  when set timeout is time.Second*1,it's will occur cancelled error
-	time.Sleep(time.Second * 2)
+	//time.Sleep(time.Second * 2)
 	return &pbhello.SayRsp{Inc: req.Inc + 1}, nil
 }
