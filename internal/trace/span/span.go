@@ -16,7 +16,7 @@
 package span
 
 import (
-	"github.com/go-roc/roc/internal/x"
+    "github.com/go-roc/roc/x"
 )
 
 // attention:it's maybe zipkin instead,don't user this for your production Environment.
@@ -28,33 +28,33 @@ import (
 
 // Span this is a demo,need to be richer
 type Span struct {
-	SpanId       uint32
-	ParentSpanId int32
-	traceId      string
+    SpanId       uint32
+    ParentSpanId int32
+    traceId      string
 }
 
 func (s *Span) Carrier() {
-	s.ParentSpanId += 1
-	s.SpanId += 1
+    s.ParentSpanId += 1
+    s.SpanId += 1
 }
 
 func (s *Span) Finish() {
-	// todo buffer flush to cloud or something
-	return
+    // todo buffer flush to cloud or something
+    return
 }
 
 func (s *Span) String() string {
-	return "span"
+    return "span"
 }
 
 func (s *Span) TraceId() string {
-	return s.traceId
+    return s.traceId
 }
 
 func NewSpan() *Span {
-	return &Span{
-		traceId:      x.NewUUID(),
-		ParentSpanId: -1,
-		SpanId:       1,
-	}
+    return &Span{
+        traceId:      x.NewUUID(),
+        ParentSpanId: -1,
+        SpanId:       1,
+    }
 }

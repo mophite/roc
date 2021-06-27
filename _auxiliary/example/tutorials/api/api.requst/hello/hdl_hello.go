@@ -16,49 +16,55 @@
 package hello
 
 import (
-	"net/http"
+    "net/http"
+    "time"
 
-	"github.com/coreos/etcd/clientv3"
+    "github.com/coreos/etcd/clientv3"
 
-	"github.com/go-roc/roc"
-	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/rlog"
+    "github.com/go-roc/roc"
+    "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbhello"
+    "github.com/go-roc/roc/parcel/context"
+    "github.com/go-roc/roc/rlog"
 )
 
 type Hello struct {
-	opt    roc.InvokeOptions
-	client pbhello.HelloWorldClient
+    opt    roc.InvokeOptions
+    client pbhello.HelloWorldClient
 }
 
 // NewHello new Hello and initialize it for rpc client
 // opt is configurable when request.
 func NewHello() *Hello {
-	return &Hello{
-		client: pbhello.NewHelloWorldClient(
-			roc.NewService(
-				roc.EtcdConfig(&clientv3.Config{
-					Endpoints: []string{"127.0.0.1:2379"},
-				}),
-			),
-		),
-		opt: roc.WithName("srv.hello"),
-	}
+    return &Hello{
+        client: pbhello.NewHelloWorldClient(
+            roc.NewService(
+                roc.EtcdConfig(
+                    &clientv3.Config{
+                        Endpoints: []string{"127.0.0.1:2379"},
+                    },
+                ),
+            ),
+        ),
+        //opt: roc.WithAddress("srv.hello","169.254.241.13:16856"),
+        opt: roc.WithName("srv.hello"),
+    }
 }
 
 func (h *Hello) SayHandler(w http.ResponseWriter, r *http.Request) {
-	_ = r.ParseForm()
-	rsp, err := h.client.Say(
-		context.Background(),
-		&pbhello.SayReq{Inc: 1},
-		//roc.WithAddress("srv.hello","127.0.0.1:8888"))
-		roc.WithName("srv.hello"))
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
+    _ = r.ParseForm()
 
-	rlog.Info("FROM hello server: ", rsp.Inc)
+    now := time.Now()
+    rsp, err := h.client.Say(
+        context.Background(),
+        &pbhello.SayReq{Inc: 1},
+        h.opt,
+    )
+    if err != nil {
+        w.Write([]byte(err.Error()))
+        return
+    }
 
-	w.Write([]byte("succuess"))
+    rlog.Infof("FROM hello server: %v |latency=%v ms ", rsp.Inc, time.Since(now).Milliseconds())
+
+    w.Write([]byte("succuess"))
 }

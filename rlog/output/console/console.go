@@ -16,47 +16,47 @@
 package console
 
 import (
-	"bytes"
-	"fmt"
+    "bytes"
+    "fmt"
 
-	"github.com/go-roc/roc/internal/x/bytesbuffpool"
-	"github.com/go-roc/roc/rlog/common"
+    "github.com/go-roc/roc/rlog/common"
+    "github.com/go-roc/roc/x/bytesbuffpool"
 )
 
 type Console struct {
-	level common.Level
+    level common.Level
 }
 
 func (s *Console) Init(string) {
-	return
+    return
 }
 
 func (s *Console) Out(level common.Level, b *bytes.Buffer) {
-	if level < s.level {
-		return
-	}
+    if level < s.level {
+        return
+    }
 
-	fmt.Printf(b.String())
+    fmt.Printf(b.String())
 
-	bytesbuffpool.Put(b)
+    bytesbuffpool.Put(b)
 }
 
 func (s *Console) Level() common.Level {
-	return s.level
+    return s.level
 }
 
 func (s *Console) SetLevel(l common.Level) {
-	s.level = l
+    s.level = l
 }
 
 func (s *Console) Poller() {
-	return
+    return
 }
 
 func (s *Console) Close() {
-	return
+    return
 }
 
 func (s *Console) String() string {
-	return "console"
+    return "console"
 }

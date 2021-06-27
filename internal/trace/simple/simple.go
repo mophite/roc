@@ -16,36 +16,36 @@
 package simple
 
 import (
-	"github.com/go-roc/roc/internal/x"
+    "github.com/go-roc/roc/x"
 )
 
 // Simple |---TraceId:1     ----->RPC----->       |---TraceId:1
 type Simple struct {
-	traceId string
+    traceId string
 }
 
 func (s *Simple) Carrier() {
-	return
+    return
 }
 
 func NewSimple(traceId ...string) *Simple {
-	s := &Simple{}
-	if len(traceId) > 0 && traceId[0] != "" {
-		s.traceId = traceId[0]
-		return s
-	}
-	s.traceId = x.NewUUID()
-	return s
+    s := &Simple{}
+    if len(traceId) > 0 && traceId[0] != "" {
+        s.traceId = traceId[0]
+        return s
+    }
+    s.traceId = x.NewUUID()
+    return s
 }
 
 func (s *Simple) String() string {
-	return "simple"
+    return "simple"
 }
 
 func (s *Simple) Finish() {
-	return
+    return
 }
 
 func (s *Simple) TraceId() string {
-	return s.traceId
+    return s.traceId
 }

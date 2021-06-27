@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"time"
+    "fmt"
+    "time"
 
-	_ "github.com/go-roc/roc/internal/etcd/mock"
-	"github.com/go-roc/roc/rsync"
+    _ "github.com/go-roc/roc/internal/etcd/mock"
+    "github.com/go-roc/roc/x/rsync"
 )
 
 func main() {

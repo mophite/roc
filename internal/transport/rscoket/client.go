@@ -16,179 +16,183 @@
 package rs
 
 import (
-	ctx "context"
-	"time"
+    ctx "context"
+    "fmt"
+    "time"
 
-	"github.com/jjeffcaii/reactor-go/scheduler"
-	"github.com/rsocket/rsocket-go"
-	"github.com/rsocket/rsocket-go/rx"
-	"github.com/rsocket/rsocket-go/rx/flux"
+    "github.com/jjeffcaii/reactor-go/scheduler"
+    "github.com/rsocket/rsocket-go"
+    "github.com/rsocket/rsocket-go/rx"
+    "github.com/rsocket/rsocket-go/rx/flux"
 
-	"github.com/rsocket/rsocket-go/payload"
+    "github.com/rsocket/rsocket-go/payload"
 
-	"github.com/go-roc/roc/internal/endpoint"
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/rlog"
+    "github.com/go-roc/roc/internal/endpoint"
+    "github.com/go-roc/roc/parcel"
+    "github.com/go-roc/roc/parcel/context"
+    "github.com/go-roc/roc/rlog"
 )
 
 //this is rsocket client
 type client struct {
 
-	//rsocket client
-	client rsocket.Client
+    //rsocket client
+    client rsocket.Client
 
-	//rsocket connect timeout
-	connectTimeout time.Duration
+    //rsocket connect timeout
+    connectTimeout time.Duration
 
-	//rsocket keepalive interval
-	keepaliveInterval time.Duration
+    //rsocket keepalive interval
+    keepaliveInterval time.Duration
 
-	//rsocket keepalive life time
-	keepaliveLifetime time.Duration
+    //rsocket keepalive life time
+    keepaliveLifetime time.Duration
 }
 
 func NewClient(connTimeout, interval, tll time.Duration) *client {
-	return &client{
-		connectTimeout:    connTimeout,
-		keepaliveInterval: interval,
-		keepaliveLifetime: tll,
-	}
+    return &client{
+        connectTimeout:    connTimeout,
+        keepaliveInterval: interval,
+        keepaliveLifetime: tll,
+    }
 }
 
 func (cli *client) Dial(e *endpoint.Endpoint, ch chan string) (err error) {
-	cli.client, err = rsocket.
-		Connect().
-		//Scheduler(scheduler.Elastic(), nil). //set scheduler to best
-		//KeepAlive(cli.keepaliveInterval, cli.keepaliveLifetime, 1).
-		//ConnectTimeout(cli.connectTimeout).
-		OnConnect(
-			func(client rsocket.Client, err error) { //handler when connect success
-				rlog.Debugf("connected at: %s", e.Address)
-			},
-		).
-		OnClose(
-			func(err error) { //when net occur some error,it's will be callback the error server ip address
-				rlog.Debugf("server [%s %s] is closed |err=%v", e.Name, e.Address, err)
-				ch <- e.Address
-			},
-		).
-		Transport(rsocket.TCPClient().SetAddr(e.Address).Build()). //setup transport and start
-		Start(ctx.TODO())
-	return err
+    cli.client, err = rsocket.
+        Connect().
+        Scheduler(scheduler.Elastic(), nil). //set scheduler to best
+        KeepAlive(cli.keepaliveInterval, cli.keepaliveLifetime, 1).
+        ConnectTimeout(cli.connectTimeout).
+        OnConnect(
+            func(client rsocket.Client, err error) { //handler when connect success
+                rlog.Debugf("connected at: %s", e.Address)
+            },
+        ).
+        OnClose(
+            func(err error) { //when net occur some error,it's will be callback the error server ip address
+                rlog.Debugf("server [%s %s] is closed |err=%v", e.Name, e.Address, err)
+                ch <- e.Address
+            },
+        ).
+        Transport(rsocket.TCPClient().SetAddr(e.Address).Build()). //setup transport and start
+        Start(ctx.TODO())
+    return err
 }
 
 // RR requestResponse on blockUnsafe
 func (cli *client) RR(c *context.Context, req *parcel.RocPacket, rsp *parcel.RocPacket) (err error) {
-	pl, release, err := cli.
-		client.
-		RequestResponse(payload.New(req.Bytes(), c.Body())).
-		BlockUnsafe(ctx.Background())
+    fmt.Println("-----now", req.Len())
+    now := time.Now()
+    pl, err := cli.
+        client.
+        RequestResponse(payload.New(req.Bytes(), c.Body())).
+        Block(ctx.Background())
 
-	if err != nil {
-		c.Error("socket err occurred ", err)
-		return err
-	}
+    if err != nil {
+        c.Error("socket err occurred ", err)
+        return err
+    }
+    fmt.Println("------now latency----", time.Since(now).Seconds())
 
-	rsp.Write(pl.Data())
+    rsp.Write(pl.Data())
 
-	release()
+    //release()
 
-	return nil
+    return nil
 }
 
 // RS requestStream
 func (cli *client) RS(c *context.Context, req *parcel.RocPacket) (chan []byte, chan error) {
-	var (
-		f    = cli.client.RequestStream(payload.New(req.Bytes(), c.Body()))
-		rsp  = make(chan []byte)
-		errs = make(chan error)
-	)
+    var (
+        f    = cli.client.RequestStream(payload.New(req.Bytes(), c.Body()))
+        rsp  = make(chan []byte)
+        errs = make(chan error)
+    )
 
-	f.
-		SubscribeOn(scheduler.Parallel()).
-		DoFinally(
-			func(s rx.SignalType) {
-				//todo handler rx.SignalType
-				close(rsp)
-				close(errs)
-			},
-		).
-		Subscribe(
-			ctx.Background(),
-			rx.OnNext(
-				func(p payload.Payload) error {
-					rsp <- payload.Clone(p).Data()
-					return nil
-				},
-			),
-			rx.OnError(
-				func(e error) {
-					errs <- e
-				},
-			),
-		)
+    f.
+        SubscribeOn(scheduler.Parallel()).
+        DoFinally(
+            func(s rx.SignalType) {
+                //todo handler rx.SignalType
+                close(rsp)
+                close(errs)
+            },
+        ).
+        Subscribe(
+            ctx.Background(),
+            rx.OnNext(
+                func(p payload.Payload) error {
+                    rsp <- payload.Clone(p).Data()
+                    return nil
+                },
+            ),
+            rx.OnError(
+                func(e error) {
+                    errs <- e
+                },
+            ),
+        )
 
-	parcel.Recycle(req)
+    parcel.Recycle(req)
 
-	return rsp, errs
+    return rsp, errs
 }
 
 // RC requestChannel
 func (cli *client) RC(c *context.Context, req chan []byte, errIn chan error) (chan []byte, chan error) {
-	var (
-		sendPayload = make(chan payload.Payload, cap(req))
-	)
+    var (
+        sendPayload = make(chan payload.Payload, cap(req))
+    )
 
-	go func() {
-		sendPayload <- payload.New(c.Body(), nil)
-		for d := range req {
-			pl := payload.New(d, nil)
-			sendPayload <- pl
-		}
+    go func() {
+        sendPayload <- payload.New(c.Body(), nil)
+        for d := range req {
+            pl := payload.New(d, nil)
+            sendPayload <- pl
+        }
 
-		close(sendPayload)
-	}()
+        close(sendPayload)
+    }()
 
-	var (
-		f    = cli.client.RequestChannel(flux.CreateFromChannel(sendPayload, errIn))
-		rsp  = make(chan []byte)
-		errs = make(chan error)
-	)
+    var (
+        f    = cli.client.RequestChannel(flux.CreateFromChannel(sendPayload, errIn))
+        rsp  = make(chan []byte)
+        errs = make(chan error)
+    )
 
-	f.
-		SubscribeOn(scheduler.Parallel()).
-		DoFinally(
-			func(s rx.SignalType) {
-				//todo handler rx.SignalType
-				close(rsp)
-				close(errs)
-			},
-		).
-		Subscribe(
-			ctx.Background(),
-			rx.OnNext(
-				func(p payload.Payload) error {
-					rsp <- payload.Clone(p).Data()
-					return nil
-				},
-			),
-			rx.OnError(
-				func(e error) {
-					errs <- e
-				},
-			),
-		)
+    f.
+        SubscribeOn(scheduler.Parallel()).
+        DoFinally(
+            func(s rx.SignalType) {
+                //todo handler rx.SignalType
+                close(rsp)
+                close(errs)
+            },
+        ).
+        Subscribe(
+            ctx.Background(),
+            rx.OnNext(
+                func(p payload.Payload) error {
+                    rsp <- payload.Clone(p).Data()
+                    return nil
+                },
+            ),
+            rx.OnError(
+                func(e error) {
+                    errs <- e
+                },
+            ),
+        )
 
-	return rsp, errs
+    return rsp, errs
 }
 
 func (cli *client) String() string {
-	return "rsocket"
+    return "rsocket"
 }
 
 func (cli *client) Close() {
-	if cli.client != nil {
-		_ = cli.client.Close()
-	}
+    if cli.client != nil {
+        _ = cli.client.Close()
+    }
 }

@@ -16,12 +16,12 @@
 package format
 
 import (
-	"bytes"
+    "bytes"
 
-	jsoniter "github.com/json-iterator/go"
+    "github.com/go-roc/roc/x/bytesbuffpool"
+    jsoniter "github.com/json-iterator/go"
 
-	"github.com/go-roc/roc/internal/x/bytesbuffpool"
-	"github.com/go-roc/roc/rlog/common"
+    "github.com/go-roc/roc/rlog/common"
 )
 
 var _ Formatter = &jsonFormat{}

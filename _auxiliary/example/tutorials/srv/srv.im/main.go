@@ -27,7 +27,7 @@ import (
 
 func main() {
 	var s = roc.NewService(
-		roc.TCPAddress("127.0.0.1:8899"),
+		//roc.TCPAddress("127.0.0.1:8899"),
 		roc.Namespace("srv.im"),
 		roc.EtcdConfig(&clientv3.Config{
 			Endpoints: []string{"127.0.0.1:2379"},

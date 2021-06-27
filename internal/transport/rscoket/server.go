@@ -74,7 +74,7 @@ func (r *server) Accept(route *router.Router) {
 	r.serverBuilder = rsocket.Receive()
 
 	r.serverBuilder.Scheduler(nil, scheduler.NewElastic(runtime.NumCPU()*2)) // setting scheduler goroutine on numCPU*2 to better working
-
+	//
 	r.serverBuilder.Resume()
 
 	r.serverStart = r.serverBuilder.
@@ -117,7 +117,6 @@ func (r *server) tcp() {
 			rlog.Errorf("tcp server start err=%v", err)
 		}
 	}()
-
 }
 
 //run websocket server

@@ -22,6 +22,7 @@ import (
 
     "github.com/go-roc/roc/internal/endpoint"
     "github.com/go-roc/roc/internal/transport"
+    rs "github.com/go-roc/roc/internal/transport/rscoket"
 )
 
 // state is mark conn state,conn must safe
@@ -105,6 +106,7 @@ func (c *Conn) growError() {
             case <-time.After(time.Second * 3):
                 // let conn working
                 // if conn is out of serviceName,this is not effect
+                //todo
                 c.working()
             }
         }()
@@ -113,7 +115,12 @@ func (c *Conn) growError() {
 
 // newConn is create a conn
 // closeCallBack is the conn client occur error and callback
-func newConn(e *endpoint.Endpoint, client transport.Client, closeCallback chan string) (*Conn, error) {
+func newConn(service *Service, e *endpoint.Endpoint, closeCallback chan string) (*Conn, error) {
+    client := rs.NewClient(
+        service.opts.connectTimeout,
+        service.opts.keepaliveInterval,
+        service.opts.keepaliveLifetime,
+    )
     err := client.Dial(e, closeCallback)
     if err != nil {
         return nil, err
@@ -136,9 +143,7 @@ func (c *Conn) Client() transport.Client {
 func (c *Conn) Close() {
     c.block()
 
-    //client.Close will be close wrong connection what you don't want
-    //because rsocket is duplex conn
-    //c.Client().Close()
+    c.Client().Close()
     c.block()
     c.client = nil
 }
