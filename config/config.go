@@ -57,7 +57,7 @@ type config struct {
 
 func NewConfig(opts ...Options) error {
     gRConfig = &config{
-        opts:  newOpts(),
+        opts:  newOpts(opts...),
         data:  make(map[string][]byte),
         cache: make(map[string]interface{}),
         close: make(chan struct{}),
