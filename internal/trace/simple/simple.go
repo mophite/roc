@@ -34,7 +34,7 @@ func NewSimple(traceId ...string) *Simple {
         s.traceId = traceId[0]
         return s
     }
-    s.traceId = x.NewUUID()
+    s.traceId = x.NewXID()
     return s
 }
 

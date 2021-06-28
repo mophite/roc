@@ -16,8 +16,9 @@
 package im
 
 import (
-	"github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbim"
-	"sync"
+    "sync"
+
+    "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/pbim"
 )
 
 func NewHub() *Hub {

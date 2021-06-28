@@ -131,9 +131,9 @@ func (c *config) backup() error {
         return err
     }
 
-    fs.Write(b)
+    _, _ = fs.Write(b)
 
-    fs.Close()
+    _ = fs.Close()
 
     return nil
 }
@@ -196,7 +196,7 @@ func (c *config) update() {
                     }
 
                 case namespace.WatcherDelete:
-                    for k, _ := range data.B {
+                    for k := range data.B {
 
                         var key = getFsName(k)
                         if _, ok := c.data[key]; ok {

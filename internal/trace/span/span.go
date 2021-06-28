@@ -53,7 +53,7 @@ func (s *Span) TraceId() string {
 
 func NewSpan() *Span {
     return &Span{
-        traceId:      x.NewUUID(),
+        traceId:      x.NewXID(),
         ParentSpanId: -1,
         SpanId:       1,
     }

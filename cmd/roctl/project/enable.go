@@ -13,5 +13,5 @@
 //  limitations under the License.
 //
 
-// enable project default generator
+// Package rocx enable project default generator
 package rocx

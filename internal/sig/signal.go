@@ -21,11 +21,11 @@ import (
 )
 
 var DefaultSignal = []os.Signal{
-	//syscall.SIGINT,
-	//syscall.SIGHUP,
-	//syscall.SIGTERM,
+	syscall.SIGINT,
+	syscall.SIGHUP,
+	syscall.SIGTERM,
 	syscall.SIGKILL,
-	//syscall.SIGQUIT,
+	syscall.SIGQUIT,
 }
 
 func ExitSignal(signal ...os.Signal) []os.Signal {

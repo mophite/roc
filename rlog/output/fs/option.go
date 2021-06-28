@@ -149,7 +149,7 @@ func MaxBufferSize(maxBufferSize int) Options {
 	}
 }
 
-func Rotate(rotate bool) Options {
+func Rotate() Options {
 	return func(option *Option) {
 		option.rotate = true
 	}

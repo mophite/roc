@@ -14,6 +14,7 @@ require (
 	github.com/jjeffcaii/reactor-go v0.5.1
 	github.com/json-iterator/go v1.1.10
 	github.com/prometheus/client_golang v1.9.0 // indirect
+	github.com/rs/xid v1.3.0
 	github.com/rsocket/rsocket-go v0.8.4
 	go.uber.org/zap v1.16.0 // indirect
 	google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98 // indirect
