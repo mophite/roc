@@ -2,11 +2,9 @@ package rsync
 
 import (
     "context"
-    "time"
 
     "github.com/coreos/etcd/clientv3/concurrency"
 
-    "github.com/go-roc/roc/internal/backoff"
     "github.com/go-roc/roc/internal/etcd"
 )
 
@@ -20,7 +18,8 @@ const rsyncLockPrefix = "rocRsyncLock/"
 //key is prefix or a unique id
 //tll is lock timeout setting
 //tryLockTimes is backoff to retry lock
-func Acquire(key string, ttl, tryLockTimes int, f func() error) error {
+func Acquire(key string, ttl int, f func() error) error {
+
     if ttl <= 0 {
         ttl = 10
     }
@@ -34,33 +33,25 @@ func Acquire(key string, ttl, tryLockTimes int, f func() error) error {
     defer session.Close()
 
     mu := concurrency.NewMutex(session, rsyncLockPrefix+key)
-    err = mu.Lock(context.TODO())
+    err = mu.Lock(context.Background())
 
     //if occur a error retry lock
     if err != nil {
-        bf := backoff.NewBackoff()
-        for i := 0; i < tryLockTimes; i++ {
-            time.Sleep(bf.Next(i))
-            err = mu.Lock(context.TODO())
-            if err != nil {
-                continue
-            }
-            break
-        }
-
-        if err != nil {
-            return err
-        }
+        return err
     }
 
     err = f()
 
-    _ = mu.Unlock(context.TODO())
+    _ = mu.Unlock(context.Background())
 
     return err
 }
 
 func AcquireDelay(key string, ttl int, f func() error) error {
+
+    if ttl <= 0 {
+        ttl = 10
+    }
 
     // get a concurrency session
     session, err := concurrency.NewSession(etcd.DefaultEtcd.Client(), concurrency.WithTTL(ttl))
@@ -68,15 +59,18 @@ func AcquireDelay(key string, ttl int, f func() error) error {
         return err
     }
 
-    defer session.Close()
-
     mu := concurrency.NewMutex(session, rsyncLockPrefix+key)
-    err = mu.Lock(context.TODO())
+    err = mu.Lock(context.Background())
 
     //if occur a error retry lock
     if err != nil {
         return err
     }
 
-    return f()
+    //the lock is not released until the lease expires
+    session.Orphan()
+
+    err = f()
+
+    return err
 }
