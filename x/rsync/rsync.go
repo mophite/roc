@@ -1,11 +1,13 @@
 package rsync
 
 import (
-    "context"
+	"context"
+	"errors"
+	"time"
 
-    "github.com/coreos/etcd/clientv3/concurrency"
+	"github.com/coreos/etcd/clientv3/concurrency"
 
-    "github.com/go-roc/roc/internal/etcd"
+	"github.com/go-roc/roc/internal/etcd"
 )
 
 const rsyncLockPrefix = "rocRsyncLock/"
@@ -20,57 +22,96 @@ const rsyncLockPrefix = "rocRsyncLock/"
 //tryLockTimes is backoff to retry lock
 func Acquire(key string, ttl int, f func() error) error {
 
-    if ttl <= 0 {
-        ttl = 10
-    }
+	if ttl <= 0 {
+		ttl = 10
+	}
 
-    // get a concurrency session
-    session, err := concurrency.NewSession(etcd.DefaultEtcd.Client(), concurrency.WithTTL(ttl))
-    if err != nil {
-        return err
-    }
+	// get a concurrency session
+	session, err := concurrency.NewSession(etcd.DefaultEtcd.Client(), concurrency.WithTTL(ttl))
+	if err != nil {
+		return err
+	}
 
-    defer session.Close()
+	defer session.Close()
 
-    mu := concurrency.NewMutex(session, rsyncLockPrefix+key)
-    err = mu.Lock(context.Background())
+	mu := concurrency.NewMutex(session, rsyncLockPrefix+key)
+	err = mu.Lock(context.Background())
 
-    //if occur a error retry lock
-    if err != nil {
-        return err
-    }
+	//if occur a error retry lock
+	if err != nil {
+		return err
+	}
 
-    err = f()
+	err = f()
 
-    _ = mu.Unlock(context.Background())
+	_ = mu.Unlock(context.Background())
 
-    return err
+	return err
 }
 
 func AcquireDelay(key string, ttl int, f func() error) error {
 
-    if ttl <= 0 {
-        ttl = 10
-    }
+	if ttl <= 0 {
+		ttl = 10
+	}
 
-    // get a concurrency session
-    session, err := concurrency.NewSession(etcd.DefaultEtcd.Client(), concurrency.WithTTL(ttl))
-    if err != nil {
-        return err
-    }
+	// get a concurrency session
+	session, err := concurrency.NewSession(etcd.DefaultEtcd.Client(), concurrency.WithTTL(ttl))
+	if err != nil {
+		return err
+	}
 
-    mu := concurrency.NewMutex(session, rsyncLockPrefix+key)
-    err = mu.Lock(context.Background())
+	mu := concurrency.NewMutex(session, rsyncLockPrefix+key)
+	err = mu.Lock(context.Background())
 
-    //if occur a error retry lock
-    if err != nil {
-        return err
-    }
+	//if occur a error retry lock
+	if err != nil {
+		return err
+	}
 
-    //the lock is not released until the lease expires
-    session.Orphan()
+	//the lock is not released until the lease expires
+	session.Orphan()
 
-    err = f()
+	err = f()
 
-    return err
+	return err
+}
+
+var ErrLock = errors.New("lock failure")
+
+//if lock get failure during time.Second,it will be return lock err
+func AcquireOnce(key string, ttl int, f func() error) error {
+
+	if ttl <= 0 {
+		ttl = 10
+	}
+
+	c, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	// get a concurrency session
+	session, err := concurrency.NewSession(
+		etcd.DefaultEtcd.Client(),
+		concurrency.WithContext(c),
+		concurrency.WithTTL(ttl),
+	)
+	if err != nil {
+		return ErrLock
+	}
+
+	mu := concurrency.NewMutex(session, rsyncLockPrefix+key)
+
+	err = mu.Lock(c)
+
+	//if occur a error retry lock
+	if err != nil {
+		return err
+	}
+
+	//the lock is not released until the lease expires
+	session.Orphan()
+
+	err = f()
+
+	return err
 }

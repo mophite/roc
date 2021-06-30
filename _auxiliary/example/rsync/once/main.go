@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -13,22 +14,22 @@ func main() {
 	var c = make(chan string)
 	go func() {
 		time.Sleep(time.Second * 2)
-		err := rsync.AcquireDelay(
+		err := rsync.AcquireOnce(
 			key, 5, func() error {
 				c <- "c1"
 				fmt.Println("do something one!")
 				return nil
 			},
 		)
-		fmt.Println("-------one err", nil)
 
-		if err != nil {
-			panic(err)
+		if err != nil && err == context.DeadlineExceeded {
+			fmt.Println("-------one err", err)
+			c <- "c1"
 		}
 	}()
 
 	go func() {
-		err := rsync.AcquireDelay(
+		err := rsync.AcquireOnce(
 			key, 5, func() error {
 				time.Sleep(time.Second * 1)
 				c <- "c2"
@@ -37,10 +38,8 @@ func main() {
 			},
 		)
 
-		fmt.Println("-----two err----",err)
-
-		if err != nil {
-			panic(err)
+		if err != nil &&err==context.DeadlineExceeded{
+			fmt.Println("-----two err----", err)
 		}
 	}()
 
