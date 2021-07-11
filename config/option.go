@@ -34,6 +34,8 @@ type Option struct {
     schema string
 
     //private config on etcd
+    //cannot user private to cover public key,because it's will be inconsistent when
+    //modify public key when modify private same key like roc.test
     private string
 
     //public config on etcd
@@ -51,6 +53,9 @@ type Option struct {
     //localFile switch
     //if true,will load local config.json to
     localFile bool
+
+    //switch to output config to log
+    logOut bool
 
     //f will be run after config already setup
     f []func() error
@@ -80,6 +85,12 @@ func Public(public string) Options {
 func LocalFile() Options {
     return func(option *Option) {
         option.localFile = true
+    }
+}
+
+func LogOut() Options {
+    return func(option *Option) {
+        option.logOut = true
     }
 }
 

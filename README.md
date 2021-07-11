@@ -32,7 +32,7 @@
 ```
 
 ```go
-    go get github.com/go -roc/roc/cmd/protoc-gen-roc
+    go get github.com/go-roc/roc/cmd/protoc-gen-roc
 ```
 
 - generate proto file to go file,like [hello.proto](https://roc/_auxiliary/example/tutorials/proto/pbhello.proto)
@@ -83,7 +83,7 @@ import (
 
     "github.com/go-roc/roc/config"
 
-    _ "github.com/go-roc/roc/etcd/mock"
+    _ "github.com/go-roc/roc/internal/etcd/mock"
 )
 
 func main() {
@@ -100,13 +100,13 @@ func main() {
         Age  int    `json:"age"`
     }
 
-    simple(key, &result)
     coverPublic(key, &result)
+    coverPrivate(key, &result)
 }
 
 //put key/value to etcd:
-//go:generate etcdctl configroc/v1.0.0/public/roc.test { "name":"roc", "age":17 }
-func simple(key string, v interface{}) {
+//go:generate etcdctl put  configroc/v1.0.0/public/roc.test "{ "name":"roc", "age":18 }"
+func coverPublic(key string, v interface{}) {
     //simple public use
     //the key is roc.test
     err := config.DecodePublic(key, v)
@@ -115,15 +115,14 @@ func simple(key string, v interface{}) {
     }
 
     fmt.Println("------", v)
-    //output: ------ {roc 17}
+    //output: ------ {roc 18}
 }
 
 //put key/value to etcd:
-//go:generate etcdctl configroc/v1.0.0/private/roc.test { "name":"roc", "age":18 }
-func coverPublic(key string, v interface{}) {
-    //the key is roc.test
-    //cover public by private
-    err := config.DecodePublic(key, v)
+//go:generate etcdctl put  configroc/v1.0.0/private/test "{ "name":"roc", "age":18 }"
+func coverPrivate(key string, v interface{}) {
+    //the key is test
+    err := config.DecodePrivate(key, v)
     if err != nil {
         panic(err)
     }

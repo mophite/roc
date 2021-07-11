@@ -52,6 +52,9 @@ type config struct {
     //watch etcd changed
     watch *etcd.Watch
 
+    //cache the config objects
+    //when create or update action occur
+    //them will be updated
     cache map[string]interface{}
 }
 
@@ -66,10 +69,17 @@ func NewConfig(opts ...Options) error {
     gRConfig.watch = etcd.NewEtcdWatch(gRConfig.opts.schema, gRConfig.opts.e.Client())
     gRConfig.action = gRConfig.watch.Watch(gRConfig.opts.schema)
 
-    err := gRConfig.configListAndSync()
-    if err != nil {
-        rlog.Error(err)
-        return err
+    if gRConfig.opts.localFile {
+        err := gRConfig.loadLocalFile()
+        if err != nil {
+            rlog.Error(err)
+        }
+    } else {
+        err := gRConfig.configListAndSync()
+        if err != nil {
+            rlog.Error(err)
+            return err
+        }
     }
 
     go gRConfig.update()
@@ -152,7 +162,21 @@ func (c *config) loadLocalFile() error {
         return err
     }
 
-    return x.Jsoniter.Unmarshal(fd, &c.data)
+    if gRConfig.opts.logOut {
+        rlog.Infof("loadLocalFile |data=%s", string(fd))
+    }
+
+    var tmp = make(map[string]interface{})
+    err = x.Jsoniter.Unmarshal(fd, &tmp)
+    if err != nil {
+        return err
+    }
+
+    for i := range tmp {
+        c.data[i] = x.MustMarshal(tmp[i])
+    }
+
+    return nil
 }
 
 func getFsName(s string) string {
@@ -181,7 +205,8 @@ func (c *config) update() {
 
                         c.data[key] = v
 
-                        if f, ok := c.cache[key]; ok {
+                        //load create config or update config to exist object
+                        if f, ok := c.cache[key]; ok { //if ok,load to object
                             var err error
                             if strings.Contains(key, c.opts.prefix) {
                                 err = DecodePublic(key, f)
@@ -235,6 +260,10 @@ func DecodePublic(key string, v interface{}) error {
 
     gRConfig.cache[key] = v
 
+    if gRConfig.opts.logOut {
+        rlog.Infof("DecodePublic |key=%s |value=%s", key, x.MustMarshalString(v))
+    }
+
     return nil
 }
 
@@ -246,6 +275,10 @@ func DecodePrivate(key string, v interface{}) error {
     }
 
     gRConfig.cache[key] = v
+
+    if gRConfig.opts.logOut {
+        rlog.Infof("DecodePublic |key=%s |value=%s", key, x.MustMarshalString(v))
+    }
 
     return nil
 }

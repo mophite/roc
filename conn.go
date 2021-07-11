@@ -98,7 +98,7 @@ func (c *Conn) growError() {
     c.Lock()
     defer c.Unlock()
 
-    if c.growErrorCount() > errCountDelta && !c.isBlock() {
+    if c.growErrorCount() > errCountDelta && c.isWorking() {
         // let conn block
         c.block()
         go func() {
@@ -106,7 +106,8 @@ func (c *Conn) growError() {
             case <-time.After(time.Second * 3):
                 // let conn working
                 // if conn is out of serviceName,this is not effect
-                //todo
+                //todo try to ping ,if ok let client working
+                //if close ,don't do anything
                 c.working()
             }
         }()
@@ -144,6 +145,6 @@ func (c *Conn) Close() {
     c.block()
 
     c.Client().Close()
-    c.block()
+
     c.client = nil
 }
