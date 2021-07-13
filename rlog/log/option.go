@@ -16,76 +16,85 @@
 package log
 
 import (
-	"github.com/go-roc/roc/rlog/format"
-	"github.com/go-roc/roc/rlog/output"
+    "github.com/go-roc/roc/rlog/format"
+    "github.com/go-roc/roc/rlog/output"
 )
 
 type Option struct {
-	call   int
-	name   string
-	prefix string
-	format format.Formatter
-	out    output.Outputor
+    //set runtime caller deep
+    call int
+
+    //set soft link file name
+    name string
+
+    //set log content prefix
+    prefix string
+
+    //format log content
+    format format.Formatter
+
+    //out for file or std,default is stdout
+    out output.Outputor
 }
 
 type Options func(*Option)
 
 func newOpts(opts ...Options) Option {
-	opt := Option{}
+    opt := Option{}
 
-	for i := range opts {
-		opts[i](&opt)
-	}
+    for i := range opts {
+        opts[i](&opt)
+    }
 
-	if opt.format == nil {
-		opt.format = format.DefaultFormat
-	}
+    if opt.format == nil {
+        opt.format = format.DefaultFormat
+    }
 
-	if opt.name == "" {
-		opt.name = "roc"
-	}
+    if opt.name == "" {
+        opt.name = "roc"
+    }
 
-	if opt.out == nil {
-		opt.out = output.DefaultOutput
-	}
+    if opt.out == nil {
+        opt.out = output.DefaultOutput
+    }
 
-	if opt.prefix == "" {
-		opt.prefix = ""
-	}
+    if opt.prefix == "" {
+        opt.prefix = ""
+    }
 
-	if opt.call == 0 {
-		opt.call = 4
-	}
+    if opt.call == 0 {
+        opt.call = 4
+    }
 
-	return opt
+    return opt
 }
 
 func Call(call int) Options {
-	return func(option *Option) {
-		option.call = call
-	}
+    return func(option *Option) {
+        option.call = call
+    }
 }
 
 func Output(out output.Outputor) Options {
-	return func(option *Option) {
-		option.out = out
-	}
+    return func(option *Option) {
+        option.out = out
+    }
 }
 
 func Name(name string) Options {
-	return func(option *Option) {
-		option.name = name
-	}
+    return func(option *Option) {
+        option.name = name
+    }
 }
 
 func Prefix(prefix string) Options {
-	return func(option *Option) {
-		option.prefix = prefix
-	}
+    return func(option *Option) {
+        option.prefix = prefix
+    }
 }
 
 func Format(format format.Formatter) Options {
-	return func(option *Option) {
-		option.format = format
-	}
+    return func(option *Option) {
+        option.format = format
+    }
 }

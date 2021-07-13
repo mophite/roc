@@ -16,6 +16,7 @@
 package config
 
 import (
+    "fmt"
     "io/ioutil"
     "os"
     "strings"
@@ -111,7 +112,6 @@ func (c *config) configListAndSync() error {
     privateData, err := c.opts.e.GetWithList(c.opts.private, clientv3.WithPrefix())
     if err == nil {
         for k, v := range privateData {
-            //cover public config
             c.data[getFsName(k)] = v
         }
     }
@@ -247,13 +247,13 @@ func (c *config) Close() {
     c.close <- struct{}{}
 }
 
-func getDataBytes(key string) []byte {
-    return gRConfig.data[key]
-}
-
 // DecodePublic decode data to config and config will be updated when etcd watch change.
 func DecodePublic(key string, v interface{}) error {
-    err := x.Jsoniter.Unmarshal(getDataBytes(gRConfig.opts.prefix+key), v)
+    d, ok := gRConfig.data[gRConfig.opts.prefix+key]
+    if !ok {
+        return fmt.Errorf("config: %s not found", key)
+    }
+    err := x.Jsoniter.Unmarshal(d, v)
     if err != nil {
         return err
     }
@@ -269,7 +269,12 @@ func DecodePublic(key string, v interface{}) error {
 
 // DecodePrivate decode data to config and config will be updated when etcd watch change.
 func DecodePrivate(key string, v interface{}) error {
-    err := x.Jsoniter.Unmarshal(getDataBytes(key), v)
+    d, ok := gRConfig.data[key]
+    if !ok {
+        return fmt.Errorf("config: %s not found", key)
+    }
+
+    err := x.Jsoniter.Unmarshal(d, v)
     if err != nil {
         return err
     }
