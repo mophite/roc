@@ -7,3 +7,7 @@ message Packet {
     string message = 2;
     bytes data = 3;
 }
+
+message ApiPlaceholder{
+
+}

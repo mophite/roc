@@ -1,243 +1,139 @@
 package roc
 
 import (
-    "errors"
-    "os"
-    "os/signal"
+    "net/http"
+    "strings"
 
-    "github.com/gogo/protobuf/proto"
-
-    "github.com/go-roc/roc/internal/router"
-    "github.com/go-roc/roc/parcel"
-    "github.com/go-roc/roc/parcel/codec"
-    "github.com/go-roc/roc/parcel/context"
-    "github.com/go-roc/roc/rlog"
-    "github.com/go-roc/roc/rlog/log"
+    "github.com/go-roc/roc/service"
+    "github.com/gorilla/mux"
 )
 
-type Service struct {
-    //run server option
-    opts Option
+const SupportPackageIsVersion1 = 1
+const HttpHandlePrefix = "RocApi"
 
-    //server exit channel
-    exit chan struct{}
+func NewRocService() *service.Service{
 
-    //server router collection
-    route *router.Router
-
-    //The strategy used by the client to initiate an rpc request, with roundRobin or direct ip request
-    strategy Strategy
 }
 
-func NewService(opts ...Options) *Service {
-    s := &Service{
-        opts: newOpts(opts...),
-        exit: make(chan struct{}),
+var defaultRouter *mux.Router
+
+// GROUP for not post http method
+func GROUP(prefix string) {
+    if !strings.HasPrefix(prefix, "/") {
+        prefix = "/" + prefix
+    }
+    if !strings.HasSuffix(prefix, "/") {
+        prefix = prefix + "/"
     }
 
-    s.route = router.NewRouter(s.opts.wrappers, s.opts.err, s.opts.cc)
+    //cannot had post prefix
+    if strings.HasPrefix(prefix, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
+    }
 
-    //NOTICE: don't register wss to sd.
-    //if r.SetupWss() {
-    //	err := r.opts.register.Register(r.WssAddress(), "wss")
-    //	if err != nil {
-    //		return nil
-    //	}
-    //}
-    s.opts.server.Accept(s.route)
-
-    s.strategy = newStrategy(s.opts.e, s.opts.registry, s)
-    return s
+    defaultRouter = service.DefaultService.PathPrefix(prefix).Subrouter()
 }
 
-func (s *Service) Codec() codec.Codec {
-    return s.opts.cc
+func GET(relativePath string, handler http.Handler) {
+
+    relativePath = tidyRelativePath(relativePath)
+
+    if strings.HasPrefix(relativePath, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
+    }
+    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodOptions, http.MethodGet)
 }
 
-// InvokeRR rpc request requestResponse,it's block request,one request one response
-func (s *Service) InvokeRR(c *context.Context, method string, req, rsp proto.Message, opts ...InvokeOptions) error {
+func POST(relativePath string, handler http.Handler) {
 
-    // new a invoke setting
-    invoke, err := newInvoke(c, method, s, opts...)
-    if err != nil {
-        return err
+    relativePath = tidyRelativePath(relativePath)
+
+    if strings.HasPrefix(relativePath, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
     }
-
-    var conn *Conn
-
-    // if address is nil ,user roundRobin strategy
-    // otherwise straight to invoke ip server
-    if invoke.opts.address != "" {
-        conn, err = invoke.strategy.Straight(invoke.opts.scope, invoke.opts.address)
-    } else {
-        conn, err = invoke.strategy.Next(invoke.opts.scope)
-    }
-
-    if err != nil {
-        return err
-    }
-
-    return invoke.invokeRR(c, req, rsp, conn, s.opts)
+    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodPost)
 }
 
-// InvokeRS rpc request requestStream,it's one request and multiple response
-func (s *Service) InvokeRS(c *context.Context, method string, req proto.Message, opts ...InvokeOptions) (
-    chan []byte,
-    chan error,
-) {
+func PUT(relativePath string, handler http.Handler) {
 
-    // new a invoke setting
-    invoke, err := newInvoke(c, method, s, opts...)
-    if err != nil {
-        // create a chan error response
-        var errs = make(chan error)
-        errs <- err
-        close(errs)
-        return nil, errs
+    relativePath = tidyRelativePath(relativePath)
+
+    if strings.HasPrefix(relativePath, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
     }
-
-    var conn *Conn
-
-    // if address is nil ,user roundRobin strategy
-    // otherwise straight to invoke ip server
-    if invoke.opts.address != "" {
-        conn, err = invoke.strategy.Straight(invoke.opts.scope, invoke.opts.address)
-    } else {
-        conn, err = invoke.strategy.Next(invoke.opts.scope)
-    }
-
-    //encode req body to roc packet
-    b, err := s.opts.cc.Encode(req)
-
-    if err != nil {
-        // create a chan error response
-        var errs = make(chan error)
-        errs <- err
-        close(errs)
-        return nil, errs
-    }
-
-    return conn.Client().RS(c, parcel.Payload(b))
+    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodPut)
 }
 
-// InvokeRC rpc request requestChannel,it's multiple request and multiple response
-func (s *Service) InvokeRC(
-    c *context.Context,
-    method string,
-    req chan []byte,
-    errIn chan error,
-    opts ...InvokeOptions,
-) (chan []byte, chan error) {
+func DELETE(relativePath string, handler http.Handler) {
 
-    // new a invoke setting
-    invoke, err := newInvoke(c, method, s, opts...)
-    if err != nil {
-        // create a chan error response
-        var errs = make(chan error)
-        errs <- err
-        close(errs)
-        return nil, errs
+    relativePath = tidyRelativePath(relativePath)
+
+    if strings.HasPrefix(relativePath, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
     }
-
-    var conn *Conn
-
-    // if address is nil ,user roundRobin strategy
-    // otherwise straight to invoke ip server
-    if invoke.opts.address != "" {
-        conn, err = invoke.strategy.Straight(invoke.opts.scope, invoke.opts.address)
-    } else {
-        conn, err = invoke.strategy.Next(invoke.opts.scope)
-    }
-    if err != nil {
-        // create a chan error response
-        var errs = make(chan error)
-        errs <- err
-        close(errs)
-        return nil, errs
-    }
-
-    return conn.Client().RC(c, req, errIn)
+    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodDelete)
 }
 
-func (s *Service) Run() error {
-    defer func() {
-        if r := recover(); r != nil {
-            rlog.Stack(r)
-        }
-    }()
+func ANY(relativePath string, handler http.Handler) {
 
-    // handler signal
-    ch := make(chan os.Signal)
-    signal.Notify(ch, s.opts.signal...)
+    relativePath = tidyRelativePath(relativePath)
 
-    go func() {
-        select {
-        case c := <-ch:
-
-            rlog.Infof("received signal %s [%s] server exit!", c.String(), s.opts.name)
-
-            s.Close()
-
-            for _, f := range s.opts.exit {
-                f()
-            }
-
-            s.exit <- struct{}{}
-        }
-    }()
-
-    // echo method list
-    s.route.List()
-    s.opts.server.Run()
-
-    rlog.Infof(
-        "[TCP:%s] AND [WS:%s] start success!",
-        s.opts.e.Absolute,
-        s.opts.wssAddress,
-    )
-
-    err := s.register()
-    if err != nil {
-        panic(err)
+    if strings.HasPrefix(relativePath, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
     }
-
-    select {
-    case <-s.exit:
-    }
-
-    return errors.New(s.opts.name + " server is exit!")
+    defaultRouter.PathPrefix(relativePath).Handler(handler)
 }
 
-func (s *Service) register() error {
-    return s.opts.registry.Register(s.opts.e)
+func HEAD(relativePath string, handler http.Handler) {
+
+    relativePath = tidyRelativePath(relativePath)
+
+    if strings.HasPrefix(relativePath, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
+    }
+    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodHead)
 }
 
-func (s *Service) RegisterHandler(method string, rr parcel.Handler) {
-    s.route.RegisterHandler(method, rr)
+func PATCH(relativePath string, handler http.Handler) {
+
+    relativePath = tidyRelativePath(relativePath)
+
+    if strings.HasPrefix(relativePath, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
+    }
+    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodPatch)
 }
 
-func (s *Service) RegisterStreamHandler(method string, rs parcel.StreamHandler) {
-    s.route.RegisterStreamHandler(method, rs)
+func CONNECT(relativePath string, handler http.Handler) {
+
+    relativePath = tidyRelativePath(relativePath)
+
+    if strings.HasPrefix(relativePath, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
+    }
+    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodConnect)
 }
 
-func (s *Service) RegisterChannelHandler(method string, rs parcel.ChannelHandler) {
-    s.route.RegisterChannelHandler(method, rs)
+func TRACE(relativePath string, handler http.Handler) {
+
+    relativePath = tidyRelativePath(relativePath)
+
+    if strings.HasPrefix(relativePath, service.DefaultService.GetApiPrefix()) {
+        panic("cannot contain unique prefix")
+    }
+    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodTrace)
 }
 
-func (s *Service) Close() {
-    if s.opts.registry != nil {
-        _ = s.opts.registry.Deregister(s.opts.e)
-        s.opts.registry.Close()
+func tidyRelativePath(relativePath string) string {
+    //trim suffix "/"
+    if strings.HasSuffix(relativePath, "/") {
+        relativePath = strings.TrimSuffix(relativePath, "/")
     }
 
-    if s.strategy != nil {
-        s.strategy.Close()
+    //add prefix "/"
+    if !strings.HasPrefix(relativePath, "/") {
+        relativePath = "/" + relativePath
     }
 
-    if s.opts.server != nil {
-        s.opts.server.Close()
-    }
-
-    //todo flush rlog content
-    log.Close()
+    return relativePath
 }

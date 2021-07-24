@@ -16,6 +16,8 @@
 package endpoint
 
 import (
+	"errors"
+
 	"github.com/go-roc/roc/internal/namespace"
 )
 
@@ -26,24 +28,31 @@ type Endpoint struct {
 	//endpoint name
 	Name string
 
-	//enpoint version
+	//endpoint version
 	Version string
 
-	// schema.name.version.id
-	// eg. goroc.api.hello.v.1.1.1.2d1bd2f9-6951-4235-83bd-d6f38b358552
+	// schema/name/version/id
 	Absolute string
 
 	//service server ip address
 	Address string
 
 	// name.version
-	// eg. api.hello.v.1.1.1
+	// eg. api.hello/v.1.0.0
 	Scope string
 }
 
-// Splicing generate scope and absolute with schema
-func (e *Endpoint) Splicing(schema string) *Endpoint {
-	e.Scope = namespace.SplicingScope(e.Name, e.Version)
-	e.Absolute = schema + "/" + e.Scope + "/" + e.Address
-	return e
+// NewEndpoint new a endpoint with schema,id,name,version,address
+func NewEndpoint(id, name, address string) (*Endpoint, error) {
+	if name == "" || address == "" || id == "" {
+		return nil, errors.New("not complete")
+	}
+	e := new(Endpoint)
+	e.Id = id
+	e.Name = name
+	e.Version = namespace.DefaultVersion
+	e.Address = address
+	e.Scope = e.Name + "/" + e.Version
+	e.Absolute = namespace.DefaultSchema + "/" + e.Scope + "/" + e.Address
+	return e, nil
 }

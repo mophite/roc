@@ -17,7 +17,13 @@ package namespace
 
 type Service = string
 
-const (
+// Schema schema is the namespace in your service collection
+//it's the root name prefix
+type Schema = string
+type Scope = string
+type RequestChannel = string
+
+var (
 	DefaultVersion      Service = "v1.0.0"
 	DefaultSchema               = "goroc"
 	DefaultConfigSchema         = "configroc"
@@ -26,14 +32,6 @@ const (
 type Header = string
 
 const (
-	DefaultHeaderTrace   Header = "X-Idempotency-Key"
-	DefaultHeaderVersion        = "X-Api-Version"
-	DefaultHeaderToken          = "X-Api-Token"
+	DefaultHeaderVersion Header = "X-Api-Version"
 	DefaultHeaderAddress        = "X-Api-Address"
 )
-
-type Schema = string
-
-type Scope = string
-
-type RequestChannel = string

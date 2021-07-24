@@ -7,7 +7,6 @@ import (
 	fmt "fmt"
 	roc "github.com/go-roc/roc"
 	parcel "github.com/go-roc/roc/parcel"
-	context "github.com/go-roc/roc/parcel/context"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -357,7 +356,7 @@ func encodeVarintHello(dAtA []byte, offset int, v uint64) int {
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
+var _ roc.Context
 var _ roc.Service
 var _ parcel.RocPacket
 
@@ -365,20 +364,20 @@ var _ parcel.RocPacket
 // is compatible with the roc package it is being compiled against.
 const _ = roc.SupportPackageIsVersion1
 
-type HelloClient interface {
-	Say(c *context.Context, req chan *SayReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SayRsp, chan error)
-	Roc(c *context.Context, req chan *RocReq, errIn chan error, opts ...roc.InvokeOptions) (chan *RocRsp, chan error)
+type HelloService interface {
+	Say(c *roc.Context, req chan *SayReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SayRsp, chan error)
+	Roc(c *roc.Context, req chan *RocReq, errIn chan error, opts ...roc.InvokeOptions) (chan *RocRsp, chan error)
 }
 
-type helloClient struct {
+type helloService struct {
 	c *roc.Service
 }
 
-func NewHelloClient(c *roc.Service) HelloClient {
-	return &helloClient{c}
+func NewHelloService(c *roc.Service) HelloService {
+	return &helloService{c}
 }
 
-func (cc *helloClient) Say(c *context.Context, req chan *SayReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SayRsp, chan error) {
+func (cc *helloService) Say(c *roc.Context, req chan *SayReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SayRsp, chan error) {
 	var in = make(chan []byte)
 	go func() {
 		for b := range req {
@@ -409,7 +408,7 @@ func (cc *helloClient) Say(c *context.Context, req chan *SayReq, errIn chan erro
 	return rsp, errs
 }
 
-func (cc *helloClient) Roc(c *context.Context, req chan *RocReq, errIn chan error, opts ...roc.InvokeOptions) (chan *RocRsp, chan error) {
+func (cc *helloService) Roc(c *roc.Context, req chan *RocReq, errIn chan error, opts ...roc.InvokeOptions) (chan *RocRsp, chan error) {
 	var in = make(chan []byte)
 	go func() {
 		for b := range req {
@@ -442,8 +441,8 @@ func (cc *helloClient) Roc(c *context.Context, req chan *RocReq, errIn chan erro
 
 // HelloServer is the server API for Hello service.
 type HelloServer interface {
-	Say(c *context.Context, req chan *SayReq, errIn chan error) (chan *SayRsp, chan error)
-	Roc(c *context.Context, req chan *RocReq, errIn chan error) (chan *RocRsp, chan error)
+	Say(c *roc.Context, req chan *SayReq, errIn chan error) (chan *SayRsp, chan error)
+	Roc(c *roc.Context, req chan *RocReq, errIn chan error) (chan *RocRsp, chan error)
 }
 
 func RegisterHelloServer(s *roc.Service, h HelloServer) {
@@ -457,7 +456,7 @@ type helloHandler struct {
 	s *roc.Service
 }
 
-func (r *helloHandler) Say(c *context.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
+func (r *helloHandler) Say(c *roc.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
 	var in = make(chan *SayReq)
 	go func() {
 		for b := range req {
@@ -484,7 +483,7 @@ func (r *helloHandler) Say(c *context.Context, req chan *parcel.RocPacket, errIn
 	return rsp, outErrs
 }
 
-func (r *helloHandler) Roc(c *context.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
+func (r *helloHandler) Roc(c *roc.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
 	var in = make(chan *RocReq)
 	go func() {
 		for b := range req {

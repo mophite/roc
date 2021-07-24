@@ -11,14 +11,17 @@ message SayRsp {
 // HelloWord is service API for client and server.
 service HelloWorld {
 
-    // requestResponse or fireAndForget.
-    rpc Say(SayReq) returns (SayRsp) {}
+  // requestResponse or fireAndForget.
+  rpc Say(SayReq) returns (SayRsp) {}
 
-    // requestStream.
-    // SayReq is channel params.
-    rpc SayStream(stream SayReq) returns (SayRsp) {}
+  // register roc http api router handler
+  rpc HttpHandleSay(SayReq)returns(SayRsp){}
 
-    // requestChannel.
-    // SayReq and SayRsp is channel.
-    rpc SayChannel(stream SayReq) returns (stream SayRsp) {}
+  // requestStream.
+  // SayReq is channel params.
+  rpc SayStream(stream SayReq) returns (SayRsp) {}
+
+  // requestChannel.
+  // SayReq and SayRsp is channel.
+  rpc SayChannel(stream SayReq) returns (stream SayRsp) {}
 }

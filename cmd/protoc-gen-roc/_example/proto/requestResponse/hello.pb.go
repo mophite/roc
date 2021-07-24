@@ -7,7 +7,6 @@ import (
 	fmt "fmt"
 	roc "github.com/go-roc/roc"
 	parcel "github.com/go-roc/roc/parcel"
-	context "github.com/go-roc/roc/parcel/context"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -357,7 +356,7 @@ func encodeVarintHello(dAtA []byte, offset int, v uint64) int {
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
+var _ roc.Context
 var _ roc.Service
 var _ parcel.RocPacket
 
@@ -365,26 +364,26 @@ var _ parcel.RocPacket
 // is compatible with the roc package it is being compiled against.
 const _ = roc.SupportPackageIsVersion1
 
-type HelloClient interface {
-	Say(c *context.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error)
-	Roc(c *context.Context, req *RocReq, opts ...roc.InvokeOptions) (*RocRsp, error)
+type HelloService interface {
+	Say(c *roc.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error)
+	Roc(c *roc.Context, req *RocReq, opts ...roc.InvokeOptions) (*RocRsp, error)
 }
 
-type helloClient struct {
+type helloService struct {
 	c *roc.Service
 }
 
-func NewHelloClient(c *roc.Service) HelloClient {
-	return &helloClient{c}
+func NewHelloService(c *roc.Service) HelloService {
+	return &helloService{c}
 }
 
-func (cc *helloClient) Say(c *context.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error) {
+func (cc *helloService) Say(c *roc.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error) {
 	rsp := &SayRsp{}
 	err := cc.c.InvokeRR(c, "Hello.Say", req, rsp, opts...)
 	return rsp, err
 }
 
-func (cc *helloClient) Roc(c *context.Context, req *RocReq, opts ...roc.InvokeOptions) (*RocRsp, error) {
+func (cc *helloService) Roc(c *roc.Context, req *RocReq, opts ...roc.InvokeOptions) (*RocRsp, error) {
 	rsp := &RocRsp{}
 	err := cc.c.InvokeRR(c, "Hello.Roc", req, rsp, opts...)
 	return rsp, err
@@ -392,8 +391,8 @@ func (cc *helloClient) Roc(c *context.Context, req *RocReq, opts ...roc.InvokeOp
 
 // HelloServer is the server API for Hello service.
 type HelloServer interface {
-	Say(c *context.Context, req *SayReq) (rsp *SayRsp, err error)
-	Roc(c *context.Context, req *RocReq) (rsp *RocRsp, err error)
+	Say(c *roc.Context, req *SayReq) (rsp *SayRsp, err error)
+	Roc(c *roc.Context, req *RocReq) (rsp *RocRsp, err error)
 }
 
 func RegisterHelloServer(s *roc.Service, h HelloServer) {
@@ -407,7 +406,7 @@ type helloHandler struct {
 	s *roc.Service
 }
 
-func (r *helloHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt parcel.Interceptor) (rsp proto.Message, err error) {
+func (r *helloHandler) Say(c *roc.Context, req *parcel.RocPacket, interrupt roc.Interceptor) (rsp proto.Message, err error) {
 	var in SayReq
 	err = r.s.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
@@ -416,13 +415,13 @@ func (r *helloHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt 
 	if interrupt == nil {
 		return r.h.Say(c, &in)
 	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
+	f := func(c *roc.Context, req proto.Message) (proto.Message, error) {
 		return r.h.Say(c, req.(*SayReq))
 	}
 	return interrupt(c, &in, f)
 }
 
-func (r *helloHandler) Roc(c *context.Context, req *parcel.RocPacket, interrupt parcel.Interceptor) (rsp proto.Message, err error) {
+func (r *helloHandler) Roc(c *roc.Context, req *parcel.RocPacket, interrupt roc.Interceptor) (rsp proto.Message, err error) {
 	var in RocReq
 	err = r.s.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
@@ -431,7 +430,7 @@ func (r *helloHandler) Roc(c *context.Context, req *parcel.RocPacket, interrupt 
 	if interrupt == nil {
 		return r.h.Roc(c, &in)
 	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
+	f := func(c *roc.Context, req proto.Message) (proto.Message, error) {
 		return r.h.Roc(c, req.(*RocReq))
 	}
 	return interrupt(c, &in, f)
