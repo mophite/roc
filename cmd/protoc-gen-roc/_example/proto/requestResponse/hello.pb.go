@@ -5,8 +5,13 @@ package hello
 
 import (
 	fmt "fmt"
-	roc "github.com/go-roc/roc"
 	parcel "github.com/go-roc/roc/parcel"
+	context "github.com/go-roc/roc/parcel/context"
+	service "github.com/go-roc/roc/service"
+	client "github.com/go-roc/roc/service/client"
+	handler "github.com/go-roc/roc/service/handler"
+	invoke "github.com/go-roc/roc/service/invoke"
+	server "github.com/go-roc/roc/service/server"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -356,57 +361,61 @@ func encodeVarintHello(dAtA []byte, offset int, v uint64) int {
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ roc.Context
-var _ roc.Service
+var _ context.Context
+var _ invoke.Invoke
+var _ handler.Handler
+var _ service.Service
 var _ parcel.RocPacket
+var _ client.Client
+var _ server.Server
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the roc package it is being compiled against.
-const _ = roc.SupportPackageIsVersion1
+const _ = service.SupportPackageIsVersion1
 
-type HelloService interface {
-	Say(c *roc.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error)
-	Roc(c *roc.Context, req *RocReq, opts ...roc.InvokeOptions) (*RocRsp, error)
+type HelloClient interface {
+	Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error)
+	Roc(c *context.Context, req *RocReq, opts ...invoke.InvokeOptions) (*RocRsp, error)
 }
 
-type helloService struct {
-	c *roc.Service
+type helloClient struct {
+	c *client.Client
 }
 
-func NewHelloService(c *roc.Service) HelloService {
-	return &helloService{c}
+func NewHelloClient(c *client.Client) HelloClient {
+	return &helloClient{c}
 }
 
-func (cc *helloService) Say(c *roc.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error) {
+func (cc *helloClient) Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error) {
 	rsp := &SayRsp{}
-	err := cc.c.InvokeRR(c, "Hello.Say", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"Hello/Say", req, rsp, opts...)
 	return rsp, err
 }
 
-func (cc *helloService) Roc(c *roc.Context, req *RocReq, opts ...roc.InvokeOptions) (*RocRsp, error) {
+func (cc *helloClient) Roc(c *context.Context, req *RocReq, opts ...invoke.InvokeOptions) (*RocRsp, error) {
 	rsp := &RocRsp{}
-	err := cc.c.InvokeRR(c, "Hello.Roc", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"Hello/Roc", req, rsp, opts...)
 	return rsp, err
 }
 
-// HelloServer is the server API for Hello service.
+// HelloServer is the server API for Hello server.
 type HelloServer interface {
-	Say(c *roc.Context, req *SayReq) (rsp *SayRsp, err error)
-	Roc(c *roc.Context, req *RocReq) (rsp *RocRsp, err error)
+	Say(c *context.Context, req *SayReq) (rsp *SayRsp, err error)
+	Roc(c *context.Context, req *RocReq) (rsp *RocRsp, err error)
 }
 
-func RegisterHelloServer(s *roc.Service, h HelloServer) {
+func RegisterHelloServer(s *server.Server, h HelloServer) {
 	var r = &helloHandler{h: h, s: s}
-	s.RegisterHandler("Hello.Say", r.Say)
-	s.RegisterHandler("Hello.Roc", r.Roc)
+	s.RegisterHandler(service.GetApiPrefix()+"Hello/Say", r.Say)
+	s.RegisterHandler(service.GetApiPrefix()+"Hello/Roc", r.Roc)
 }
 
 type helloHandler struct {
 	h HelloServer
-	s *roc.Service
+	s *server.Server
 }
 
-func (r *helloHandler) Say(c *roc.Context, req *parcel.RocPacket, interrupt roc.Interceptor) (rsp proto.Message, err error) {
+func (r *helloHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt handler.Interceptor) (rsp proto.Message, err error) {
 	var in SayReq
 	err = r.s.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
@@ -415,13 +424,13 @@ func (r *helloHandler) Say(c *roc.Context, req *parcel.RocPacket, interrupt roc.
 	if interrupt == nil {
 		return r.h.Say(c, &in)
 	}
-	f := func(c *roc.Context, req proto.Message) (proto.Message, error) {
+	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
 		return r.h.Say(c, req.(*SayReq))
 	}
 	return interrupt(c, &in, f)
 }
 
-func (r *helloHandler) Roc(c *roc.Context, req *parcel.RocPacket, interrupt roc.Interceptor) (rsp proto.Message, err error) {
+func (r *helloHandler) Roc(c *context.Context, req *parcel.RocPacket, interrupt handler.Interceptor) (rsp proto.Message, err error) {
 	var in RocReq
 	err = r.s.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
@@ -430,7 +439,7 @@ func (r *helloHandler) Roc(c *roc.Context, req *parcel.RocPacket, interrupt roc.
 	if interrupt == nil {
 		return r.h.Roc(c, &in)
 	}
-	f := func(c *roc.Context, req proto.Message) (proto.Message, error) {
+	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
 		return r.h.Roc(c, req.(*RocReq))
 	}
 	return interrupt(c, &in, f)

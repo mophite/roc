@@ -15,7 +15,7 @@ service HelloWorld {
   rpc Say(SayReq) returns (SayRsp) {}
 
   // register roc http api router handler
-  rpc HttpHandleSay(SayReq)returns(SayRsp){}
+  // rpc RocApiSay(SayReq)returns(SayRsp){}
 
   // requestStream.
   // SayReq is channel params.

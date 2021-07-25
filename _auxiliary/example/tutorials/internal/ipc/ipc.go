@@ -1,10 +1,10 @@
 package ipc
 
 import (
-	"github.com/go-roc/roc"
+    "github.com/go-roc/roc"
 )
 
 type Ipc interface {
-	Service() *roc.Service
-	InvokeOptions() []roc.InvokeOptions
+    Service() *roc.Service
+    InvokeOptions() []roc.InvokeOptions
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 
 	"github.com/go-roc/roc"
+	"github.com/go-roc/roc"
 )
 
 var helloClient = phello.NewHelloWorldClient(roc.NewService(

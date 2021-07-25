@@ -21,8 +21,8 @@ import (
 
 type Proto struct{}
 
-func (p *Proto) Encode(req proto.Message) ([]byte, error) {
-	b, err := proto.Marshal(req)
+func (p *Proto) Encode(req interface{}) ([]byte, error) {
+	b, err := proto.Marshal(req.(proto.Message))
 	if err != nil {
 		return nil, err
 	}
@@ -30,6 +30,13 @@ func (p *Proto) Encode(req proto.Message) ([]byte, error) {
 	return b, nil
 }
 
-func (*Proto) Decode(b []byte, rsp proto.Message) error {
-	return proto.Unmarshal(b, rsp)
+func (*Proto) Decode(b []byte, rsp interface{}) error {
+	r := rsp.(proto.Message)
+	err := proto.Unmarshal(b, r)
+	if err != nil {
+		return err
+	}
+
+	rsp = r
+	return nil
 }

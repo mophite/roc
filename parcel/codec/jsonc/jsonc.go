@@ -15,7 +15,11 @@
 
 package jsonc
 
-import jsoniter "github.com/json-iterator/go"
+import (
+	"fmt"
+
+	jsoniter "github.com/json-iterator/go"
+)
 
 var JSCodec = &JsonCodec{jsonCodec: jsoniter.ConfigFastest}
 
@@ -33,5 +37,10 @@ func (j *JsonCodec) Encode(req interface{}) ([]byte, error) {
 }
 
 func (j *JsonCodec) Decode(b []byte, rsp interface{}) error {
+	fmt.Println("----4--",string(b))
 	return j.jsonCodec.Unmarshal(b, rsp)
+}
+
+func (j *JsonCodec) Name() string {
+	return "jsoniter"
 }

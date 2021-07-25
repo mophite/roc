@@ -16,9 +16,9 @@
 package main
 
 import (
-	"github.com/go-roc/roc/cmd"
+    "github.com/go-roc/roc/cmd"
 )
 
 func main() {
-	cmd.Run()
+    cmd.Run()
 }

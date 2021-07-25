@@ -16,79 +16,80 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
-	"sync/atomic"
+    "fmt"
+    "strconv"
+    "sync/atomic"
 
-	"tutorials/proto/pim"
+    "tutorials/proto/pim"
 
-	"github.com/coreos/etcd/clientv3"
+    "github.com/coreos/etcd/clientv3"
 
-	"github.com/go-roc/roc"
+    "github.com/go-roc/roc"
+    "github.com/go-roc/roc"
 )
 
 var imClient = pim.NewImClient(
-	roc.NewService(
-		roc.TCPAddress("127.0.0.1:8899"),
-		roc.Namespace("srv.im"),
-		roc.EtcdConfig(
-			&clientv3.Config{
-				Endpoints: []string{"127.0.0.1:2379"},
-			},
-		),
-	),
+    roc.NewService(
+        roc.TCPAddress("127.0.0.1:8899"),
+        roc.Namespace("srv.im"),
+        roc.EtcdConfig(
+            &clientv3.Config{
+                Endpoints: []string{"127.0.0.1:2379"},
+            },
+        ),
+    ),
 )
 var opt = roc.WithName("srv.hello")
 
 func main() {
 
-	cRsp, err := imClient.Connect(context.Background(), &pim.ConnectReq{UserName: "roc"})
-	if err != nil {
-		panic(err)
-	}
+    cRsp, err := imClient.Connect(context.Background(), &pim.ConnectReq{UserName: "roc"})
+    if err != nil {
+        panic(err)
+    }
 
-	if !cRsp.IsConnect {
-		return
-	}
+    if !cRsp.IsConnect {
+        return
+    }
 
-	var req = make(chan *pim.SendMessageReq)
-	var errsIn = make(chan error)
-	go func() {
-		for i := 0; i < 3; i++ {
-			req <- &pim.SendMessageReq{Message: "im - " + strconv.Itoa(i)}
-		}
+    var req = make(chan *pim.SendMessageReq)
+    var errsIn = make(chan error)
+    go func() {
+        for i := 0; i < 3; i++ {
+            req <- &pim.SendMessageReq{Message: "im - " + strconv.Itoa(i)}
+        }
 
-		//close(req)
-		//close(errsIn)
-	}()
+        //close(req)
+        //close(errsIn)
+    }()
 
-	rsp, errs := imClient.SendMessage(context.Background(), req, errsIn, opt)
+    rsp, errs := imClient.SendMessage(context.Background(), req, errsIn, opt)
 
-	var count uint32
+    var count uint32
 
-	var done = make(chan struct{})
-	go func() {
-		var err error
-	QUIT:
-		for {
-			select {
-			case b, ok := <-rsp:
-				if ok {
-					fmt.Println("------receive from srv.im----", b.Message)
-					atomic.AddUint32(&count, 1)
-				} else {
-					break QUIT
-				}
-			case err = <-errs:
-				if err != nil {
-					break QUIT
-				}
-			}
-		}
-		done <- struct{}{}
+    var done = make(chan struct{})
+    go func() {
+        var err error
+    QUIT:
+        for {
+            select {
+            case b, ok := <-rsp:
+                if ok {
+                    fmt.Println("------receive from srv.im----", b.Message)
+                    atomic.AddUint32(&count, 1)
+                } else {
+                    break QUIT
+                }
+            case err = <-errs:
+                if err != nil {
+                    break QUIT
+                }
+            }
+        }
+        done <- struct{}{}
 
-		fmt.Println("say handler count is: ", atomic.LoadUint32(&count))
-	}()
+        fmt.Println("say handler count is: ", atomic.LoadUint32(&count))
+    }()
 
-	<-done
+    <-done
 }

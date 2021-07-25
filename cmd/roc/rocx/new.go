@@ -16,96 +16,100 @@
 package rocx
 
 import (
-	"fmt"
-	"os"
-	"runtime"
+    "fmt"
+    "os"
+    "runtime"
 
-	cmdx "github.com/go-cmd/cmd"
-	"github.com/go-roc/roc/cmd"
-	"github.com/urfave/cli/v2"
+    cmdx "github.com/go-cmd/cmd"
+    "github.com/go-roc/roc/cmd"
+    "github.com/urfave/cli/v2"
 )
 
 //init project
 func init() {
-	cmd.Register(
-		&cli.Command{
-			Name:        "init",
-			Aliases:     []string{"i"},
-			Usage:       "Init your project at root dir",
-			UsageText:   "",
-			Description: "",
-			Action:      run,
-		},
-	)
+    cmd.Register(
+        &cli.Command{
+            Name:        "init",
+            Aliases:     []string{"i"},
+            Usage:       "Init your project at root dir",
+            UsageText:   "",
+            Description: "",
+            Action:      run,
+        },
+    )
 }
 
 type rocx struct {
 
-	//root dir folder name
-	root string
+    //root dir folder name
+    root string
 
-	//to create moduleName
-	moduleName string
+    //to create moduleName
+    moduleName string
 
-	//absolute path here
-	absolutePath string
+    //absolute path here
+    absolutePath string
 
-	//create file by tpl
-	stencil []stencil
+    //create file by tpl
+    stencil []stencil
 
-	//create folder path by path
-	absPath []absPath
+    //create folder path by path
+    absPath []absPath
 
-	//roc version at latest tag
-	rocVersion string
+    //roc version at latest tag
+    rocVersion string
 }
 
 type stencil struct {
-	path string
-	tpl  string
+    path string
+    tpl  string
 }
 
 type absPath struct {
-	path string
+    path string
 }
 
 func run(c *cli.Context) error {
-	moduleName := c.Args().First()
+    moduleName := c.Args().First()
 
-	if len(c.Args().First()) == 0 {
-		moduleName = getProjectName()
-		return nil
-	}
+    if len(c.Args().First()) == 0 {
+        moduleName = getProjectName()
+        return nil
+    }
 
-	r := &rocx{
-		root:         getProjectName(),
-		moduleName:   moduleName,
-		absolutePath: getLastPwd(),
-		rocVersion:   getLatestTag(),
-	}
+    r := &rocx{
+        root:         getProjectName(),
+        moduleName:   moduleName,
+        absolutePath: getLastPwd(),
+        rocVersion:   getLatestTag(),
+    }
 
-	if os.Getenv("GO111MODULE") == "off" {
-		err := os.Setenv("GO111MODULE", "on")
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "env GO111MODULE incorrect")
-			fmt.Fprintln(os.Stdout, "set GO111MODULE")
-			// Create Cmd, buffered output
-			envCmd := cmdx.NewCmd("go", "env", "-w", "GO111MODULE", "=", "on")
+    if os.Getenv("GO111MODULE") == "off" {
+        err := os.Setenv("GO111MODULE", "on")
+        if err != nil {
+            fmt.Fprintln(os.Stderr, "env GO111MODULE incorrect")
+            fmt.Fprintln(os.Stdout, "set GO111MODULE")
+            // Create Cmd, buffered output
+            envCmd := cmdx.NewCmd("go", "env", "-w", "GO111MODULE", "=", "on")
 
-			select {
-			case <-envCmd.Start():
-			}
-		}
-	}
+            select {
+            case <-envCmd.Start():
+            }
+        }
+    }
 
-	fmt.Fprintln(os.Stdout, "suggest go version is newer than what 1.16.")
-	fmt.Fprintln(os.Stdout, "your go version is: ", runtime.Version())
+    fmt.Fprintln(os.Stdout, "suggest go version is newer than what 1.16.")
+    fmt.Fprintln(os.Stdout, "your go version is: ", runtime.Version())
 
-	r.absPath = []absPath{}
+    r.absPath = []absPath{
 
-	r.stencil = []stencil{}
+    }
 
-	return nil
+    r.stencil = []stencil{
+
+    }
+
+    return nil
 }
 
 func (r *rocx) createDir() {

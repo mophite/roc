@@ -7,14 +7,16 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/go-roc/roc/internal/registry"
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/service/handler"
-	"github.com/go-roc/roc/service/router"
-	"github.com/go-roc/roc/x"
 	"github.com/gorilla/mux"
 
+	"github.com/go-roc/roc/internal/endpoint"
+	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/codec"
+	"github.com/go-roc/roc/parcel/context"
+	"github.com/go-roc/roc/parcel/metadata"
 	"github.com/go-roc/roc/rlog"
+	"github.com/go-roc/roc/service/handler"
+	"github.com/go-roc/roc/service/router"
 )
 
 type Server struct {
@@ -31,7 +33,7 @@ type Server struct {
 	*mux.Router
 }
 
-func NewService(opts ...Options) *Server {
+func NewServer(opts ...Options) *Server {
 	s := &Server{
 		opts:   newOpts(opts...),
 		exit:   make(chan struct{}),
@@ -47,6 +49,10 @@ func NewService(opts ...Options) *Server {
 
 func (s *Server) GetApiPrefix() string {
 	return s.opts.apiPrefix
+}
+
+func (s *Server) Codec() codec.Codec {
+	return codec.DefaultCodec
 }
 
 func (s *Server) Run() error {
@@ -103,7 +109,7 @@ func (s *Server) Run() error {
 
 	rlog.Infof(
 		"[TCP:%s][WS:%s][HTTP:%s] start success!",
-		s.opts.e.Absolute,
+		endpoint.DefaultLocalEndpoint.Absolute,
 		s.opts.wssAddress,
 		s.opts.httpAddress,
 	)
@@ -121,7 +127,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) register() error {
-	return registry.DefaultRegistry.Register(s.opts.e)
+	return s.opts.registry.Register(endpoint.DefaultLocalEndpoint)
 }
 
 func (s *Server) RegisterHandler(method string, rr handler.Handler) {
@@ -144,35 +150,33 @@ func (s *Server) Close() {
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	h, ok := s.route.ApiProcess(r.URL.Path)
+	if r.Method == http.MethodPost {
+		var c = context.Background()
 
-	//only allow post request less version 1.1.x
-	//because ServeHTTP api need support json or proto data protocol
-	if !ok {
+		c.Metadata = new(metadata.Metadata)
+		c.SetMethod(r.URL.Path)
+
+		var req, rsp = parcel.Payloader(r.Body), parcel.NewPacket()
+		defer func() {
+			parcel.Recycle(req, rsp)
+		}()
+
+		_ = r.Body.Close()
+
+		err := s.route.RRProcess(c, req, rsp)
+
+		//only allow post request less version 1.1.x
+		//because ServeHTTP api need support json or proto data protocol
+		if err == router.ErrNotFoundHandler {
+			//todo 404 service code config to service
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		w.Write(rsp.Bytes())
+	} else {
 		//todo 404 service code config to service
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
-	if r.Method == http.MethodPost {
-		var c = context.Background()
-		c.Body = r.Body
-
-		rsp, err := h(c)
-
-		_ = r.Body.Close()
-
-		if err != nil {
-			//todo 500 service code config to service
-			rlog.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		_, _ = w.Write(x.MustMarshal(rsp))
-	}
-}
-
-func (s *Server) RegisterApiRouter(relativePath string, apiHandler handler.ApiRocHandler) {
-	s.route.RegisterApiHandler(relativePath, apiHandler)
 }

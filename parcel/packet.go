@@ -17,11 +17,12 @@ package parcel
 
 import (
 	"bytes"
+	"io"
 	"sync"
 )
 
 var packetPool = sync.Pool{New: func() interface{} {
-	return &RocPacket{B: new(bytes.Buffer)}
+	return &RocPacket{B: bytes.NewBuffer(make([]byte, 4096))}
 }}
 
 type RocPacket struct {
@@ -42,6 +43,12 @@ func NewPacket() *RocPacket {
 func Payload(b []byte) *RocPacket {
 	r := packetPool.Get().(*RocPacket)
 	r.Write(b)
+	return r
+}
+
+func Payloader(body io.ReadCloser) *RocPacket {
+	r := packetPool.Get().(*RocPacket)
+	_, _ = io.Copy(r.B, body)
 	return r
 }
 

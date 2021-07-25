@@ -4,12 +4,12 @@ syntax = "proto3";
 
 // request params.
 message SayReq {
-  uint32 inc = 1;
+  string ping = 1;
 }
 
 // response content.
 message SayRsp {
-  uint32 inc = 1;
+  string pong=2;
 }
 
 // HelloWorld is service API for client and server.
@@ -17,15 +17,4 @@ service HelloWorld {
 
   // requestResponse or fireAndForget.
   rpc Say(SayReq) returns (SayRsp) {}
-
-  // http api handle
-  rpc HttpHandleSay(SayReq) returns (SayRsp) {}
-
-  // requestStream.
-  // SayReq is channel params.
-  rpc SayStream(stream SayReq) returns (SayRsp) {}
-
-  // requestChannel.
-  // SayReq and SayRsp is channel.
-  rpc SayChannel(stream SayReq) returns (stream SayRsp) {}
 }

@@ -15,44 +15,45 @@
 
 package rocx
 
+
 import (
-	"os"
-	"path/filepath"
-	"strings"
+    "os"
+    "path/filepath"
+    "strings"
 )
 
 const pathSeparator = string(os.PathSeparator)
 
 // getLastPwd get last file directory
 func getLastPwd() string {
-	f := func(s string, pos, length int) string {
-		runes := []rune(s)
-		l := pos + length
-		if l > len(runes) {
-			l = len(runes)
-		}
-		return string(runes[pos:l])
-	}
-	directory := pwd()
-	return f(directory, 0, strings.LastIndex(directory, pathSeparator))
+    f := func(s string, pos, length int) string {
+        runes := []rune(s)
+        l := pos + length
+        if l > len(runes) {
+            l = len(runes)
+        }
+        return string(runes[pos:l])
+    }
+    directory := pwd()
+    return f(directory, 0, strings.LastIndex(directory, pathSeparator))
 }
 
 // pwd get current file directory
 func pwd() string {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	return filepath.Dir(ex)
+    ex, err := os.Executable()
+    if err != nil {
+        panic(err)
+    }
+    return filepath.Dir(ex)
 }
 
 // getProjectName get current project name
 func getProjectName() string {
-	f := func(s string, pos int) string {
-		runes := []rune(s)
-		return string(runes[pos:])
-	}
+    f := func(s string, pos int) string {
+        runes := []rune(s)
+        return string(runes[pos:])
+    }
 
-	directory := pwd()
-	return strings.Trim(f(directory, strings.LastIndex(directory, pathSeparator)), pathSeparator)
+    directory := pwd()
+    return strings.Trim(f(directory, strings.LastIndex(directory, pathSeparator)), pathSeparator)
 }

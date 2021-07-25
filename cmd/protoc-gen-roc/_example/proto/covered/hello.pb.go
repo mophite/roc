@@ -5,9 +5,13 @@ package hello
 
 import (
 	fmt "fmt"
-	roc "github.com/go-roc/roc"
 	parcel "github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/x"
+	context "github.com/go-roc/roc/parcel/context"
+	service "github.com/go-roc/roc/service"
+	client "github.com/go-roc/roc/service/client"
+	handler "github.com/go-roc/roc/service/handler"
+	invoke "github.com/go-roc/roc/service/invoke"
+	server "github.com/go-roc/roc/service/server"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -121,19 +125,18 @@ func init() {
 func init() { proto.RegisterFile("hello.proto", fileDescriptor_61ef911816e0a8ce) }
 
 var fileDescriptor_61ef911816e0a8ce = []byte{
-	// 185 bytes of a gzipped FileDescriptorProto
+	// 169 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xce, 0x48, 0xcd, 0xc9,
 	0xc9, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x57, 0x92, 0xe1, 0x62, 0x0b, 0x4e, 0xac, 0x0c, 0x4a,
 	0x2d, 0x14, 0x12, 0xe2, 0x62, 0xc9, 0x4b, 0xcc, 0x4d, 0x95, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c,
-	0x02, 0xb3, 0x61, 0xb2, 0xc5, 0x05, 0xd8, 0x64, 0x8d, 0xa6, 0x32, 0x72, 0x71, 0x79, 0x80, 0xcc,
-	0x0a, 0xcf, 0x2f, 0xca, 0x49, 0x11, 0x92, 0xe4, 0x62, 0x0e, 0x4e, 0xac, 0x14, 0x62, 0xd7, 0x83,
-	0x18, 0x28, 0x05, 0x61, 0x14, 0x17, 0x28, 0x31, 0x08, 0x29, 0x73, 0xf1, 0x7a, 0x94, 0x94, 0x14,
-	0x78, 0x24, 0xe6, 0xa5, 0xe4, 0xa4, 0xe2, 0x52, 0xa4, 0xc8, 0xc5, 0x19, 0x9c, 0x58, 0x19, 0x5c,
-	0x52, 0x94, 0x9a, 0x98, 0x8b, 0x4d, 0x81, 0x06, 0xa3, 0x90, 0x0a, 0x17, 0x57, 0x70, 0x62, 0xa5,
-	0x73, 0x46, 0x62, 0x5e, 0x5e, 0x6a, 0x0e, 0x76, 0x35, 0x06, 0x8c, 0x4e, 0x12, 0x27, 0x1e, 0xc9,
-	0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91, 0x1c, 0xe3, 0x84, 0xc7, 0x72, 0x0c, 0x17, 0x1e,
-	0xcb, 0x31, 0xdc, 0x78, 0x2c, 0xc7, 0x90, 0xc4, 0x06, 0xf6, 0xb4, 0x31, 0x20, 0x00, 0x00, 0xff,
-	0xff, 0xad, 0x6a, 0x45, 0x4f, 0x03, 0x01, 0x00, 0x00,
+	0x02, 0xb3, 0x61, 0xb2, 0xc5, 0x05, 0xd8, 0x64, 0x8d, 0x0a, 0xb8, 0xb8, 0x3c, 0x40, 0x46, 0x85,
+	0xe7, 0x17, 0xe5, 0xa4, 0x08, 0x49, 0x72, 0x31, 0x07, 0x27, 0x56, 0x0a, 0xb1, 0xeb, 0x41, 0xcc,
+	0x93, 0x82, 0x30, 0x8a, 0x0b, 0x94, 0x18, 0x84, 0x14, 0xb9, 0x38, 0x83, 0x13, 0x2b, 0x83, 0x4b,
+	0x8a, 0x52, 0x13, 0x73, 0xb1, 0x29, 0xd0, 0x60, 0x14, 0x52, 0xe1, 0xe2, 0x0a, 0x4e, 0xac, 0x74,
+	0xce, 0x48, 0xcc, 0xcb, 0x4b, 0xcd, 0xc1, 0xae, 0xc6, 0x80, 0xd1, 0x49, 0xe2, 0xc4, 0x23, 0x39,
+	0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63,
+	0x39, 0x86, 0x1b, 0x8f, 0xe5, 0x18, 0x92, 0xd8, 0xc0, 0xde, 0x31, 0x06, 0x04, 0x00, 0x00, 0xff,
+	0xff, 0xbf, 0xef, 0x30, 0x0c, 0xdd, 0x00, 0x00, 0x00,
 }
 
 func (m *SayReq) Marshal() (dAtA []byte, err error) {
@@ -209,56 +212,45 @@ func encodeVarintHello(dAtA []byte, offset int, v uint64) int {
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ roc.Context
-var _ roc.Service
+var _ context.Context
+var _ invoke.Invoke
+var _ handler.Handler
+var _ service.Service
 var _ parcel.RocPacket
+var _ client.Client
+var _ server.Server
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the roc package it is being compiled against.
-const _ = roc.SupportPackageIsVersion1
+const _ = service.SupportPackageIsVersion1
 
-type HelloWorldService interface {
+type HelloWorldClient interface {
 	// requestResponse or fireAndForget.
-	Say(c *roc.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error)
-	// register roc http api router handler
-	HttpHandleSay(relativePath string, h roc.ApiHandler)
+	Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error)
 	// requestStream.
 	// SayReq is channel params.
-	SayStream(c *roc.Context, req *SayReq, opts ...roc.InvokeOptions) (chan *SayRsp, chan error)
+	SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error)
 	// requestChannel.
 	// SayReq and SayRsp is channel.
-	SayChannel(c *roc.Context, req chan *SayReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SayRsp, chan error)
+	SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error)
 }
 
-type helloWorldService struct {
-	c *roc.Service
+type helloWorldClient struct {
+	c *client.Client
 }
 
-func NewHelloWorldService(c *roc.Service) HelloWorldService {
-	return &helloWorldService{c}
+func NewHelloWorldClient(c *client.Client) HelloWorldClient {
+	return &helloWorldClient{c}
 }
 
-func (cc *helloWorldService) Say(c *roc.Context, req *SayReq, opts ...roc.InvokeOptions) (*SayRsp, error) {
+func (cc *helloWorldClient) Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error) {
 	rsp := &SayRsp{}
-	err := cc.c.InvokeRR(c, "HelloWorld.Say", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"HelloWorld/Say", req, rsp, opts...)
 	return rsp, err
 }
 
-func (cc *helloWorldService) HttpHandleSay(relativePath string, h roc.ApiHandler) {
-	f := func(c *roc.Context) (proto.Message, error) {
-		var req SayReq
-		err := x.Jsoniter.NewDecoder(c.Body).Decode(&req)
-		if err != nil {
-			return nil, err
-		}
-		var rsp = &SayRsp{}
-		h(c, &req, rsp)
-		return rsp, nil
-	}
-	cc.c.RegisterApiRouter(relativePath, f)
-}
-func (cc *helloWorldService) SayStream(c *roc.Context, req *SayReq, opts ...roc.InvokeOptions) (chan *SayRsp, chan error) {
-	data, errs := cc.c.InvokeRS(c, "HelloWorld.SayStream", req, opts...)
+func (cc *helloWorldClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
+	data, errs := cc.c.InvokeRS(c, "HelloWorld/SayStream", req, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
 		for b := range data {
@@ -275,7 +267,7 @@ func (cc *helloWorldService) SayStream(c *roc.Context, req *SayReq, opts ...roc.
 	return rsp, errs
 }
 
-func (cc *helloWorldService) SayChannel(c *roc.Context, req chan *SayReq, errIn chan error, opts ...roc.InvokeOptions) (chan *SayRsp, chan error) {
+func (cc *helloWorldClient) SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
 	var in = make(chan []byte)
 	go func() {
 		for b := range req {
@@ -289,7 +281,7 @@ func (cc *helloWorldService) SayChannel(c *roc.Context, req chan *SayReq, errIn 
 		close(in)
 	}()
 
-	data, errs := cc.c.InvokeRC(c, "HelloWorld.SayChannel", in, errIn, opts...)
+	data, errs := cc.c.InvokeRC(c, "HelloWorld/SayChannel", in, errIn, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
 		for b := range data {
@@ -306,34 +298,31 @@ func (cc *helloWorldService) SayChannel(c *roc.Context, req chan *SayReq, errIn 
 	return rsp, errs
 }
 
-// HelloWorldServer is the server API for HelloWorld service.
+// HelloWorldServer is the server API for HelloWorld server.
 type HelloWorldServer interface {
 	// requestResponse or fireAndForget.
-	Say(c *roc.Context, req *SayReq) (rsp *SayRsp, err error)
-	// register roc http api router handler
-	HttpHandleSay(c *roc.Context, req *SayReq) (rsp *SayRsp, err error)
+	Say(c *context.Context, req *SayReq) (rsp *SayRsp, err error)
 	// requestStream.
 	// SayReq is channel params.
-	SayStream(c *roc.Context, req *SayReq) (chan *SayRsp, chan error)
+	SayStream(c *context.Context, req *SayReq) (chan *SayRsp, chan error)
 	// requestChannel.
 	// SayReq and SayRsp is channel.
-	SayChannel(c *roc.Context, req chan *SayReq, errIn chan error) (chan *SayRsp, chan error)
+	SayChannel(c *context.Context, req chan *SayReq, errIn chan error) (chan *SayRsp, chan error)
 }
 
-func RegisterHelloWorldServer(s *roc.Service, h HelloWorldServer) {
+func RegisterHelloWorldServer(s *server.Server, h HelloWorldServer) {
 	var r = &helloWorldHandler{h: h, s: s}
-	s.RegisterHandler("HelloWorld.Say", r.Say)
-	s.RegisterHandler("HelloWorld.HttpHandleSay", r.HttpHandleSay)
-	s.RegisterStreamHandler("HelloWorld.SayStream", r.SayStream)
-	s.RegisterChannelHandler("HelloWorld.SayChannel", r.SayChannel)
+	s.RegisterHandler(service.GetApiPrefix()+"HelloWorld/Say", r.Say)
+	s.RegisterStreamHandler("HelloWorld/SayStream", r.SayStream)
+	s.RegisterChannelHandler("HelloWorld/SayChannel", r.SayChannel)
 }
 
 type helloWorldHandler struct {
 	h HelloWorldServer
-	s *roc.Service
+	s *server.Server
 }
 
-func (r *helloWorldHandler) Say(c *roc.Context, req *parcel.RocPacket, interrupt roc.Interceptor) (rsp proto.Message, err error) {
+func (r *helloWorldHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt handler.Interceptor) (rsp proto.Message, err error) {
 	var in SayReq
 	err = r.s.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
@@ -342,28 +331,13 @@ func (r *helloWorldHandler) Say(c *roc.Context, req *parcel.RocPacket, interrupt
 	if interrupt == nil {
 		return r.h.Say(c, &in)
 	}
-	f := func(c *roc.Context, req proto.Message) (proto.Message, error) {
+	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
 		return r.h.Say(c, req.(*SayReq))
 	}
 	return interrupt(c, &in, f)
 }
 
-func (r *helloWorldHandler) HttpHandleSay(c *roc.Context, req *parcel.RocPacket, interrupt roc.Interceptor) (rsp proto.Message, err error) {
-	var in SayReq
-	err = r.s.Codec().Decode(req.Bytes(), &in)
-	if err != nil {
-		return nil, err
-	}
-	if interrupt == nil {
-		return r.h.HttpHandleSay(c, &in)
-	}
-	f := func(c *roc.Context, req proto.Message) (proto.Message, error) {
-		return r.h.HttpHandleSay(c, req.(*SayReq))
-	}
-	return interrupt(c, &in, f)
-}
-
-func (r *helloWorldHandler) SayStream(c *roc.Context, req *parcel.RocPacket) (chan proto.Message, chan error) {
+func (r *helloWorldHandler) SayStream(c *context.Context, req *parcel.RocPacket) (chan proto.Message, chan error) {
 	var errs = make(chan error)
 	var in SayReq
 	err := r.s.Codec().Decode(req.Bytes(), &in)
@@ -397,7 +371,7 @@ func (r *helloWorldHandler) SayStream(c *roc.Context, req *parcel.RocPacket) (ch
 	return rsp, errs
 }
 
-func (r *helloWorldHandler) SayChannel(c *roc.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
+func (r *helloWorldHandler) SayChannel(c *context.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
 	var in = make(chan *SayReq)
 	go func() {
 		for b := range req {

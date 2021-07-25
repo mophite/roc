@@ -16,14 +16,13 @@
 package codec
 
 import (
-	"github.com/gogo/protobuf/proto"
-
-	"github.com/go-roc/roc/parcel/codec/protoc"
+	"github.com/go-roc/roc/parcel/codec/jsonc"
 )
 
-var DefaultCodec Codec = &protoc.Proto{}
+var DefaultCodec Codec = jsonc.JSCodec
 
 type Codec interface {
-	Encode(message proto.Message) ([]byte, error)
-	Decode(b []byte, message proto.Message) error
+	Encode(message interface{}) ([]byte, error)
+	Decode(b []byte, message interface{}) error
+	Name() string
 }

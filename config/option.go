@@ -16,158 +16,158 @@
 package config
 
 import (
-	"strings"
+    "strings"
 
-	"github.com/go-roc/roc/internal/etcd"
-	"github.com/go-roc/roc/internal/namespace"
-	"github.com/go-roc/roc/x/fs"
+    "github.com/go-roc/roc/internal/etcd"
+    "github.com/go-roc/roc/internal/namespace"
+    "github.com/go-roc/roc/x/fs"
 )
 
 type Option struct {
 
-	//etcd
-	e *etcd.Etcd
+    //etcd
+    e *etcd.Etcd
 
-	//disableDynamic switch
-	disableDynamic bool
+    //disableDynamic switch
+    disableDynamic bool
 
-	//config schema on etcd
-	//schema usually is public config dir
-	schema string
+    //config schema on etcd
+    //schema usually is public config dir
+    schema string
 
-	//private config on etcd
-	//cannot user private to cover public key,because it's will be inconsistent when
-	//modify public key when modify private same key like roc.test
-	private string
+    //private config on etcd
+    //cannot user private to cover public key,because it's will be inconsistent when
+    //modify public key when modify private same key like roc.test
+    private string
 
-	//public config on etcd
-	public string
+    //public config on etcd
+    public string
 
-	//publicPrefix eg. roc.test "roc." is prefix
-	publicPrefix string
+    //publicPrefix eg. roc.test "roc." is prefix
+    publicPrefix string
 
-	//config version
-	version string
+    //config version
+    version string
 
-	//backup file path
-	backupPath string
+    //backup file path
+    backupPath string
 
-	//localFile switch
-	//if true,will load local config.json to
-	localFile bool
+    //localFile switch
+    //if true,will load local config.json to
+    localFile bool
 
-	//switch to output config to log
-	logOut bool
+    //switch to output config to log
+    logOut bool
 
-	//f will be run after config already setup
-	f []func() error
+    //f will be run after config already setup
+    f []func() error
 }
 
 type Options func(option *Option)
 
 //Chaos is config already setup and do Chaos functions
 func Chaos(f ...func() error) Options {
-	return func(option *Option) {
-		option.f = f
-	}
+    return func(option *Option) {
+        option.f = f
+    }
 }
 
 func Private(private string) Options {
-	return func(option *Option) {
-		option.private = private
-	}
+    return func(option *Option) {
+        option.private = private
+    }
 }
 
 func Public(public string) Options {
-	return func(option *Option) {
-		option.public = public
-	}
+    return func(option *Option) {
+        option.public = public
+    }
 }
 
 func LocalFile() Options {
-	return func(option *Option) {
-		option.localFile = true
-	}
+    return func(option *Option) {
+        option.localFile = true
+    }
 }
 
 func LogOut() Options {
-	return func(option *Option) {
-		option.logOut = true
-	}
+    return func(option *Option) {
+        option.logOut = true
+    }
 }
 
 func DisableDynamic() Options {
-	return func(option *Option) {
-		option.disableDynamic = true
-	}
+    return func(option *Option) {
+        option.disableDynamic = true
+    }
 }
 
 func Schema(schema string) Options {
-	return func(option *Option) {
-		option.schema = schema
-	}
+    return func(option *Option) {
+        option.schema = schema
+    }
 }
 
 func Version(version string) Options {
-	return func(option *Option) {
-		option.version = version
-	}
+    return func(option *Option) {
+        option.version = version
+    }
 }
 
 func Backup(path string) Options {
-	return func(option *Option) {
-		option.backupPath = path
-	}
+    return func(option *Option) {
+        option.backupPath = path
+    }
 }
 
 func Prefix(prefix string) Options {
-	return func(option *Option) {
-		option.publicPrefix = prefix
-	}
+    return func(option *Option) {
+        option.publicPrefix = prefix
+    }
 }
 
 func newOpts(opts ...Options) Option {
-	opt := Option{}
+    opt := Option{}
 
-	for i := range opts {
-		opts[i](&opt)
-	}
+    for i := range opts {
+        opts[i](&opt)
+    }
 
-	if opt.schema == "" {
-		opt.schema = namespace.DefaultConfigSchema
-	}
+    if opt.schema == "" {
+        opt.schema = namespace.DefaultConfigSchema
+    }
 
-	if opt.version == "" {
-		opt.version = namespace.DefaultVersion
-	}
+    if opt.version == "" {
+        opt.version = namespace.DefaultVersion
+    }
 
-	opt.schema += "/" + opt.version
+    opt.schema += "/" + opt.version
 
-	if opt.backupPath == "" {
-		opt.backupPath = "./config.json"
-	}
+    if opt.backupPath == "" {
+        opt.backupPath = "./config.json"
+    }
 
-	if opt.private == "" {
-		opt.private = fs.GetProjectName()
-	}
+    if opt.private == "" {
+        opt.private = fs.GetProjectName()
+    }
 
-	opt.private = opt.schema + "/" + opt.private + "/"
+    opt.private = opt.schema + "/" + opt.private + "/"
 
-	if opt.public == "" {
-		opt.public = "public"
-	}
+    if opt.public == "" {
+        opt.public = "public"
+    }
 
-	opt.public = opt.schema + "/" + opt.public + "/"
+    opt.public = opt.schema + "/" + opt.public + "/"
 
-	opt.e = etcd.DefaultEtcd
+    opt.e = etcd.DefaultEtcd
 
-	if opt.publicPrefix == "" {
-		opt.publicPrefix = "roc."
-	}
+    if opt.publicPrefix == "" {
+        opt.publicPrefix = "roc."
+    }
 
-	if strings.Contains(opt.private, opt.publicPrefix) {
-		panic("private cannot contains public prefix")
-	}
+    if strings.Contains(opt.private, opt.publicPrefix) {
+        panic("private cannot contains public prefix")
+    }
 
-	return opt
+    return opt
 }

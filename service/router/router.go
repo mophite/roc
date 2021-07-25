@@ -19,9 +19,10 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/gogo/protobuf/proto"
+
 	"github.com/go-roc/roc/parcel/context"
 	"github.com/go-roc/roc/service/handler"
-	"github.com/gogo/protobuf/proto"
 
 	"github.com/go-roc/roc/parcel"
 	"github.com/go-roc/roc/parcel/codec"
@@ -29,7 +30,7 @@ import (
 )
 
 var (
-	errNotFoundHandler = errors.New("not found rrRoute")
+	ErrNotFoundHandler = errors.New("not found rrRoute")
 )
 
 type Router struct {
@@ -42,9 +43,6 @@ type Router struct {
 
 	//requestChannel map cache channelHandler
 	rcRoute map[string]handler.ChannelHandler
-
-	//http post request handler
-	apiRouter map[string]handler.ApiRocHandler
 
 	//wrapper middleware
 	wrappers []handler.WrapperHandler
@@ -62,7 +60,6 @@ func NewRouter(wrappers []handler.WrapperHandler, err parcel.ErrorPackager) *Rou
 		rrRoute:     make(map[string]handler.Handler),
 		rsRoute:     make(map[string]handler.StreamHandler),
 		rcRoute:     make(map[string]handler.ChannelHandler),
-		apiRouter:   make(map[string]handler.ApiRocHandler),
 		wrappers:    wrappers,
 		errorPacket: err,
 		cc:          codec.DefaultCodec,
@@ -106,25 +103,10 @@ func (r *Router) RegisterChannelHandler(service string, rc handler.ChannelHandle
 	r.rcRoute[service] = rc
 }
 
-func (r *Router) RegisterApiHandler(path string, h handler.ApiRocHandler) {
-	r.Lock()
-	defer r.Unlock()
-	if _, ok := r.apiRouter[path]; ok {
-		panic("this rcRoute is already exist:" + path)
-	}
-
-	r.apiRouter[path] = h
-}
-
-func (r *Router) ApiProcess(path string) (handler.ApiRocHandler, bool) {
-	h, ok := r.apiRouter[path]
-	return h, ok
-}
-
 func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parcel.RocPacket) error {
 	rr, ok := r.rrRoute[c.Method()]
 	if !ok {
-		return errNotFoundHandler
+		return ErrNotFoundHandler
 	}
 
 	resp, err := rr(c, req, r.interrupt())

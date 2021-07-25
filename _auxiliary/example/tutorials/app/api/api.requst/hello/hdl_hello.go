@@ -16,43 +16,44 @@
 package hello
 
 import (
-	"net/http"
-	"time"
+    "net/http"
+    "time"
 
-	"tutorials/internal/ipc"
-	"tutorials/proto/phello"
+    "tutorials/internal/ipc"
+    "tutorials/proto/phello"
 
-	"github.com/go-roc/roc"
-	"github.com/go-roc/roc/rlog"
+    "github.com/go-roc/roc"
+    "github.com/go-roc/roc"
+    "github.com/go-roc/roc/rlog"
 )
 
 type HelloWorld struct {
-	opt    []roc.InvokeOptions
-	client phello.HelloWorldClient
+    opt    []roc.InvokeOptions
+    client phello.HelloWorldClient
 }
 
 // NewHello new Hello and initialize it for rpc client
 // opt is configurable when request.
 func NewHello(s *roc.Service) *HelloWorld {
-	return &HelloWorld{
-		client: phello.NewHelloWorldClient(s),
-		opt: []roc.InvokeOptions{
-			roc.WithName("srv.hello"),
-		},
-	}
+    return &HelloWorld{
+        client: phello.NewHelloWorldClient(s),
+        opt: []roc.InvokeOptions{
+            roc.WithName("srv.hello"),
+        },
+    }
 }
 
 func (h *HelloWorld) SayHandler(w http.ResponseWriter, r *http.Request) {
-	_ = r.ParseForm()
+    _ = r.ParseForm()
 
-	now := time.Now()
-	rsp, err := ipc.SayHello(context.Background(), &phello.SayReq{Inc: 1})
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
+    now := time.Now()
+    rsp, err := ipc.SayHello(context.Background(), &phello.SayReq{Inc: 1})
+    if err != nil {
+        w.Write([]byte(err.Error()))
+        return
+    }
 
-	rlog.Infof("FROM hello server: %v |latency=%v ms ", rsp.Inc, time.Since(now).Milliseconds())
+    rlog.Infof("FROM hello server: %v |latency=%v ms ", rsp.Inc, time.Since(now).Milliseconds())
 
-	w.Write([]byte("succuess"))
+    w.Write([]byte("succuess"))
 }

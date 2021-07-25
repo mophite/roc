@@ -17,8 +17,6 @@ package context
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/go-roc/roc/internal/trace"
 	"github.com/go-roc/roc/internal/trace/simple"
@@ -32,18 +30,20 @@ type Context struct {
 	//tracker exists throughout the life cycle of the context
 	Trace trace.Trace
 
-	//http writer
-	Writer http.ResponseWriter
-
-	//http request
-	Request *http.Request
-
-	//http request body
-	Body io.ReadCloser
+	////http writer
+	//Writer http.ResponseWriter
+	//
+	////http request
+	//Request *http.Request
+	//
+	////http request body
+	//Body io.ReadCloser
 }
 
 func Background() *Context {
-	return new(Context)
+	return &Context{
+		Trace: simple.NewSimple(),
+	}
 }
 
 func (c *Context) WithMetadata(service, method, tracing string, meta map[string]string) error {
@@ -54,7 +54,7 @@ func (c *Context) WithMetadata(service, method, tracing string, meta map[string]
 	c.Metadata = m
 
 	if tracing == "" {
-		c.Trace = simple.NewSimple(tracing)
+		c.Trace = simple.WithSimple(tracing)
 	}
 
 	return nil
@@ -67,14 +67,14 @@ func NewContext(service, method, tracing string, meta map[string]string) (*Conte
 	}
 	return &Context{
 		Metadata: m,
-		Trace:    simple.NewSimple(tracing),
+		Trace:    simple.WithSimple(tracing),
 	}, nil
 }
 
 func FromMetadata(b []byte) *Context {
 	m := metadata.DecodeMetadata(b)
 	return &Context{
-		Trace:    simple.NewSimple(m.Tracing()),
+		Trace:    simple.WithSimple(m.Tracing()),
 		Metadata: m,
 	}
 }

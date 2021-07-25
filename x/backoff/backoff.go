@@ -16,8 +16,8 @@
 package backoff
 
 import (
-	"math"
-	"time"
+    "math"
+    "time"
 )
 
 //Truncated Binary Exponential Back—off,TBEB
@@ -29,52 +29,52 @@ const defaultFactor = 2
 var defaultBackoff = newBackoff()
 
 type backOff struct {
-	factor, delayMin, delayMax float64
-	Attempts                   int
+    factor, delayMin, delayMax float64
+    Attempts                   int
 }
 
 func newBackoff() *backOff {
-	return &backOff{
-		factor:   defaultFactor,
-		delayMin: 10,
-		delayMax: 1000,
-	}
+    return &backOff{
+        factor:   defaultFactor,
+        delayMin: 10,
+        delayMax: 1000,
+    }
 }
 
 func NewBackoff() *backOff {
-	return defaultBackoff.clone()
+    return defaultBackoff.clone()
 }
 
 func WitchBackoff(factor, delayMin, delayMax float64, attempts int) *backOff {
-	b := defaultBackoff.clone()
-	b.factor = factor
-	b.delayMax = delayMax
-	b.delayMin = delayMin
-	b.Attempts = attempts
-	return b
+    b := defaultBackoff.clone()
+    b.factor = factor
+    b.delayMax = delayMax
+    b.delayMin = delayMin
+    b.Attempts = attempts
+    return b
 }
 
 // Next
 // Exponential
 func (b *backOff) Next(delta int) time.Duration {
-	r := b.delayMin * math.Pow(b.factor, float64(b.Attempts))
-	b.Attempts += delta
-	if r > b.delayMax {
-		return b.duration(b.delayMax)
-	}
+    r := b.delayMin * math.Pow(b.factor, float64(b.Attempts))
+    b.Attempts += delta
+    if r > b.delayMax {
+        return b.duration(b.delayMax)
+    }
 
-	if r < b.delayMin {
-		return b.duration(b.delayMin)
-	}
+    if r < b.delayMin {
+        return b.duration(b.delayMin)
+    }
 
-	return b.duration(r)
+    return b.duration(r)
 }
 
 func (b *backOff) duration(t float64) time.Duration {
-	return time.Millisecond * time.Duration(t)
+    return time.Millisecond * time.Duration(t)
 }
 
 func (b *backOff) clone() *backOff {
-	cb := *b
-	return &cb
+    cb := *b
+    return &cb
 }

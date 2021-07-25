@@ -1,13 +1,13 @@
 package rocx
 
 import (
-	"testing"
+    "testing"
 
-	"github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/assert"
 )
 
 func TestGetLatestTag(t *testing.T) {
-	tag := getLatestTag()
-	assert.NotEmpty(t, tag)
-	t.Log(tag)
+    tag := getLatestTag()
+    assert.NotEmpty(t, tag)
+    t.Log(tag)
 }

@@ -16,75 +16,76 @@
 package hello
 
 import (
-	"sync/atomic"
-	"time"
+    "sync/atomic"
+    "time"
 
-	"tutorials/proto/phello"
+    "tutorials/proto/phello"
 
-	"github.com/go-roc/roc"
+    "github.com/go-roc/roc"
+    "github.com/go-roc/roc"
 )
 
 type Hello struct {
-	Service *roc.Service
+    Service *roc.Service
 }
 
 func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) (chan *phello.SayRsp, chan error) {
-	var rsp = make(chan *phello.SayRsp)
-	var err = make(chan error)
+    var rsp = make(chan *phello.SayRsp)
+    var err = make(chan error)
 
-	go func() {
-		var count uint32
-		for i := 0; i < 200; i++ {
-			rsp <- &phello.SayRsp{Inc: req.Inc + uint32(i)}
-			atomic.AddUint32(&count, 1)
-			time.Sleep(time.Second * 1)
-		}
+    go func() {
+        var count uint32
+        for i := 0; i < 200; i++ {
+            rsp <- &phello.SayRsp{Inc: req.Inc + uint32(i)}
+            atomic.AddUint32(&count, 1)
+            time.Sleep(time.Second * 1)
+        }
 
-		c.Info("say stream example count is: ", atomic.LoadUint32(&count))
+        c.Info("say stream example count is: ", atomic.LoadUint32(&count))
 
-		close(rsp)
-		close(err)
-	}()
+        close(rsp)
+        close(err)
+    }()
 
-	return rsp, err
+    return rsp, err
 }
 
 func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, errIn chan error) (
-	chan *phello.SayRsp,
-	chan error,
+    chan *phello.SayRsp,
+    chan error,
 ) {
-	var rsp = make(chan *phello.SayRsp)
-	var errs = make(chan error)
+    var rsp = make(chan *phello.SayRsp)
+    var errs = make(chan error)
 
-	go func() {
-	QUIT:
-		for {
-			select {
-			case data, ok := <-req:
-				if !ok {
-					break QUIT
-				}
+    go func() {
+    QUIT:
+        for {
+            select {
+            case data, ok := <-req:
+                if !ok {
+                    break QUIT
+                }
 
-				//test channel sending frequency
-				time.Sleep(time.Second)
-				rsp <- &phello.SayRsp{Inc: data.Inc + uint32(1)}
+                //test channel sending frequency
+                time.Sleep(time.Second)
+                rsp <- &phello.SayRsp{Inc: data.Inc + uint32(1)}
 
-			case e := <-errIn:
-				if e != nil {
-					errs <- e
-				}
-			}
-		}
+            case e := <-errIn:
+                if e != nil {
+                    errs <- e
+                }
+            }
+        }
 
-		close(rsp)
-		close(errs)
-	}()
+        close(rsp)
+        close(errs)
+    }()
 
-	return rsp, errs
+    return rsp, errs
 }
 
 func (h *Hello) Say(c *context.Context, req *phello.SayReq) (rsp *phello.SayRsp, err error) {
-	//  when set timeout is time.Second*1,it's will occur cancelled error
-	//time.Sleep(time.Second * 2)
-	return &phello.SayRsp{Inc: req.Inc + 1}, nil
+    //  when set timeout is time.Second*1,it's will occur cancelled error
+    //time.Sleep(time.Second * 2)
+    return &phello.SayRsp{Inc: req.Inc + 1}, nil
 }

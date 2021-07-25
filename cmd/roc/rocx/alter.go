@@ -16,40 +16,40 @@
 package rocx
 
 import (
-	"fmt"
-	"os"
+    "fmt"
+    "os"
 )
 
 func createRecursionDir(path string) error {
-	if exists(path) {
-		return fmt.Errorf("create %s is already exist", path)
-	}
+    if exists(path) {
+        return fmt.Errorf("create %s is already exist", path)
+    }
 
-	err := os.MkdirAll(path, os.ModePerm)
-	if err != nil {
-		return err
-	}
+    err := os.MkdirAll(path, os.ModePerm)
+    if err != nil {
+        return err
+    }
 
-	return nil
+    return nil
 }
 
 //create file *.go *.sh or others
 func createAndWriteFile(path string, handler func(*os.File) error) error {
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND|os.O_SYNC, os.ModePerm)
-	if err != nil {
-		return err
-	}
+    f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND|os.O_SYNC, os.ModePerm)
+    if err != nil {
+        return err
+    }
 
-	return handler(f)
+    return handler(f)
 }
 
 func exists(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		if os.IsExist(err) {
-			return true
-		}
-		return false
-	}
-	return true
+    _, err := os.Stat(path)
+    if err != nil {
+        if os.IsExist(err) {
+            return true
+        }
+        return false
+    }
+    return true
 }

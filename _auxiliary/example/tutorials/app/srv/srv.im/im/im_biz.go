@@ -16,68 +16,68 @@
 package im
 
 import (
-	"sync"
+    "sync"
 
 	"tutorials/proto/pim"
 )
 
 func NewHub() *Hub {
-	h := &Hub{
-		lock:         new(sync.RWMutex),
-		connectCount: 0,
-		clients:      make(map[string]*point),
-		broadCast:    make(chan *pim.SendMessageReq),
-	}
-	go h.poller()
-	return h
+    h := &Hub{
+        lock:         new(sync.RWMutex),
+        connectCount: 0,
+        clients:      make(map[string]*point),
+        broadCast:    make(chan *pim.SendMessageReq),
+    }
+    go h.poller()
+    return h
 }
 
 type Hub struct {
-	lock         *sync.RWMutex
-	connectCount uint32
-	clients      map[string]*point
-	broadCast    chan *pim.SendMessageReq
+    lock         *sync.RWMutex
+    connectCount uint32
+    clients      map[string]*point
+    broadCast    chan *pim.SendMessageReq
 }
 
 type point struct {
-	userName string
-	message  chan *pim.SendMessageRsp
+    userName string
+    message  chan *pim.SendMessageRsp
 }
 
 func (h *Hub) count() uint32 {
-	return h.connectCount
+    return h.connectCount
 }
 
 func (h *Hub) addClient(p *point) {
-	if _, ok := h.clients[p.userName]; !ok {
-		h.lock.RLock()
-		h.clients[p.userName] = p
-		h.connectCount += 1
-		h.lock.RUnlock()
-	}
+    if _, ok := h.clients[p.userName]; !ok {
+        h.lock.RLock()
+        h.clients[p.userName] = p
+        h.connectCount += 1
+        h.lock.RUnlock()
+    }
 }
 
 func (h *Hub) removeClient(p *point) {
-	if _, ok := h.clients[p.userName]; ok {
-		h.lock.RLock()
-		delete(h.clients, p.userName)
-		h.connectCount -= 1
-		h.lock.RUnlock()
-	}
+    if _, ok := h.clients[p.userName]; ok {
+        h.lock.RLock()
+        delete(h.clients, p.userName)
+        h.connectCount -= 1
+        h.lock.RUnlock()
+    }
 }
 
 func (h *Hub) poller() {
 
-	for {
-		select {
-		case b := <-h.broadCast:
-			go func() {
-				for userName, _ := range h.clients {
-					h.clients[userName].message <- &pim.SendMessageRsp{Message: b.Message}
-				}
-			}()
+    for {
+        select {
+        case b := <-h.broadCast:
+            go func() {
+                for userName, _ := range h.clients {
+                    h.clients[userName].message <- &pim.SendMessageRsp{Message: b.Message}
+                }
+            }()
 
-			// todo some thing
-		}
-	}
+            // todo some thing
+        }
+    }
 }

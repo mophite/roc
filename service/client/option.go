@@ -3,50 +3,49 @@ package client
 import (
 	"time"
 
-	"github.com/go-roc/roc/config"
+	"github.com/go-roc/roc/internal/registry"
+	"github.com/go-roc/roc/parcel/codec"
+	"github.com/go-roc/roc/service/conn"
 )
 
 type Option struct {
-	// connect server within connectTimeout
-	// if out of ranges,will be timeout
-	connectTimeout time.Duration
 
-	// keepalive setting,the period for requesting heartbeat to stay connected
-	keepaliveInterval time.Duration
+	//data codec
+	cc codec.Codec
 
-	// keepalive setting,the longest time the connection can survive
-	keepaliveLifetime time.Duration
-
-	//config options
-	configOpt []config.Options
+	//discover service
+	registry registry.Registry
 }
 
 type Options func(option *Option)
 
-func ConfigOption(opts ...config.Options) Options {
+func Codec(cc codec.Codec) Options {
 	return func(option *Option) {
-		option.configOpt = opts
+		option.cc = cc
 	}
 }
 
-// ConnectTimeout set connect timeout
-func ConnectTimeout(connectTimeout time.Duration) Options {
+func Registry(registry registry.Registry) Options {
 	return func(option *Option) {
-		option.connectTimeout = connectTimeout
+		option.registry = registry
 	}
 }
 
-// KeepaliveInterval set keepalive interval
+func ConnectTimeout(timeout time.Duration) Options {
+	return func(option *Option) {
+		conn.DefaultConnectTimeout = timeout
+	}
+}
+
 func KeepaliveInterval(keepaliveInterval time.Duration) Options {
 	return func(option *Option) {
-		option.keepaliveInterval = keepaliveInterval
+		conn.DefaultKeepaliveInterval = keepaliveInterval
 	}
 }
 
-// KeepaliveLifetime set keepalive life time
 func KeepaliveLifetime(keepaliveLifetime time.Duration) Options {
 	return func(option *Option) {
-		option.keepaliveLifetime = keepaliveLifetime
+		conn.DefaultKeepaliveLifetime = keepaliveLifetime
 	}
 }
 
@@ -57,25 +56,16 @@ func newOpts(opts ...Options) Option {
 		opts[i](&opt)
 	}
 
-	err := config.NewConfig(opt.configOpt...)
-	if err != nil {
-		panic("config NewConfig occur error: " + err.Error())
-	}
-
 	//if opt.ratelimit <= 0 {
 	//	opt.ratelimit = math.MaxInt32
 	//}
 	//set connect timeout or default
-	if opt.connectTimeout <= 0 {
-		opt.connectTimeout = time.Second * 5
+	if opt.cc == nil {
+		opt.cc = codec.DefaultCodec
 	}
 
-	if opt.keepaliveLifetime <= 0 {
-		opt.keepaliveLifetime = time.Second * 600
-	}
-
-	if opt.keepaliveInterval <= 0 {
-		opt.keepaliveInterval = time.Second * 5
+	if opt.registry == nil {
+		opt.registry = registry.DefaultRegistry
 	}
 
 	return opt

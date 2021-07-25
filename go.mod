@@ -14,6 +14,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.2.0
+	github.com/gorilla/mux v1.8.0
 	github.com/jjeffcaii/reactor-go v0.5.1
 	github.com/json-iterator/go v1.1.10
 	github.com/prometheus/client_golang v1.9.0 // indirect

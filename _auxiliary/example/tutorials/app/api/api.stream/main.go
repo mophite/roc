@@ -16,59 +16,60 @@
 package main
 
 import (
-	"fmt"
-	"sync/atomic"
+    "fmt"
+    "sync/atomic"
 
-	"tutorials/proto/phello"
+    "tutorials/proto/phello"
 
-	"github.com/coreos/etcd/clientv3"
+    "github.com/coreos/etcd/clientv3"
 
-	"github.com/go-roc/roc"
+    "github.com/go-roc/roc"
+    "github.com/go-roc/roc"
 )
 
 var helloClient = phello.NewHelloWorldClient(
-	roc.NewService(
-		roc.TCPAddress("127.0.0.1:8899"),
-		roc.Namespace("srv.im"),
-		roc.EtcdConfig(
-			&clientv3.Config{
-				Endpoints: []string{"127.0.0.1:2379"},
-			},
+    roc.NewService(
+        roc.TCPAddress("127.0.0.1:8899"),
+        roc.Namespace("srv.im"),
+        roc.EtcdConfig(
+            &clientv3.Config{
+                Endpoints: []string{"127.0.0.1:2379"},
+            },
 		),
-	),
+    ),
 )
 var opt = roc.WithName("srv.hello")
 
 func main() {
 
-	rsp, errs := helloClient.SayStream(context.Background(), &phello.SayReq{Inc: 1}, opt)
+    rsp, errs := helloClient.SayStream(context.Background(), &phello.SayReq{Inc: 1}, opt)
 
-	var count uint32
+    var count uint32
 
-	var done = make(chan struct{})
-	go func() {
-		var err error
-	QUIT:
-		for {
-			select {
-			case b, ok := <-rsp:
-				if ok {
-					fmt.Println("------receive from srv.hello----", b.Inc)
-					atomic.AddUint32(&count, 1)
-				} else {
-					break QUIT
-				}
-			case err = <-errs:
-				if err != nil {
-					break QUIT
-				}
-			}
-		}
-		done <- struct{}{}
+    var done = make(chan struct{})
+    go func() {
+        var err error
+    QUIT:
+        for {
+            select {
+            case b, ok := <-rsp:
+                if ok {
+                    fmt.Println("------receive from srv.hello----", b.Inc)
+                    atomic.AddUint32(&count, 1)
+                } else {
+                    break QUIT
+                }
+            case err = <-errs:
+                if err != nil {
+                    break QUIT
+                }
+            }
+        }
+        done <- struct{}{}
 
-		fmt.Println("say handler count is: ", atomic.LoadUint32(&count))
-	}()
+        fmt.Println("say handler count is: ", atomic.LoadUint32(&count))
+    }()
 
-	<-done
+    <-done
 
 }
