@@ -16,157 +16,166 @@
 package server
 
 import (
-    ctx "context"
-    "net/http"
-    "time"
+	ctx "context"
+	"net/http"
+	"time"
 
-    "github.com/go-roc/roc/internal/namespace"
-    "github.com/go-roc/roc/service/opt"
-    "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 
-    "github.com/go-roc/roc/parcel"
-    "github.com/go-roc/roc/parcel/context"
-    "github.com/go-roc/roc/parcel/metadata"
-    "github.com/go-roc/roc/rlog"
-    "github.com/go-roc/roc/service/handler"
-    "github.com/go-roc/roc/service/router"
+	"github.com/go-roc/roc/internal/namespace"
+	"github.com/go-roc/roc/service/opt"
+
+	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/context"
+	"github.com/go-roc/roc/parcel/metadata"
+	"github.com/go-roc/roc/rlog"
+	"github.com/go-roc/roc/service/handler"
+	"github.com/go-roc/roc/service/router"
 )
 
 type Server struct {
-    //run transportServer option
-    opts opt.Option
+	//run transportServer option
+	opts opt.Option
 
-    //transportServer exit channel
-    exit chan struct{}
+	//transportServer exit channel
+	exit chan struct{}
 
-    //rpc transportServer router collection
-    route *router.Router
+	//rpc transportServer router collection
+	route *router.Router
 
-    //api router
-    *mux.Router
+	//api router
+	*mux.Router
 
-    //api http server
-    httpServer *http.Server
+	//api http server
+	httpServer *http.Server
 }
 
 func NewServer(opts opt.Option) *Server {
-    s := &Server{
-        opts:   opts,
-        exit:   make(chan struct{}),
-        Router: mux.NewRouter(),
-    }
+	s := &Server{
+		opts:   opts,
+		exit:   make(chan struct{}),
+		Router: mux.NewRouter(),
+	}
 
-    s.route = router.NewRouter(s.opts.Wrappers, s.opts.Err)
+	s.route = router.NewRouter(s.opts.Wrappers, s.opts.Err)
 
-    s.opts.TransportServer.Accept(s.route)
+	s.opts.TransportServer.Accept(s.route)
 
-    return s
+	return s
 }
 
 func (s *Server) Run() {
-    // echo method list
-    s.route.List()
+	// echo method list
+	s.route.List()
 
-    s.opts.TransportServer.Run()
+	s.opts.TransportServer.Run()
 
-    //run http transportServer
-    if s.opts.HttpAddress != "" {
-        go func() {
+	//run http transportServer
+	if s.opts.HttpAddress != "" {
+		go func() {
 
-            s.PathPrefix(s.opts.ApiPrefix).Handler(s)
+			s.PathPrefix(s.opts.ApiPrefix).Handler(s)
 
-            s.httpServer = &http.Server{
-                Handler:      s.Router,
-                Addr:         s.opts.HttpAddress,
-                WriteTimeout: 15 * time.Second,
-                ReadTimeout:  15 * time.Second,
-                IdleTimeout:  time.Second * 60,
-            }
+			s.httpServer = &http.Server{
+				Handler:      s.Router,
+				Addr:         s.opts.HttpAddress,
+				WriteTimeout: 15 * time.Second,
+				ReadTimeout:  15 * time.Second,
+				IdleTimeout:  time.Second * 60,
+			}
 
-            if err := s.httpServer.ListenAndServe(); err != nil {
-                rlog.Error(err)
-            }
-        }()
-    }
+			if err := s.httpServer.ListenAndServe(); err != nil {
+				rlog.Error(err)
+			}
+		}()
+	}
 
-    rlog.Infof(
-        "[TCP:%s][WS:%s][HTTP:%s] start success!",
-        s.opts.TcpAddress,
-        s.opts.WssAddress,
-        s.opts.HttpAddress,
-    )
+	rlog.Infof(
+		"[TCP:%s][WS:%s][HTTP:%s] start success!",
+		s.opts.TcpAddress,
+		s.opts.WssAddress,
+		s.opts.HttpAddress,
+	)
 
-    err := s.register()
-    if err != nil {
-        panic(err)
-    }
+	err := s.register()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (s *Server) register() error {
-    return s.opts.Registry.Register(s.opts.Endpoint)
+	return s.opts.Registry.Register(s.opts.Endpoint)
 }
 
 func (s *Server) RegisterHandler(method string, rr handler.Handler) {
-    s.route.RegisterHandler(method, rr)
+	s.route.RegisterHandler(method, rr)
 }
 
 func (s *Server) RegisterStreamHandler(method string, rs handler.StreamHandler) {
-    s.route.RegisterStreamHandler(method, rs)
+	s.route.RegisterStreamHandler(method, rs)
 }
 
 func (s *Server) RegisterChannelHandler(method string, rs handler.ChannelHandler) {
-    s.route.RegisterChannelHandler(method, rs)
+	s.route.RegisterChannelHandler(method, rs)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-    if r.Method == http.MethodPost {
-        var c = context.Background()
+	if r.Method == http.MethodPost {
+		var c = context.Background()
 
-        c.Metadata = new(metadata.Metadata)
-        c.SetMethod(r.URL.Path)
-        c.ContentType = r.Header.Get(namespace.DefaultHeaderContentType)
+		c.Metadata = new(metadata.Metadata)
+		c.SetMethod(r.URL.Path)
 
-        var req, rsp = parcel.PayloadIo(r.Body), parcel.NewPacket()
-        defer func() {
-            parcel.Recycle(req, rsp)
-        }()
+		for k, v := range r.Header {
+			if len(v) == 0 {
+				continue
+			}
+			c.SetHeader(k, v[0])
+		}
 
-        _ = r.Body.Close()
+		c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
 
-        err := s.route.RRProcess(c, req, rsp)
+		var req, rsp = parcel.PayloadIo(r.Body), parcel.NewPacket()
+		defer func() {
+			parcel.Recycle(req, rsp)
+		}()
 
-        //only allow post request less version 1.1.x
-        //because ServeHTTP api need support json or proto data protocol
-        if err == router.ErrNotFoundHandler {
-            //todo 404 service code config to service
-            w.WriteHeader(http.StatusNotFound)
-            return
-        }
+		_ = r.Body.Close()
 
-        if err != nil {
-            c.Error(err)
-            w.WriteHeader(http.StatusInternalServerError)
-            return
-        }
+		err := s.route.RRProcess(c, req, rsp)
 
-        w.Write(rsp.Bytes())
-    } else {
-        //todo service code config to service
-        w.WriteHeader(http.StatusMethodNotAllowed)
-        return
-    }
+		//only allow post request less version 1.1.x
+		//because ServeHTTP api need support json or proto data protocol
+		if err == router.ErrNotFoundHandler {
+			//todo 404 service code config to service
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if err != nil {
+			c.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(rsp.Bytes())
+	} else {
+		//todo service code config to service
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 func (s *Server) Close() {
-    cc, cancel := ctx.WithTimeout(ctx.Background(), time.Second*5)
-    defer cancel()
+	cc, cancel := ctx.WithTimeout(ctx.Background(), time.Second*5)
+	defer cancel()
 
-    if s.httpServer != nil {
-        _ = s.httpServer.Shutdown(cc)
-    }
+	if s.httpServer != nil {
+		_ = s.httpServer.Shutdown(cc)
+	}
 
-    if s.opts.TransportServer != nil {
-        s.opts.TransportServer.Close()
-    }
+	if s.opts.TransportServer != nil {
+		s.opts.TransportServer.Close()
+	}
 }
