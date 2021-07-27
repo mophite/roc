@@ -150,16 +150,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err == router.ErrNotFoundHandler {
 			//todo 404 service code config to service
 			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		if err != nil {
+		} else if err != nil {
 			c.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
-			return
 		}
 
-		w.Write(rsp.Bytes())
+		if len(rsp.Bytes()) > 0 {
+			w.WriteHeader(http.StatusOK)
+			w.Write(rsp.Bytes())
+		}
+
 	} else {
 		//todo service code config to service
 		w.WriteHeader(http.StatusMethodNotAllowed)

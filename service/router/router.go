@@ -101,18 +101,20 @@ func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parce
 		return ErrNotFoundHandler
 	}
 	resp, err := rr(c, req, r.interrupt())
+	if resp != nil {
+		b, err := codec.GetCodec(c.ContentType).Encode(resp)
+		if err != nil {
+			c.Error(err)
+			return err
+		}
+
+		rsp.Write(b)
+	}
+
 	if err != nil {
 		c.Error(err)
 		return err
 	}
-
-	b, err := codec.GetCodec(c.ContentType).Encode(resp)
-	if err != nil {
-		c.Error(err)
-		return err
-	}
-
-	rsp.Write(b)
 
 	return nil
 }
