@@ -1,0 +1,25 @@
+#!/bin/sh
+# 打印输出
+echo '======上传代码到服务器======'
+# 打开线上项目文件夹
+cd /code/guashu_api
+# 这个很重要，如果不取消的话将不能在cd的路径上进行git操作
+unset GIT_DIR
+
+ldflags="-X 'main.version=$(git log --pretty=format:'%H' -n 1)'"
+
+export GOROOT="/usr/local/go"
+export GOPATH=/code/go
+export GOBIN=$GOROOT/bin
+export PATH=$PATH:$GOBIN
+export GO111MODULE=on
+export GOPROXY=https://goproxy.cn
+
+git pull origin master;\
+go mod tidy
+
+make r
+
+echo $(date)"代码更新完成,commit="$ldflags >> hook.log
+echo '======代码更新完成======'
+exit

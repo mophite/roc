@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+// this proto file is for api.hello/srv.hello
+
+// request params.
+message SayReq {
+  uint32 inc = 1;
+}
+
+// response content.
+message SayRsp {
+  uint32 inc = 1;
+}
+
+// HelloWorld is service API for client and server.
+service HelloWorld {
+
+  // requestResponse or fireAndForget.
+  rpc Say(SayReq) returns (SayRsp) {}
+
+  // requestStream.
+  // SayReq is channel params.
+  rpc SayStream(stream SayReq) returns (SayRsp) {}
+
+  // requestChannel.
+  // SayReq and SayRsp is channel.
+  rpc SayChannel(stream SayReq) returns (stream SayRsp) {}
+}
