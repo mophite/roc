@@ -16,9 +16,10 @@
 package handler
 
 import (
-    "github.com/go-roc/roc/parcel"
-    "github.com/go-roc/roc/parcel/context"
-    "github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
+
+	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/context"
 )
 
 //Handler for rpc service handler
@@ -37,7 +38,7 @@ type Fire func(c *context.Context, req proto.Message) (proto.Message, error)
 type Interceptor func(c *context.Context, req proto.Message, fire Fire) (proto.Message, error)
 
 // WrapperHandler for all rpc function middleware
-type WrapperHandler func(c *context.Context) error
+type WrapperHandler func(c *context.Context) (proto.Message, error)
 
 // ApiHandler register router by POST http method
 //the request body with content-type
