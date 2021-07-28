@@ -11,9 +11,11 @@ func main() {
     s := service.New(
         service.Namespace("api.hello"),
         service.HttpAddress("0.0.0.0:9999"),
+        service.TCPAddress("0.0.0.0:8888"),
     )
 
     phello.RegisterHelloWorldServer(s.Server(), &hello.Hello{})
+
     err := s.Run()
     if err != nil {
         rlog.Error(err)

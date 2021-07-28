@@ -13,7 +13,6 @@
 //  limitations under the License.
 //
 
-
 package opt
 
 import (
@@ -34,7 +33,6 @@ import (
     "github.com/go-roc/roc/service/handler"
     "github.com/go-roc/roc/x"
     "github.com/go-roc/roc/x/fs"
-    "github.com/gorilla/mux"
 )
 
 type Options func(option *Option)
@@ -93,14 +91,14 @@ type Option struct {
     //config options
     ConfigOpt []config.Options
 
-    //http api router
-    Router *mux.Router
-
     //service discover registry
     Registry registry.Registry
 
     //service discover endpoint
     Endpoint *endpoint.Endpoint
+
+    //only need one middleware on roc http api POST/DELETE method
+    HttpMiddleware []handler.HttpInterceptor
 }
 
 func NewOpts(opts ...Options) Option {
@@ -135,6 +133,16 @@ func NewOpts(opts ...Options) Option {
 
     if opt.WssAddress != "" && opt.WssPath == "" {
         opt.WssPath = "/roc/wss"
+    }
+
+    if opt.WssPath != "" {
+        if !strings.HasPrefix(opt.WssPath, "/") {
+            opt.WssPath = "/" + opt.WssPath
+        }
+
+        if strings.HasSuffix(opt.WssPath, "/") {
+            opt.WssPath = strings.TrimSuffix(opt.WssPath, "/")
+        }
     }
 
     if opt.Err == nil {
@@ -189,8 +197,6 @@ func NewOpts(opts ...Options) Option {
     if err != nil {
         panic("config NewConfig occur error: " + err.Error())
     }
-
-    opt.Router = mux.NewRouter()
 
     if opt.Registry == nil {
         opt.Registry = registry.NewRegistry()

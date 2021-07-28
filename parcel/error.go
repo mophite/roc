@@ -34,7 +34,7 @@ var (
 )
 
 type ErrorPackager interface {
-    Encode(c codec.Codec,code ErrorCode, err error) []byte
+    Encode(c codec.Codec, code ErrorCode, err error) []byte
 }
 
 type ErrorPacket struct {
@@ -48,7 +48,7 @@ func NewErrorPacket() *ErrorPacket {
 func (e *ErrorPacket) Encode(c codec.Codec, code ErrorCode, err error) []byte {
     ep := *e
     ep.data.Code = code
-    ep.data.Message = err.Error()
+    ep.data.Msg = err.Error()
     b, _ := c.Encode(&ep.data)
     return b
 }

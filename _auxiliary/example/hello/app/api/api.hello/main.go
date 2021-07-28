@@ -8,7 +8,12 @@ import (
 )
 
 func main() {
-    s := service.New(service.HttpAddress("0.0.0.0:9999"))
+    s := service.New(
+        service.HttpAddress("0.0.0.0:9999"),
+        service.Namespace("api.hello"),
+        service.TCPAddress("0.0.0.0:8888"),
+        service.WssAddress("0.0.0.0:10000", "/hello"),
+    )
 
     phello.RegisterHelloWorldServer(s.Server(), &hello.Hello{Client: s.Client()})
     err := s.Run()

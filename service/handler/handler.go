@@ -16,10 +16,12 @@
 package handler
 
 import (
-	"github.com/gogo/protobuf/proto"
+    "net/http"
 
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/context"
+    "github.com/gogo/protobuf/proto"
+
+    "github.com/go-roc/roc/parcel"
+    "github.com/go-roc/roc/parcel/context"
 )
 
 //Handler for rpc service handler
@@ -29,7 +31,10 @@ type Handler func(c *context.Context, req *parcel.RocPacket, interrupt Intercept
 type StreamHandler func(c *context.Context, req *parcel.RocPacket) (chan proto.Message, chan error)
 
 // ChannelHandler for rpc service channel handler
-type ChannelHandler func(c *context.Context, req chan *parcel.RocPacket, errs chan error) (chan proto.Message, chan error)
+type ChannelHandler func(c *context.Context, req chan *parcel.RocPacket, errs chan error) (
+    chan proto.Message,
+    chan error,
+)
 
 //Fire run interceptor action
 type Fire func(c *context.Context, req proto.Message) (proto.Message, error)
@@ -47,3 +52,5 @@ type WrapperHandler func(c *context.Context) (proto.Message, error)
 type ApiHandler func(c *context.Context, req proto.Message, rsp proto.Message)
 
 type ApiRocHandler func(c *context.Context) (rsp proto.Message, err error)
+
+type HttpInterceptor func(w http.ResponseWriter, r *http.Request) error

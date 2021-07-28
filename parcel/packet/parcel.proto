@@ -3,11 +3,19 @@ syntax = "proto3";
 package packet;
 
 message Packet {
-    int32 code = 1;
-    string message = 2;
-    bytes data = 3;
+  int32 code = 1;
+  string msg = 2;
+  bytes data = 3;
 }
 
-message ApiPlaceholder{
+message FileReq{
+  string name = 1;
+  int64 size = 2;
+  bytes  body = 3;
+}
 
+message FileRsp{
+  int32 code = 1;
+  string msg = 2;
+  map<string, string>  data = 3;
 }

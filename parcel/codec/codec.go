@@ -21,6 +21,8 @@ import (
     "github.com/gogo/protobuf/proto"
 )
 
+//todo https://github.com/klauspost/compress use compress
+
 var defaultCodec Codec = &protoc.Proto{}
 
 const (
@@ -34,14 +36,14 @@ type Codec interface {
     Name() string
 }
 
-var defaultCodecs = map[string]Codec{
+var DefaultCodecs = map[string]Codec{
     "application/json":     jsonc.JSCodec,
     "application/proto":    &protoc.Proto{},
     "application/protobuf": &protoc.Proto{},
 }
 
 func GetCodec(contentType string) Codec {
-    c, ok := defaultCodecs[contentType]
+    c, ok := DefaultCodecs[contentType]
     if !ok {
         return defaultCodec
     }
@@ -49,5 +51,5 @@ func GetCodec(contentType string) Codec {
 }
 
 func SetCodec(contentType string, c Codec) {
-    defaultCodecs[contentType] = c
+    DefaultCodecs[contentType] = c
 }

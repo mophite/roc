@@ -17,19 +17,15 @@ package service
 
 import (
     "errors"
-    "net/http"
     "os"
     "os/signal"
-    "strings"
 
     "github.com/go-roc/roc/config"
-    "github.com/go-roc/roc/rlog"
-    "github.com/go-roc/roc/service/opt"
-    "github.com/gorilla/mux"
-
     "github.com/go-roc/roc/internal/etcd"
+    "github.com/go-roc/roc/rlog"
     "github.com/go-roc/roc/rlog/log"
     "github.com/go-roc/roc/service/client"
+    "github.com/go-roc/roc/service/opt"
     "github.com/go-roc/roc/service/server"
 )
 
@@ -55,6 +51,10 @@ func New(opts ...opt.Options) *Service {
 
     s.server = server.NewServer(s.opts)
     return s
+}
+
+func GetApiPrefix() string {
+    return DefaultApiPrefix
 }
 
 func (s *Service) Client() *client.Client {
@@ -132,132 +132,4 @@ func (s *Service) Close() {
 
     //todo flush rlog content
     log.Close()
-}
-
-var defaultRouter *mux.Router
-
-// GROUP for not post http method
-func (s *Service) GROUP(prefix string) *Service {
-    if !strings.HasPrefix(prefix, "/") {
-        prefix = "/" + prefix
-    }
-    if !strings.HasSuffix(prefix, "/") {
-        prefix = prefix + "/"
-    }
-
-    //cannot had post prefix
-    if strings.HasPrefix(prefix, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-
-    defaultRouter = s.opts.Router.PathPrefix(prefix).Subrouter()
-    return s
-}
-
-func (s *Service) GET(relativePath string, handler http.Handler) {
-
-    relativePath = tidyRelativePath(relativePath)
-
-    if strings.HasPrefix(relativePath, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodOptions, http.MethodGet)
-}
-
-func (s *Service) POST(relativePath string, handler http.Handler) {
-
-    relativePath = tidyRelativePath(relativePath)
-
-    if strings.HasPrefix(relativePath, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodPost)
-}
-
-func (s *Service) PUT(relativePath string, handler http.Handler) {
-
-    relativePath = tidyRelativePath(relativePath)
-
-    if strings.HasPrefix(relativePath, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodPut)
-}
-
-func (s *Service) DELETE(relativePath string, handler http.Handler) {
-
-    relativePath = tidyRelativePath(relativePath)
-
-    if strings.HasPrefix(relativePath, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodDelete)
-}
-
-func (s *Service) ANY(relativePath string, handler http.Handler) {
-
-    relativePath = tidyRelativePath(relativePath)
-
-    if strings.HasPrefix(relativePath, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-    defaultRouter.PathPrefix(relativePath).Handler(handler)
-}
-
-func (s *Service) HEAD(relativePath string, handler http.Handler) {
-
-    relativePath = tidyRelativePath(relativePath)
-
-    if strings.HasPrefix(relativePath, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodHead)
-}
-
-func (s *Service) PATCH(relativePath string, handler http.Handler) {
-
-    relativePath = tidyRelativePath(relativePath)
-
-    if strings.HasPrefix(relativePath, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodPatch)
-}
-
-func (s *Service) CONNECT(relativePath string, handler http.Handler) {
-
-    relativePath = tidyRelativePath(relativePath)
-
-    if strings.HasPrefix(relativePath, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodConnect)
-}
-
-func (s *Service) TRACE(relativePath string, handler http.Handler) {
-
-    relativePath = tidyRelativePath(relativePath)
-
-    if strings.HasPrefix(relativePath, GetApiPrefix()) {
-        panic("cannot contain unique prefix")
-    }
-    defaultRouter.PathPrefix(relativePath).Handler(handler).Methods(http.MethodTrace)
-}
-
-func tidyRelativePath(relativePath string) string {
-    //trim suffix "/"
-    if strings.HasSuffix(relativePath, "/") {
-        relativePath = strings.TrimSuffix(relativePath, "/")
-    }
-
-    //add prefix "/"
-    if !strings.HasPrefix(relativePath, "/") {
-        relativePath = "/" + relativePath
-    }
-
-    return relativePath
-}
-
-func GetApiPrefix() string {
-    return DefaultApiPrefix
 }
