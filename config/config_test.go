@@ -87,12 +87,5 @@ func TestDecode(t *testing.T) {
 
 		assert.Equal(t, v1.Name, "roc")
 		assert.Equal(t, v1.Age, 1)
-
-		var v2 configData
-		err = DecodePublic(key, &v2)
-		assert.NotNil(t, err)
-		assert.Equal(t, v2.Name, "")
-		assert.Equal(t, v2.Age, 0)
 	}
-
 }
