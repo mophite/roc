@@ -45,12 +45,4 @@ type Interceptor func(c *context.Context, req proto.Message, fire Fire) (proto.M
 // WrapperHandler for all rpc function middleware
 type WrapperHandler func(c *context.Context) (proto.Message, error)
 
-// ApiHandler register router by POST http method
-//the request body with content-type
-//will be json or proto data protocol. eg.
-//func (h *hello)Say(c *Context,req *phello.SayReq,rsp *phello.SayRsp)error
-type ApiHandler func(c *context.Context, req proto.Message, rsp proto.Message)
-
-type ApiRocHandler func(c *context.Context) (rsp proto.Message, err error)
-
 type HttpInterceptor func(w http.ResponseWriter, r *http.Request) error
