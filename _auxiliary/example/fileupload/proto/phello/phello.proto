@@ -1,11 +1,7 @@
 syntax = "proto3";
 
-package packet;
-
-message Packet {
-  int32 code = 1;
-  string msg = 2;
-  bytes data = 3;
+service File{
+  rpc Upload(FileReq)returns(FileRsp){}
 }
 
 message FileReq{

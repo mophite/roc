@@ -16,7 +16,9 @@
 package server
 
 import (
+	"bytes"
 	ctx "context"
+	"io"
 	"net/http"
 	"time"
 
@@ -24,6 +26,7 @@ import (
 	"github.com/go-roc/roc/parcel"
 	"github.com/go-roc/roc/parcel/codec"
 	"github.com/go-roc/roc/parcel/context"
+	"github.com/go-roc/roc/parcel/packet"
 	"github.com/go-roc/roc/rlog"
 	"github.com/go-roc/roc/service/handler"
 	"github.com/go-roc/roc/service/opt"
@@ -112,9 +115,9 @@ func (s *Server) RegisterChannelHandler(method string, rs handler.ChannelHandler
 	s.route.RegisterChannelHandler(method, rs)
 }
 
-//roc not support method GET,because you can use other http web framework
+//roc not support method GET OPTIONS,because you can use other http web framework
 //to build a restful api
-//roc support POST,DELETE for compatible rrRouter ,witch request response way
+//roc support POST,DELETE,PUT for compatible rrRouter ,witch request response way
 //because ServeHTTP api need support json or proto data protocol
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
@@ -129,7 +132,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
 
-	for i := range s.opts.HttpAddress {
+	for i := range s.opts.HttpMiddleware {
 		err := s.opts.HttpMiddleware[i](w, r)
 		if err != nil {
 			b := s.opts.Err.Encode(codec.GetCodec(c.ContentType), 400, err)
@@ -166,6 +169,61 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write(rsp.Bytes())
 		}
+
+		return
+
+	case http.MethodPut:
+		//if _, ok := codec.DefaultCodecs[c.ContentType]; !ok {
+		//	w.WriteHeader(http.StatusBadRequest)
+		//	w.Write([]byte(`400 BAD REQUEST`))
+		//	return
+		//}
+
+		f, h, err := r.FormFile("file")
+		if err != nil {
+			rlog.Error(err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`400 BAD REQUEST`))
+			return
+		}
+
+		var buf = bytes.NewBuffer(make([]byte, 0, 10485760))
+
+		io.Copy(buf, f)
+
+		var fileReq = &packet.FileReq{}
+		fileReq.Body = buf.Bytes()
+		fileReq.FileSize = h.Size
+		fileReq.FileName = h.Filename
+
+		fb, err := codec.GetCodec(c.ContentType).Encode(fileReq)
+		if err != nil {
+			rlog.Error(err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`400 BAD REQUEST`))
+			return
+		}
+
+		var req, rsp = parcel.Payload(fb), parcel.NewPacket()
+		defer func() {
+			parcel.Recycle(req, rsp)
+		}()
+		_ = r.Body.Close()
+
+		err = s.route.RRProcess(c, req, rsp)
+
+		if err == router.ErrNotFoundHandler {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`404 NOT FOUND`))
+			return
+		}
+
+		if len(rsp.Bytes()) > 0 {
+			w.WriteHeader(http.StatusOK)
+			w.Write(rsp.Bytes())
+		}
+
+		return
 	}
 
 	w.WriteHeader(http.StatusMethodNotAllowed)
