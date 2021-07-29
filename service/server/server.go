@@ -115,7 +115,7 @@ func (s *Server) RegisterChannelHandler(method string, rs handler.ChannelHandler
 	s.route.RegisterChannelHandler(method, rs)
 }
 
-//roc not support method GET OPTIONS,because you can use other http web framework
+//roc don't support method GET OPTIONS,because you can use other http web framework
 //to build a restful api
 //roc support POST,DELETE,PUT for compatible rrRouter ,witch request response way
 //because ServeHTTP api need support json or proto data protocol
@@ -146,7 +146,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost, http.MethodDelete:
 
 		if _, ok := codec.DefaultCodecs[c.ContentType]; !ok {
-			w.Header().Set("Content-type", "application/text")
+			w.Header().Set("Content-type", "text/plain")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`400 BAD REQUEST`))
 			return
@@ -162,7 +162,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err := s.route.RRProcess(c, req, rsp)
 
 		if err == router.ErrNotFoundHandler {
-			w.Header().Set("Content-type", "application/text")
+			w.Header().Set("Content-type", "text/plain")
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(`404 NOT FOUND`))
 			return
@@ -185,7 +185,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f, h, err := r.FormFile("file")
 		if err != nil {
 			rlog.Error(err)
-			w.Header().Set("Content-type", "application/text")
+			w.Header().Set("Content-type", "text/plain")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`400 BAD REQUEST`))
 			return
@@ -203,7 +203,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fb, err := codec.GetCodec(c.ContentType).Encode(fileReq)
 		if err != nil {
 			rlog.Error(err)
-			w.Header().Set("Content-type", "application/text")
+			w.Header().Set("Content-type", "text/plain")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`400 BAD REQUEST`))
 			return
@@ -218,13 +218,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err = s.route.RRProcess(c, req, rsp)
 
 		if err == router.ErrNotFoundHandler {
-			w.Header().Set("Content-type", "application/text")
+			w.Header().Set("Content-type", "text/plain")
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(`404 NOT FOUND`))
 			return
 		}
 
 		if len(rsp.Bytes()) > 0 {
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			w.Write(rsp.Bytes())
 		}
@@ -232,7 +233,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-type", "application/text")
+	w.Header().Set("Content-type", "text/plain")
 	w.WriteHeader(http.StatusMethodNotAllowed)
 	w.Write([]byte(`METHOD NOT ALLOWED`))
 	return
