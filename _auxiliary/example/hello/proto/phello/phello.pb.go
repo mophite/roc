@@ -4,19 +4,21 @@
 package phello
 
 import (
-	fmt "fmt"
-	parcel "github.com/go-roc/roc/parcel"
-	codec "github.com/go-roc/roc/parcel/codec"
-	context "github.com/go-roc/roc/parcel/context"
-	service "github.com/go-roc/roc/service"
-	client "github.com/go-roc/roc/service/client"
-	handler "github.com/go-roc/roc/service/handler"
-	invoke "github.com/go-roc/roc/service/invoke"
-	server "github.com/go-roc/roc/service/server"
-	proto "github.com/gogo/protobuf/proto"
-	io "io"
-	math "math"
+	"fmt"
+	"io"
+	"math"
 	math_bits "math/bits"
+
+	"github.com/gogo/protobuf/proto"
+
+	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/codec"
+	"github.com/go-roc/roc/parcel/context"
+	"github.com/go-roc/roc/service"
+	"github.com/go-roc/roc/service/client"
+	"github.com/go-roc/roc/service/handler"
+	"github.com/go-roc/roc/service/invoke"
+	"github.com/go-roc/roc/service/server"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -240,19 +242,19 @@ func NewHelloWorldClient(c *client.Client) HelloWorldClient {
 
 func (cc *helloWorldClient) Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error) {
 	rsp := &SayRsp{}
-	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"HelloWorld/Say", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"helloworld/say", req, rsp, opts...)
 	return rsp, err
 }
 
 // HelloWorldServer is the server API for HelloWorld server.
 type HelloWorldServer interface {
 	// requestResponse or fireAndForget.
-	Say(c *context.Context, req *SayReq, rsp *SayRsp)
+	Say(c *context.Context, req *SayReq, rsp *SayRsp) (err error)
 }
 
 func RegisterHelloWorldServer(s *server.Server, h HelloWorldServer) {
 	var r = &helloWorldHandler{h: h, s: s}
-	s.RegisterHandler(service.GetApiPrefix()+"HelloWorld/Say", r.Say)
+	s.RegisterHandler(service.GetApiPrefix()+"helloworld/say", r.Say)
 }
 
 type helloWorldHandler struct {
@@ -268,12 +270,12 @@ func (r *helloWorldHandler) Say(c *context.Context, req *parcel.RocPacket, inter
 	}
 	var out = SayRsp{}
 	if interrupt == nil {
-		r.h.Say(c, &in, &out)
-		return &out, nil
+		err = r.h.Say(c, &in, &out)
+		return &out, err
 	}
 	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		r.h.Say(c, req.(*SayReq), &out)
-		return &out, nil
+		err = r.h.Say(c, req.(*SayReq), &out)
+		return &out, err
 	}
 	return interrupt(c, &in, f)
 }

@@ -130,6 +130,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		c.SetHeader(k, v[0])
 	}
+
 	c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
 
 	for i := range s.opts.HttpMiddleware {

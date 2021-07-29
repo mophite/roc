@@ -1,14 +1,15 @@
 package hello
 
 import (
-	"github.com/go-roc/roc/_auxiliary/example/httpservice/proto/phello"
+	"github.com/go-roc/roc/_auxiliary/example/hello/proto/phello"
 	"github.com/go-roc/roc/parcel/context"
 )
 
 type Hello struct {
 }
 
-func (h *Hello) Say(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
+func (h *Hello) Say(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) error {
 	c.Info("--------srv hello--------", req.Ping)
 	rsp.Pong = "pong"
+	return nil
 }

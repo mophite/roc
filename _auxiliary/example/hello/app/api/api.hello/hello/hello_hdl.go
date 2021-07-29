@@ -14,16 +14,20 @@ type Hello struct {
 
 var sayClient phello.HelloWorldClient
 
-func (h *Hello) Say(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
+func (h *Hello) Say(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) error {
 	c.Info("--------api hello--------", req.Ping, c.ContentType)
 	if sayClient == nil {
 		sayClient = phello.NewHelloWorldClient(h.Client)
 	}
 
-	_, err := sayClient.Say(c, req, invoke.WithName("srv.hello"))
+	sayRsp, err := sayClient.Say(c, req, invoke.WithName("srv.hello"))
 	if err != nil {
 		rlog.Error(err)
 		rsp.Pong = "error"
-		return
+		return err
 	}
+
+	rsp.Pong = sayRsp.Pong
+
+	return nil
 }
