@@ -24,7 +24,7 @@ import (
 
 //todo https://github.com/klauspost/compress use compress
 
-var defaultCodec Codec = &protoc.Proto{}
+var defaultCodec Codec = jsonc.JSCodec
 
 const (
 	ApplicationJson  = "application/json"

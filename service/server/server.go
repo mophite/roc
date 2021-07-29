@@ -235,7 +235,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-type", "text/plain")
 	w.WriteHeader(http.StatusMethodNotAllowed)
-	w.Write([]byte(`METHOD NOT ALLOWED`))
+	w.Write([]byte(`405 METHOD NOT ALLOWED`))
 	return
 }
 
