@@ -230,18 +230,14 @@ func (r *roc) generateService(file *generator.FileDescriptor, service *pb.Servic
 
 	for _, v := range service.Method {
 		if !v.GetClientStreaming() && !v.GetServerStreaming() {
-			//if r.GetRocApiPrefix(generator.CamelCase(v.GetName())) {
-			//    //r.P(`s.RegisterHandler("`, serverName, ".", *v.Name, `",r.`, *v.Name, ")")
-			//    continue
-			//}
-			r.P(`s.RegisterHandler(service.GetApiPrefix()+"`, serverName, "/", *v.Name, `",r.`, *v.Name, ")")
+			r.P(`s.RegisterHandler(service.GetApiPrefix()+"`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
 		}
 		if v.GetClientStreaming() && !v.GetServerStreaming() {
-			r.P(`s.RegisterStreamHandler("`, serverName, "/", *v.Name, `",r.`, *v.Name, ")")
+			r.P(`s.RegisterStreamHandler("`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
 		}
 
 		if v.GetClientStreaming() && v.GetServerStreaming() {
-			r.P(`s.RegisterChannelHandler("`, serverName, "/", *v.Name, `",r.`, *v.Name, ")")
+			r.P(`s.RegisterChannelHandler("`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
 		}
 	}
 	r.P("}")
@@ -334,7 +330,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 
 		r.P("func (cc *", unexport(serverName), "Client) ", r.generateClientSignature(serverName, method), "{")
 		r.P("rsp := &", outType, "{}")
-		r.P(`err := cc.c.InvokeRR(c, service.GetApiPrefix()+"`, serverName, "/", methodName, `", req, rsp, opts...)`)
+		r.P(`err := cc.c.InvokeRR(c, service.GetApiPrefix()+"`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", req, rsp, opts...)`)
 		r.P("return rsp, err")
 		r.P("}")
 		r.P()
@@ -343,7 +339,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 
 	if method.GetClientStreaming() && !method.GetServerStreaming() {
 		r.P("func (cc *", unexport(serverName), "Client) ", r.generateClientSignature(serverName, method), "{")
-		r.P(`data, errs :=cc.c.InvokeRS(c, "`, serverName, "/", methodName, `", req, opts...)`)
+		r.P(`data, errs :=cc.c.InvokeRS(c, "`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", req, opts...)`)
 		r.P("var rsp = make(chan *", outType, ")")
 		r.P("go func() {")
 		r.P("for b := range data {")
@@ -377,7 +373,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 		r.P("close(in)")
 		r.P("}()")
 		r.P()
-		r.P(`data, errs :=cc.c.InvokeRC(c, "`, serverName, "/", methodName, `", in, errIn, opts...)`)
+		r.P(`data, errs :=cc.c.InvokeRC(c, "`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", in, errIn, opts...)`)
 		r.P("var rsp = make(chan *", outType, ")")
 		r.P("go func() {")
 		r.P("for b := range data {")
