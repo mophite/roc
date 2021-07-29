@@ -146,6 +146,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost, http.MethodDelete:
 
 		if _, ok := codec.DefaultCodecs[c.ContentType]; !ok {
+			w.Header().Set("Content-type", "application/text")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`400 BAD REQUEST`))
 			return
@@ -161,6 +162,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err := s.route.RRProcess(c, req, rsp)
 
 		if err == router.ErrNotFoundHandler {
+			w.Header().Set("Content-type", "application/text")
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(`404 NOT FOUND`))
 			return
@@ -183,6 +185,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f, h, err := r.FormFile("file")
 		if err != nil {
 			rlog.Error(err)
+			w.Header().Set("Content-type", "application/text")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`400 BAD REQUEST`))
 			return
@@ -200,6 +203,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fb, err := codec.GetCodec(c.ContentType).Encode(fileReq)
 		if err != nil {
 			rlog.Error(err)
+			w.Header().Set("Content-type", "application/text")
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`400 BAD REQUEST`))
 			return
@@ -214,6 +218,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err = s.route.RRProcess(c, req, rsp)
 
 		if err == router.ErrNotFoundHandler {
+			w.Header().Set("Content-type", "application/text")
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(`404 NOT FOUND`))
 			return
@@ -227,6 +232,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-type", "application/text")
 	w.WriteHeader(http.StatusMethodNotAllowed)
 	w.Write([]byte(`METHOD NOT ALLOWED`))
 	return
