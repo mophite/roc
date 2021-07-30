@@ -16,10 +16,10 @@
 package codec
 
 import (
-	"github.com/gogo/protobuf/proto"
+    "github.com/gogo/protobuf/proto"
 
-	"github.com/go-roc/roc/parcel/codec/jsonc"
-	"github.com/go-roc/roc/parcel/codec/protoc"
+    "github.com/go-roc/roc/parcel/codec/jsonc"
+    "github.com/go-roc/roc/parcel/codec/protoc"
 )
 
 //todo https://github.com/klauspost/compress use compress
@@ -27,31 +27,34 @@ import (
 var defaultCodec Codec = jsonc.JSCodec
 
 const (
-	ApplicationJson  = "application/json"
-	ApplicationProto = "application/proto"
+    ApplicationJson  = "application/json"
+    ApplicationProto = "application/proto"
 )
 
 type Codec interface {
-	Encode(message proto.Message) ([]byte, error)
-	Decode(b []byte, message proto.Message) error
-	Name() string
+    Encode(message proto.Message) ([]byte, error)
+    Decode(b []byte, message proto.Message) error
+    MustEncodeString(message proto.Message) string
+    MustEncode(message proto.Message) []byte
+    MustDecode(b []byte, message proto.Message)
+    Name() string
 }
 
 var DefaultCodecs = map[string]Codec{
-	"application/json":     jsonc.JSCodec,
-	"application/proto":    &protoc.Proto{},
-	"application/protobuf": &protoc.Proto{},
-	//"multipart/form-data":  nil,
+    "application/json":     jsonc.JSCodec,
+    "application/proto":    &protoc.Proto{},
+    "application/protobuf": &protoc.Proto{},
+    //"multipart/form-data":  nil,
 }
 
-func GetCodec(contentType string) Codec {
-	c, ok := DefaultCodecs[contentType]
-	if !ok {
-		return defaultCodec
-	}
-	return c
+func CodecType(contentType string) Codec {
+    c, ok := DefaultCodecs[contentType]
+    if !ok {
+        return defaultCodec
+    }
+    return c
 }
 
 func SetCodec(contentType string, c Codec) {
-	DefaultCodecs[contentType] = c
+    DefaultCodecs[contentType] = c
 }

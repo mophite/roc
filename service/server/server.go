@@ -16,238 +16,277 @@
 package server
 
 import (
-	"bytes"
-	ctx "context"
-	"io"
-	"net/http"
-	"time"
+    "bytes"
+    ctx "context"
+    "io"
+    "net/http"
+    "time"
 
-	"github.com/go-roc/roc/internal/namespace"
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/codec"
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/parcel/packet"
-	"github.com/go-roc/roc/rlog"
-	"github.com/go-roc/roc/service/handler"
-	"github.com/go-roc/roc/service/opt"
-	"github.com/go-roc/roc/service/router"
+    "github.com/go-roc/roc/internal/namespace"
+    "github.com/go-roc/roc/parcel"
+    "github.com/go-roc/roc/parcel/codec"
+    "github.com/go-roc/roc/parcel/context"
+    "github.com/go-roc/roc/parcel/packet"
+    "github.com/go-roc/roc/rlog"
+    "github.com/go-roc/roc/service/handler"
+    "github.com/go-roc/roc/service/opt"
+    "github.com/go-roc/roc/service/router"
+    "github.com/rs/cors"
 )
 
 type Server struct {
-	//run transportServer option
-	opts opt.Option
+    //run transportServer option
+    opts opt.Option
 
-	//transportServer exit channel
-	exit chan struct{}
+    //transportServer exit channel
+    exit chan struct{}
 
-	//rpc transportServer router collection
-	route *router.Router
+    //rpc transportServer router collection
+    route *router.Router
 
-	//api http server
-	httpServer *http.Server
+    //api http server
+    httpServer *http.Server
 }
 
 func NewServer(opts opt.Option) *Server {
-	s := &Server{
-		opts: opts,
-		exit: make(chan struct{}),
-	}
+    s := &Server{
+        opts: opts,
+        exit: make(chan struct{}),
+    }
 
-	s.route = router.NewRouter(s.opts.Wrappers, s.opts.Err)
+    s.route = router.NewRouter(s.opts.Wrappers, s.opts.Err)
 
-	s.opts.TransportServer.Accept(s.route)
+    s.opts.TransportServer.Accept(s.route)
 
-	return s
+    return s
 }
 
 func (s *Server) Run() {
-	// echo method list
-	s.route.List()
+    // echo method list
+    s.route.List()
 
-	s.opts.TransportServer.Run()
+    s.opts.TransportServer.Run()
 
-	//run http transportServer
-	if s.opts.HttpAddress != "" {
-		go func() {
+    //run http transportServer
+    if s.opts.HttpAddress != "" {
+        go func() {
 
-			http.Handle(s.opts.ApiPrefix, s)
+            http.Handle(s.opts.ApiPrefix, cors.New(*s.opts.CorsOptions).Handler(s))
 
-			s.httpServer = &http.Server{
-				Handler:      s,
-				Addr:         s.opts.HttpAddress,
-				WriteTimeout: 15 * time.Second,
-				ReadTimeout:  15 * time.Second,
-				IdleTimeout:  time.Second * 60,
-			}
+            s.httpServer = &http.Server{
+                Handler:      s,
+                Addr:         s.opts.HttpAddress,
+                WriteTimeout: 15 * time.Second,
+                ReadTimeout:  15 * time.Second,
+                IdleTimeout:  time.Second * 60,
+            }
 
-			if err := s.httpServer.ListenAndServe(); err != nil {
-				rlog.Error(err)
-			}
-		}()
-	}
+            if err := s.httpServer.ListenAndServe(); err != nil {
+                rlog.Error(err)
+            }
+        }()
+    }
 
-	rlog.Infof(
-		"[TCP:%s][WS:%s][HTTP:%s] start success!",
-		s.opts.TcpAddress,
-		s.opts.WssAddress,
-		s.opts.HttpAddress,
-	)
+    rlog.Infof(
+        "[TCP:%s][WS:%s][HTTP:%s] start success!",
+        s.opts.TcpAddress,
+        s.opts.WssAddress,
+        s.opts.HttpAddress,
+    )
 
-	err := s.register()
-	if err != nil {
-		panic(err)
-	}
+    err := s.register()
+    if err != nil {
+        panic(err)
+    }
 }
 
 func (s *Server) register() error {
-	return s.opts.Registry.Register(s.opts.Endpoint)
+    return s.opts.Registry.Register(s.opts.Endpoint)
 }
 
 func (s *Server) RegisterHandler(method string, rr handler.Handler) {
-	s.route.RegisterHandler(method, rr)
+    s.route.RegisterHandler(method, rr)
 }
 
 func (s *Server) RegisterStreamHandler(method string, rs handler.StreamHandler) {
-	s.route.RegisterStreamHandler(method, rs)
+    s.route.RegisterStreamHandler(method, rs)
 }
 
 func (s *Server) RegisterChannelHandler(method string, rs handler.ChannelHandler) {
-	s.route.RegisterChannelHandler(method, rs)
+    s.route.RegisterChannelHandler(method, rs)
 }
 
-//roc don't support method GET OPTIONS,because you can use other http web framework
-//to build a restful api
-//roc support POST,DELETE,PUT for compatible rrRouter ,witch request response way
+//roc don't suggest method like GET,because you can use other http web framework
+//to build a restful api with not by roc
+//roc support POST,DELETE,PUT,GET,OPTIONS for compatible rrRouter ,witch request response way
 //because ServeHTTP api need support json or proto data protocol
+//suggest just use POST,PUT for your roc service
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	var c = context.Background()
-	c.SetMethod(r.URL.Path)
+    if r.Method == http.MethodOptions {
+        w.WriteHeader(http.StatusOK)
+        return
+    }
 
-	for k, v := range r.Header {
-		if len(v) == 0 {
-			continue
-		}
-		c.SetHeader(k, v[0])
-	}
+    var c = context.Background()
+    c.SetMethod(r.URL.Path)
 
-	c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
+    for k, v := range r.Header {
+        if len(v) == 0 {
+            continue
+        }
+        c.SetHeader(k, v[0])
+    }
 
-	for i := range s.opts.HttpMiddleware {
-		err := s.opts.HttpMiddleware[i](w, r)
-		if err != nil {
-			b := s.opts.Err.Encode(codec.GetCodec(c.ContentType), 400, err)
-			w.Write(b)
-			return
-		}
-	}
+    c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
 
-	switch r.Method {
-	case http.MethodPost, http.MethodDelete:
+    w.Header().Set(namespace.DefaultHeaderContentType, c.ContentType)
 
-		if _, ok := codec.DefaultCodecs[c.ContentType]; !ok {
-			w.Header().Set("Content-type", "text/plain")
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`400 BAD REQUEST`))
-			return
-		}
+    switch r.Method {
+    case http.MethodPost, http.MethodDelete:
 
-		var req, rsp = parcel.PayloadIo(r.Body), parcel.NewPacket()
-		defer func() {
-			parcel.Recycle(req, rsp)
-		}()
+        if _, ok := codec.DefaultCodecs[c.ContentType]; !ok {
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusBadRequest)
+            w.Write([]byte(`400 Bad Request`))
+            return
+        }
 
-		_ = r.Body.Close()
+        var req, rsp = parcel.PayloadIo(r.Body), parcel.NewPacket()
+        defer func() {
+            parcel.Recycle(req, rsp)
+        }()
 
-		err := s.route.RRProcess(c, req, rsp)
+        _ = r.Body.Close()
 
-		if err == router.ErrNotFoundHandler {
-			w.Header().Set("Content-type", "text/plain")
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`404 NOT FOUND`))
-			return
-		}
+        err := s.route.RRProcess(c, req, rsp)
 
-		if len(rsp.Bytes()) > 0 {
-			w.WriteHeader(http.StatusOK)
-			w.Write(rsp.Bytes())
-		}
+        if err == router.ErrNotFoundHandler {
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusNotFound)
+            w.Write([]byte(`404 Not Found`))
+            return
+        }
 
-		return
+        if len(rsp.Bytes()) > 0 {
+            w.WriteHeader(http.StatusOK)
+            w.Write(rsp.Bytes())
+        }
 
-	case http.MethodPut:
-		//if _, ok := codec.DefaultCodecs[c.ContentType]; !ok {
-		//	w.WriteHeader(http.StatusBadRequest)
-		//	w.Write([]byte(`400 BAD REQUEST`))
-		//	return
-		//}
+        return
 
-		f, h, err := r.FormFile("file")
-		if err != nil {
-			rlog.Error(err)
-			w.Header().Set("Content-type", "text/plain")
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`400 BAD REQUEST`))
-			return
-		}
+    case http.MethodPut:
 
-		var buf = bytes.NewBuffer(make([]byte, 0, 10485760))
+        f, h, err := r.FormFile("file")
+        if err != nil {
+            rlog.Error(err)
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusBadRequest)
+            w.Write([]byte(`400 Bad Request`))
+            return
+        }
 
-		io.Copy(buf, f)
+        var buf = bytes.NewBuffer(make([]byte, 0, 10485760))
 
-		var fileReq = &packet.FileReq{}
-		fileReq.Body = buf.Bytes()
-		fileReq.FileSize = h.Size
-		fileReq.FileName = h.Filename
+        io.Copy(buf, f)
 
-		fb, err := codec.GetCodec(c.ContentType).Encode(fileReq)
-		if err != nil {
-			rlog.Error(err)
-			w.Header().Set("Content-type", "text/plain")
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`400 BAD REQUEST`))
-			return
-		}
+        var fileReq = &packet.FileReq{}
+        fileReq.Body = buf.Bytes()
+        fileReq.FileSize = h.Size
+        fileReq.FileName = h.Filename
 
-		var req, rsp = parcel.Payload(fb), parcel.NewPacket()
-		defer func() {
-			parcel.Recycle(req, rsp)
-		}()
-		_ = r.Body.Close()
+        fb, err := c.Codec().Encode(fileReq)
+        if err != nil {
+            rlog.Error(err)
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusBadRequest)
+            w.Write([]byte(`400 Bad Request`))
+            return
+        }
 
-		err = s.route.RRProcess(c, req, rsp)
+        var req, rsp = parcel.Payload(fb), parcel.NewPacket()
+        defer func() {
+            parcel.Recycle(req, rsp)
+        }()
+        _ = r.Body.Close()
 
-		if err == router.ErrNotFoundHandler {
-			w.Header().Set("Content-type", "text/plain")
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`404 NOT FOUND`))
-			return
-		}
+        err = s.route.RRProcess(c, req, rsp)
 
-		if len(rsp.Bytes()) > 0 {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write(rsp.Bytes())
-		}
+        if err == router.ErrNotFoundHandler {
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusNotFound)
+            w.Write([]byte(`404 Not Found`))
+            return
+        }
 
-		return
-	}
+        if len(rsp.Bytes()) > 0 {
+            w.WriteHeader(http.StatusOK)
+            w.Write(rsp.Bytes())
+        }
 
-	w.Header().Set("Content-type", "text/plain")
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	w.Write([]byte(`405 METHOD NOT ALLOWED`))
-	return
+        return
+
+    case http.MethodGet:
+        _ = r.ParseForm()
+
+        var apiReq = &packet.ApiReq{Params: make(map[string]string, len(r.Form))}
+        for k, v := range r.Form {
+            if len(v) > 0 {
+                apiReq.Params[k] = v[0]
+            }
+        }
+
+        fb, err := c.Codec().Encode(apiReq)
+        if err != nil {
+            rlog.Error(err)
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusBadRequest)
+            w.Write([]byte(`400 Bad Request`))
+            return
+        }
+
+        var req, rsp = parcel.Payload(fb), parcel.NewPacket()
+        defer func() {
+            parcel.Recycle(req, rsp)
+        }()
+        _ = r.Body.Close()
+
+        err = s.route.RRProcess(c, req, rsp)
+
+        if err == router.ErrNotFoundHandler {
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusNotFound)
+            w.Write([]byte(`404 Not Found`))
+            return
+        }
+
+        if len(rsp.Bytes()) > 0 {
+            w.WriteHeader(http.StatusOK)
+            w.Write(rsp.Bytes())
+        }
+
+        return
+
+    case http.MethodOptions:
+        w.WriteHeader(http.StatusOK)
+        return
+    }
+
+    w.Header().Set("Content-type", "text/plain")
+    w.WriteHeader(http.StatusMethodNotAllowed)
+    w.Write([]byte(`405 Method Not Allowed`))
+    return
 }
 
 func (s *Server) Close() {
-	cc, cancel := ctx.WithTimeout(ctx.Background(), time.Second*5)
-	defer cancel()
+    cc, cancel := ctx.WithTimeout(ctx.Background(), time.Second*5)
+    defer cancel()
 
-	if s.httpServer != nil {
-		_ = s.httpServer.Shutdown(cc)
-	}
+    if s.httpServer != nil {
+        _ = s.httpServer.Shutdown(cc)
+    }
 
-	if s.opts.TransportServer != nil {
-		s.opts.TransportServer.Close()
-	}
+    if s.opts.TransportServer != nil {
+        s.opts.TransportServer.Close()
+    }
 }

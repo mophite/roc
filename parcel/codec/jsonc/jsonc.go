@@ -38,8 +38,26 @@ func (j *JsonCodec) Encode(req proto.Message) ([]byte, error) {
     return b, nil
 }
 
+func (j *JsonCodec) MustEncode(req proto.Message) []byte {
+    b, _ := j.jsonCodec.Marshal(req)
+    return b
+}
+
+func (j *JsonCodec) MustEncodeString(req proto.Message) string {
+    b, err := j.jsonCodec.MarshalToString(req)
+    if err != nil {
+        return ""
+    }
+
+    return b
+}
+
 func (j *JsonCodec) Decode(b []byte, rsp proto.Message) error {
     return j.jsonCodec.Unmarshal(b, rsp)
+}
+
+func (j *JsonCodec) MustDecode(b []byte, rsp proto.Message) {
+    _ = j.jsonCodec.Unmarshal(b, rsp)
 }
 
 func (j *JsonCodec) Name() string {

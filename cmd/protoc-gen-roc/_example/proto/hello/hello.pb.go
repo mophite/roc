@@ -6,7 +6,6 @@ package hello
 import (
 	fmt "fmt"
 	parcel "github.com/go-roc/roc/parcel"
-	codec "github.com/go-roc/roc/parcel/codec"
 	context "github.com/go-roc/roc/parcel/context"
 	service "github.com/go-roc/roc/service"
 	client "github.com/go-roc/roc/service/client"
@@ -75,7 +74,7 @@ func (m *SayReq) GetName() string {
 }
 
 type SayRsp struct {
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
 func (m *SayRsp) Reset()         { *m = SayRsp{} }
@@ -118,115 +117,26 @@ func (m *SayRsp) GetName() string {
 	return ""
 }
 
-type RocReq struct {
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-}
-
-func (m *RocReq) Reset()         { *m = RocReq{} }
-func (m *RocReq) String() string { return proto.CompactTextString(m) }
-func (*RocReq) ProtoMessage()    {}
-func (*RocReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ef911816e0a8ce, []int{2}
-}
-func (m *RocReq) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *RocReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_RocReq.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *RocReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RocReq.Merge(m, src)
-}
-func (m *RocReq) XXX_Size() int {
-	return m.Size()
-}
-func (m *RocReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_RocReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RocReq proto.InternalMessageInfo
-
-func (m *RocReq) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-type RocRsp struct {
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-}
-
-func (m *RocRsp) Reset()         { *m = RocRsp{} }
-func (m *RocRsp) String() string { return proto.CompactTextString(m) }
-func (*RocRsp) ProtoMessage()    {}
-func (*RocRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ef911816e0a8ce, []int{3}
-}
-func (m *RocRsp) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *RocRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_RocRsp.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *RocRsp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RocRsp.Merge(m, src)
-}
-func (m *RocRsp) XXX_Size() int {
-	return m.Size()
-}
-func (m *RocRsp) XXX_DiscardUnknown() {
-	xxx_messageInfo_RocRsp.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RocRsp proto.InternalMessageInfo
-
-func (m *RocRsp) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
 func init() {
-	proto.RegisterType((*SayReq)(nil), "SayReq")
-	proto.RegisterType((*SayRsp)(nil), "SayRsp")
-	proto.RegisterType((*RocReq)(nil), "RocReq")
-	proto.RegisterType((*RocRsp)(nil), "RocRsp")
+	proto.RegisterType((*SayReq)(nil), "hello.SayReq")
+	proto.RegisterType((*SayRsp)(nil), "hello.SayRsp")
 }
 
 func init() { proto.RegisterFile("hello.proto", fileDescriptor_61ef911816e0a8ce) }
 
 var fileDescriptor_61ef911816e0a8ce = []byte{
-	// 156 bytes of a gzipped FileDescriptorProto
+	// 176 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xce, 0x48, 0xcd, 0xc9,
-	0xc9, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x57, 0x92, 0xe1, 0x62, 0x0b, 0x4e, 0xac, 0x0c, 0x4a,
-	0x2d, 0x14, 0x12, 0xe2, 0x62, 0xc9, 0x4b, 0xcc, 0x4d, 0x95, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c,
-	0x02, 0xb3, 0x61, 0xb2, 0xc5, 0x05, 0x70, 0x59, 0x26, 0x54, 0xd9, 0xa0, 0xfc, 0x64, 0x3c, 0x7a,
-	0x41, 0xb2, 0xd8, 0xf5, 0x1a, 0xd9, 0x72, 0xb1, 0x7a, 0x80, 0x9c, 0x21, 0x24, 0xc9, 0xc5, 0x1c,
-	0x9c, 0x58, 0x29, 0xc4, 0xae, 0x07, 0x71, 0x86, 0x14, 0x84, 0x51, 0x5c, 0xa0, 0xc4, 0x00, 0x92,
-	0x0a, 0xca, 0x4f, 0x16, 0x62, 0xd7, 0x83, 0xd8, 0x22, 0x05, 0x61, 0x80, 0xa4, 0x9c, 0x24, 0x4e,
-	0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x09, 0x8f, 0xe5, 0x18,
-	0x2e, 0x3c, 0x96, 0x63, 0xb8, 0xf1, 0x58, 0x8e, 0x21, 0x89, 0x0d, 0xec, 0x2f, 0x63, 0x40, 0x00,
-	0x00, 0x00, 0xff, 0xff, 0x0e, 0xef, 0xf9, 0x4d, 0xe6, 0x00, 0x00, 0x00,
+	0xc9, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x73, 0x94, 0x64, 0xb8, 0xd8, 0x82,
+	0x13, 0x2b, 0x83, 0x52, 0x0b, 0x85, 0x84, 0xb8, 0x58, 0xf2, 0x12, 0x73, 0x53, 0x25, 0x18, 0x15,
+	0x18, 0x35, 0x38, 0x83, 0xc0, 0x6c, 0x98, 0x6c, 0x71, 0x01, 0x36, 0x59, 0xa3, 0x29, 0x8c, 0x5c,
+	0x5c, 0x1e, 0x20, 0x53, 0xc2, 0xf3, 0x8b, 0x72, 0x52, 0x84, 0x54, 0xb9, 0x98, 0x83, 0x13, 0x2b,
+	0x85, 0x78, 0xf5, 0x20, 0xd6, 0x40, 0x8c, 0x95, 0x42, 0xe6, 0x16, 0x17, 0x28, 0x31, 0x08, 0xe9,
+	0x72, 0x71, 0x06, 0x27, 0x56, 0x06, 0x97, 0x14, 0xa5, 0x26, 0xe6, 0x12, 0x52, 0xac, 0xc1, 0x28,
+	0x64, 0xc0, 0xc5, 0x15, 0x9c, 0x58, 0xe9, 0x9c, 0x91, 0x98, 0x97, 0x97, 0x9a, 0x43, 0x58, 0xbd,
+	0x01, 0xa3, 0x93, 0xc4, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7,
+	0x38, 0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x24, 0xb1, 0x81,
+	0xbd, 0x6e, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x3c, 0x0b, 0x23, 0x43, 0x09, 0x01, 0x00, 0x00,
 }
 
 func (m *SayReq) Marshal() (dAtA []byte, err error) {
@@ -284,67 +194,7 @@ func (m *SayRsp) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Name)
 		i = encodeVarintHello(dAtA, i, uint64(len(m.Name)))
 		i--
-		dAtA[i] = 0x12
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *RocReq) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *RocReq) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *RocReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintHello(dAtA, i, uint64(len(m.Name)))
-		i--
 		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *RocRsp) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *RocRsp) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *RocRsp) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintHello(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0x12
 	}
 	return len(dAtA) - i, nil
 }
@@ -374,82 +224,181 @@ var _ server.Server
 // is compatible with the roc package it is being compiled against.
 const _ = service.SupportPackageIsVersion1
 
-type HelloClient interface {
+type HelloWorldClient interface {
+	// requestResponse or fireAndForget.
 	Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error)
-	Roc(c *context.Context, req *RocReq, opts ...invoke.InvokeOptions) (*RocRsp, error)
+	// requestStream.
+	// SayReq is channel params.
+	SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error)
+	// requestChannel.
+	// SayReq and SayRsp is channel.
+	SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error)
 }
 
-type helloClient struct {
+type helloWorldClient struct {
 	c *client.Client
 }
 
-func NewHelloClient(c *client.Client) HelloClient {
-	return &helloClient{c}
+func NewHelloWorldClient(c *client.Client) HelloWorldClient {
+	return &helloWorldClient{c}
 }
 
-func (cc *helloClient) Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error) {
+func (cc *helloWorldClient) Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error) {
 	rsp := &SayRsp{}
-	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"Hello/Say", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"helloworld/say", req, rsp, opts...)
 	return rsp, err
 }
 
-func (cc *helloClient) Roc(c *context.Context, req *RocReq, opts ...invoke.InvokeOptions) (*RocRsp, error) {
-	rsp := &RocRsp{}
-	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"Hello/Roc", req, rsp, opts...)
-	return rsp, err
+func (cc *helloWorldClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
+	data, errs := cc.c.InvokeRS(c, "helloworld/saystream", req, opts...)
+	var rsp = make(chan *SayRsp)
+	go func() {
+		for b := range data {
+			v := &SayRsp{}
+			err := c.Codec().Decode(b, v)
+			if err != nil {
+				errs <- err
+				break
+			}
+			rsp <- v
+		}
+		close(rsp)
+	}()
+	return rsp, errs
 }
 
-// HelloServer is the server API for Hello server.
-type HelloServer interface {
-	Say(c *context.Context, req *SayReq, rsp *SayRsp)
-	Roc(c *context.Context, req *RocReq, rsp *RocRsp)
+func (cc *helloWorldClient) SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
+	var in = make(chan []byte)
+	go func() {
+		for b := range req {
+			v, err := c.Codec().Encode(b)
+			if err != nil {
+				errIn <- err
+				break
+			}
+			in <- v
+		}
+		close(in)
+	}()
+
+	data, errs := cc.c.InvokeRC(c, "helloworld/saychannel", in, errIn, opts...)
+	var rsp = make(chan *SayRsp)
+	go func() {
+		for b := range data {
+			v := &SayRsp{}
+			err := c.Codec().Decode(b, v)
+			if err != nil {
+				errs <- err
+				break
+			}
+			rsp <- v
+		}
+		close(rsp)
+	}()
+	return rsp, errs
 }
 
-func RegisterHelloServer(s *server.Server, h HelloServer) {
-	var r = &helloHandler{h: h, s: s}
-	s.RegisterHandler(service.GetApiPrefix()+"Hello/Say", r.Say)
-	s.RegisterHandler(service.GetApiPrefix()+"Hello/Roc", r.Roc)
+// HelloWorldServer is the server API for HelloWorld server.
+type HelloWorldServer interface {
+	// requestResponse or fireAndForget.
+	Say(c *context.Context, req *SayReq, rsp *SayRsp) (err error)
+	// requestStream.
+	// SayReq is channel params.
+	SayStream(c *context.Context, req *SayReq) (chan *SayRsp, chan error)
+	// requestChannel.
+	// SayReq and SayRsp is channel.
+	SayChannel(c *context.Context, req chan *SayReq, errIn chan error) (chan *SayRsp, chan error)
 }
 
-type helloHandler struct {
-	h HelloServer
+func RegisterHelloWorldServer(s *server.Server, h HelloWorldServer) {
+	var r = &helloWorldHandler{h: h, s: s}
+	s.RegisterHandler(service.GetApiPrefix()+"helloworld/say", r.Say)
+	s.RegisterStreamHandler("helloworld/saystream", r.SayStream)
+	s.RegisterChannelHandler("helloworld/saychannel", r.SayChannel)
+}
+
+type helloWorldHandler struct {
+	h HelloWorldServer
 	s *server.Server
 }
 
-func (r *helloHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt handler.Interceptor) (rsp proto.Message, err error) {
+func (r *helloWorldHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt handler.Interceptor) (rsp proto.Message, err error) {
 	var in SayReq
-	err = codec.GetCodec(c.ContentType).Decode(req.Bytes(), &in)
+	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
 		return nil, err
 	}
 	var out = SayRsp{}
 	if interrupt == nil {
-		r.h.Say(c, &in, &out)
-		return &out, nil
+		err = r.h.Say(c, &in, &out)
+		return &out, err
 	}
 	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		r.h.Say(c, req.(*SayReq), &out)
-		return &out, nil
+		err = r.h.Say(c, req.(*SayReq), &out)
+		return &out, err
 	}
 	return interrupt(c, &in, f)
 }
 
-func (r *helloHandler) Roc(c *context.Context, req *parcel.RocPacket, interrupt handler.Interceptor) (rsp proto.Message, err error) {
-	var in RocReq
-	err = codec.GetCodec(c.ContentType).Decode(req.Bytes(), &in)
+func (r *helloWorldHandler) SayStream(c *context.Context, req *parcel.RocPacket) (chan proto.Message, chan error) {
+	var errs = make(chan error)
+	var in SayReq
+	err := c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		return nil, err
+		errs <- err
+		close(errs)
+		return nil, errs
 	}
-	var out = RocRsp{}
-	if interrupt == nil {
-		r.h.Roc(c, &in, &out)
-		return &out, nil
-	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		r.h.Roc(c, req.(*RocReq), &out)
-		return &out, nil
-	}
-	return interrupt(c, &in, f)
+
+	out, outErrs := r.h.SayStream(c, &in)
+	var rsp = make(chan proto.Message, len(out))
+
+	go func() {
+	QUIT:
+		for {
+			select {
+			case d, ok := <-out:
+				if ok {
+					rsp <- d
+				} else {
+					break QUIT
+				}
+			case err := <-outErrs:
+				errs <- err
+				break QUIT
+			}
+		}
+		close(rsp)
+		close(errs)
+	}()
+	return rsp, errs
+}
+
+func (r *helloWorldHandler) SayChannel(c *context.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
+	var in = make(chan *SayReq)
+	go func() {
+		for b := range req {
+			var v = &SayReq{}
+			err := c.Codec().Decode(b.Bytes(), v)
+			if err != nil {
+				errIn <- err
+				break
+			}
+			in <- v
+		}
+		close(in)
+	}()
+
+	out, outErrs := r.h.SayChannel(c, in, errIn)
+	var rsp = make(chan proto.Message)
+
+	go func() {
+		for d := range out {
+			rsp <- d
+		}
+		close(rsp)
+	}()
+	return rsp, outErrs
 }
 
 func (m *SayReq) Size() (n int) {
@@ -466,32 +415,6 @@ func (m *SayReq) Size() (n int) {
 }
 
 func (m *SayRsp) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovHello(uint64(l))
-	}
-	return n
-}
-
-func (m *RocReq) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovHello(uint64(l))
-	}
-	return n
-}
-
-func (m *RocRsp) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -621,171 +544,7 @@ func (m *SayRsp) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: SayRsp: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowHello
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthHello
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthHello
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipHello(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthHello
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *RocReq) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowHello
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: RocReq: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RocReq: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowHello
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthHello
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthHello
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipHello(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthHello
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *RocRsp) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowHello
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: RocRsp: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RocRsp: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}

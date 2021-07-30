@@ -17,4 +17,16 @@ service HelloWorld {
 
   // requestResponse or fireAndForget.
   rpc Say(SayReq) returns (SayRsp) {}
+
+  // get http request api
+  rpc SayGet(ApiReq)returns(ApiRsp){}
+}
+
+message ApiReq{
+  map<string, string> params = 1;
+}
+
+message ApiRsp{
+  int32 code = 1;
+  string msg = 2;
 }

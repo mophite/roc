@@ -16,21 +16,22 @@
 package service
 
 import (
-	"os"
-	"strings"
-	"time"
+    "os"
+    "strings"
+    "time"
 
-	"github.com/coreos/etcd/clientv3"
+    "github.com/coreos/etcd/clientv3"
+    "github.com/rs/cors"
 
-	"github.com/go-roc/roc/config"
-	"github.com/go-roc/roc/internal/endpoint"
-	"github.com/go-roc/roc/internal/namespace"
-	"github.com/go-roc/roc/internal/registry"
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/codec"
-	"github.com/go-roc/roc/service/conn"
-	"github.com/go-roc/roc/service/handler"
-	"github.com/go-roc/roc/service/opt"
+    "github.com/go-roc/roc/config"
+    "github.com/go-roc/roc/internal/endpoint"
+    "github.com/go-roc/roc/internal/namespace"
+    "github.com/go-roc/roc/internal/registry"
+    "github.com/go-roc/roc/parcel"
+    "github.com/go-roc/roc/parcel/codec"
+    "github.com/go-roc/roc/service/conn"
+    "github.com/go-roc/roc/service/handler"
+    "github.com/go-roc/roc/service/opt"
 )
 
 const SupportPackageIsVersion1 = 1
@@ -39,150 +40,150 @@ const SupportPackageIsVersion1 = 1
 var DefaultApiPrefix = "/roc/"
 
 func BuffSize(buffSize int) opt.Options {
-	return func(o *opt.Option) {
-		o.BuffSize = buffSize
-	}
+    return func(o *opt.Option) {
+        o.BuffSize = buffSize
+    }
 }
 
 func Wrapper(wrappers ...handler.WrapperHandler) opt.Options {
-	return func(o *opt.Option) {
-		o.Wrappers = append(o.Wrappers, wrappers...)
-	}
+    return func(o *opt.Option) {
+        o.Wrappers = append(o.Wrappers, wrappers...)
+    }
 }
 
 func Exit(exit ...func()) opt.Options {
-	return func(o *opt.Option) {
-		o.Exit = exit
-	}
+    return func(o *opt.Option) {
+        o.Exit = exit
+    }
 }
 
 func Signal(signal ...os.Signal) opt.Options {
-	return func(o *opt.Option) {
-		o.Signal = signal
-	}
+    return func(o *opt.Option) {
+        o.Signal = signal
+    }
 }
 
 func Port(port [2]int) opt.Options {
-	return func(o *opt.Option) {
-		if port[0] > port[1] {
-			panic("port index 0 must more than 1")
-		}
+    return func(o *opt.Option) {
+        if port[0] > port[1] {
+            panic("port index 0 must more than 1")
+        }
 
-		if port[0] < 10000 {
-			panic("rand port for internal transportServer suggest more than 10000")
-		}
+        if port[0] < 10000 {
+            panic("rand port for internal transportServer suggest more than 10000")
+        }
 
-		o.RandPort = &port
-	}
+        o.RandPort = &port
+    }
 }
 
 func Error(err parcel.ErrorPackager) opt.Options {
-	return func(o *opt.Option) {
-		o.Err = err
-	}
+    return func(o *opt.Option) {
+        o.Err = err
+    }
 }
 
 func WssAddress(address, path string) opt.Options {
-	return func(o *opt.Option) {
-		o.WssAddress = address
-		o.WssPath = path
-	}
+    return func(o *opt.Option) {
+        o.WssAddress = address
+        o.WssPath = path
+    }
 }
 
 func HttpAddress(address string) opt.Options {
-	return func(o *opt.Option) {
-		o.HttpAddress = address
-	}
+    return func(o *opt.Option) {
+        o.HttpAddress = address
+    }
 }
 
 func Id(id string) opt.Options {
-	return func(o *opt.Option) {
-		o.Id = id
-	}
+    return func(o *opt.Option) {
+        o.Id = id
+    }
 }
 
 func Namespace(name string) opt.Options {
-	return func(o *opt.Option) {
-		o.Name = name
-	}
+    return func(o *opt.Option) {
+        o.Name = name
+    }
 }
 
 // EtcdConfig setting global etcd config first
 func EtcdConfig(e *clientv3.Config) opt.Options {
-	return func(o *opt.Option) {
-		o.EtcdConfig = e
-	}
+    return func(o *opt.Option) {
+        o.EtcdConfig = e
+    }
 }
 
 func TCPAddress(address string) opt.Options {
-	return func(o *opt.Option) {
-		o.TcpAddress = address
-	}
+    return func(o *opt.Option) {
+        o.TcpAddress = address
+    }
 }
 
 func ConfigOption(opts ...config.Options) opt.Options {
-	return func(o *opt.Option) {
-		o.ConfigOpt = opts
-	}
+    return func(o *opt.Option) {
+        o.ConfigOpt = opts
+    }
 }
 
 func Codec(contentType string, c codec.Codec) opt.Options {
-	return func(o *opt.Option) {
-		codec.SetCodec(contentType, c)
-	}
+    return func(o *opt.Option) {
+        codec.SetCodec(contentType, c)
+    }
 }
 
 func Version(version string) opt.Options {
-	return func(o *opt.Option) {
-		namespace.DefaultVersion = version
-	}
+    return func(o *opt.Option) {
+        namespace.DefaultVersion = version
+    }
 }
 
 func Registry(r registry.Registry) opt.Options {
-	return func(o *opt.Option) {
-		o.Registry = r
-	}
+    return func(o *opt.Option) {
+        o.Registry = r
+    }
 }
 
 func ApiPrefix(apiPrefix string) opt.Options {
-	return func(o *opt.Option) {
-		if !strings.HasPrefix(apiPrefix, "/") {
-			apiPrefix = "/" + apiPrefix
-		}
-		if !strings.HasSuffix(apiPrefix, "/") {
-			apiPrefix += "/"
-		}
-		DefaultApiPrefix = apiPrefix
-	}
+    return func(o *opt.Option) {
+        if !strings.HasPrefix(apiPrefix, "/") {
+            apiPrefix = "/" + apiPrefix
+        }
+        if !strings.HasSuffix(apiPrefix, "/") {
+            apiPrefix += "/"
+        }
+        DefaultApiPrefix = apiPrefix
+    }
 }
 
 // Deprecated: newServer will created endpoint
 func Endpoint(e *endpoint.Endpoint) opt.Options {
-	return func(o *opt.Option) {
-		o.Endpoint = e
-	}
+    return func(o *opt.Option) {
+        o.Endpoint = e
+    }
 }
 
 func ConnectTimeout(timeout time.Duration) opt.Options {
-	return func(o *opt.Option) {
-		conn.DefaultConnectTimeout = timeout
-	}
+    return func(o *opt.Option) {
+        conn.DefaultConnectTimeout = timeout
+    }
 }
 
 func KeepaliveInterval(keepaliveInterval time.Duration) opt.Options {
-	return func(o *opt.Option) {
-		conn.DefaultKeepaliveInterval = keepaliveInterval
-	}
+    return func(o *opt.Option) {
+        conn.DefaultKeepaliveInterval = keepaliveInterval
+    }
 }
 
 func KeepaliveLifetime(keepaliveLifetime time.Duration) opt.Options {
-	return func(o *opt.Option) {
-		conn.DefaultKeepaliveLifetime = keepaliveLifetime
-	}
+    return func(o *opt.Option) {
+        conn.DefaultKeepaliveLifetime = keepaliveLifetime
+    }
 }
 
-func HttpMiddleware(m ...handler.HttpInterceptor) opt.Options {
-	return func(option *opt.Option) {
-		option.HttpMiddleware = m
-	}
+func Cors(m *cors.Options) opt.Options {
+    return func(option *opt.Option) {
+        option.CorsOptions = m
+    }
 }

@@ -4,21 +4,18 @@
 package phello
 
 import (
-	"fmt"
-	"io"
-	"math"
+	fmt "fmt"
+	parcel "github.com/go-roc/roc/parcel"
+	context "github.com/go-roc/roc/parcel/context"
+	service "github.com/go-roc/roc/service"
+	client "github.com/go-roc/roc/service/client"
+	handler "github.com/go-roc/roc/service/handler"
+	invoke "github.com/go-roc/roc/service/invoke"
+	server "github.com/go-roc/roc/service/server"
+	proto "github.com/gogo/protobuf/proto"
+	io "io"
+	math "math"
 	math_bits "math/bits"
-
-	"github.com/gogo/protobuf/proto"
-
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/codec"
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/service"
-	"github.com/go-roc/roc/service/client"
-	"github.com/go-roc/roc/service/handler"
-	"github.com/go-roc/roc/service/invoke"
-	"github.com/go-roc/roc/service/server"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -264,7 +261,7 @@ type helloWorldHandler struct {
 
 func (r *helloWorldHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt handler.Interceptor) (rsp proto.Message, err error) {
 	var in SayReq
-	err = codec.GetCodec(c.ContentType).Decode(req.Bytes(), &in)
+	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
 		return nil, err
 	}

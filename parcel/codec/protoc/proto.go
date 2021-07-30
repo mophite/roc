@@ -16,6 +16,7 @@
 package protoc
 
 import (
+    "github.com/go-roc/roc/x"
     "github.com/gogo/protobuf/proto"
 )
 
@@ -30,12 +31,29 @@ func (p *Proto) Encode(req proto.Message) ([]byte, error) {
     return b, nil
 }
 
+func (p *Proto) MustEncodeString(req proto.Message) string {
+    b, err := proto.Marshal(req)
+    if err != nil {
+        return ""
+    }
+    return x.BytesToString(b)
+}
+
+func (p *Proto) MustEncode(req proto.Message) []byte {
+    b, _ := proto.Marshal(req)
+    return b
+}
+
 func (*Proto) Decode(b []byte, rsp proto.Message) error {
     err := proto.Unmarshal(b, rsp)
     if err != nil {
         return err
     }
     return nil
+}
+
+func (*Proto) MustDecode(b []byte, rsp proto.Message) {
+    proto.Unmarshal(b, rsp)
 }
 
 func (*Proto) Name() string {

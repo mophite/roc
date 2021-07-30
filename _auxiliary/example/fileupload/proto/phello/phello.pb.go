@@ -6,7 +6,6 @@ package phello
 import (
 	fmt "fmt"
 	parcel "github.com/go-roc/roc/parcel"
-	codec "github.com/go-roc/roc/parcel/codec"
 	context "github.com/go-roc/roc/parcel/context"
 	service "github.com/go-roc/roc/service"
 	client "github.com/go-roc/roc/service/client"
@@ -91,9 +90,8 @@ func (m *FileReq) GetBody() []byte {
 }
 
 type FileRsp struct {
-	Code int32             `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Msg  string            `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
-	Data map[string]string `protobuf:"bytes,3,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Code uint32 `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Msg  string `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
 }
 
 func (m *FileRsp) Reset()         { *m = FileRsp{} }
@@ -129,7 +127,7 @@ func (m *FileRsp) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FileRsp proto.InternalMessageInfo
 
-func (m *FileRsp) GetCode() int32 {
+func (m *FileRsp) GetCode() uint32 {
 	if m != nil {
 		return m.Code
 	}
@@ -143,40 +141,28 @@ func (m *FileRsp) GetMsg() string {
 	return ""
 }
 
-func (m *FileRsp) GetData() map[string]string {
-	if m != nil {
-		return m.Data
-	}
-	return nil
-}
-
 func init() {
 	proto.RegisterType((*FileReq)(nil), "FileReq")
 	proto.RegisterType((*FileRsp)(nil), "FileRsp")
-	proto.RegisterMapType((map[string]string)(nil), "FileRsp.DataEntry")
 }
 
 func init() { proto.RegisterFile("phello.proto", fileDescriptor_b68df64f33d13f32) }
 
 var fileDescriptor_b68df64f33d13f32 = []byte{
-	// 264 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x3c, 0x90, 0xbb, 0x4e, 0xc3, 0x30,
-	0x14, 0x40, 0xe3, 0x26, 0x2d, 0xc9, 0xa5, 0x03, 0xb2, 0x18, 0xac, 0x22, 0x59, 0x51, 0x86, 0x2a,
-	0x53, 0x86, 0x32, 0x80, 0x18, 0x11, 0x30, 0x32, 0x18, 0x21, 0x46, 0xe4, 0x92, 0x0b, 0x44, 0x38,
-	0x75, 0x68, 0x02, 0x52, 0xfa, 0x15, 0xfd, 0x2c, 0xc6, 0x8e, 0x8c, 0x28, 0xf9, 0x11, 0x64, 0xc7,
-	0xed, 0x76, 0x7c, 0x8f, 0x7c, 0xfc, 0x80, 0x69, 0xf5, 0x8e, 0x4a, 0xe9, 0xac, 0x5a, 0xeb, 0x46,
-	0x27, 0x4f, 0x70, 0x74, 0x57, 0x28, 0x14, 0xf8, 0x49, 0xcf, 0x20, 0x7a, 0x2d, 0x14, 0x3e, 0xaf,
-	0x64, 0x89, 0x8c, 0xc4, 0x24, 0x8d, 0x44, 0x68, 0x06, 0xf7, 0xb2, 0xc4, 0x83, 0xac, 0x8b, 0x0d,
-	0xb2, 0x51, 0x4c, 0x52, 0x7f, 0x90, 0x0f, 0xc5, 0x06, 0x29, 0x85, 0x60, 0xa9, 0xf3, 0x96, 0xf9,
-	0x31, 0x49, 0xa7, 0xc2, 0x72, 0xb2, 0x25, 0xae, 0x5c, 0x57, 0xc6, 0xbf, 0xe8, 0x7c, 0x88, 0x8e,
-	0x85, 0x65, 0x7a, 0x02, 0x7e, 0x59, 0xbf, 0xd9, 0x54, 0x24, 0x0c, 0xd2, 0x39, 0x04, 0xb9, 0x6c,
-	0x24, 0xf3, 0x63, 0x3f, 0x3d, 0x5e, 0xd0, 0xcc, 0xed, 0xce, 0x6e, 0x64, 0x23, 0x6f, 0x57, 0xcd,
-	0xba, 0x15, 0xd6, 0xcf, 0x2e, 0x20, 0x3a, 0x8c, 0x4c, 0xe6, 0x03, 0x5b, 0x77, 0x5d, 0x83, 0xf4,
-	0x14, 0xc6, 0xdf, 0x52, 0x7d, 0xa1, 0x4b, 0x0f, 0x8b, 0xab, 0xd1, 0x25, 0x59, 0xcc, 0x21, 0x30,
-	0x4d, 0xca, 0x61, 0xf2, 0x58, 0x29, 0x2d, 0x73, 0x1a, 0x66, 0xee, 0xf1, 0xb3, 0x70, 0x7f, 0x5c,
-	0xe2, 0x5d, 0xb3, 0x9f, 0x8e, 0x93, 0x5d, 0xc7, 0xc9, 0x5f, 0xc7, 0xc9, 0xb6, 0xe7, 0xde, 0xae,
-	0xe7, 0xde, 0x6f, 0xcf, 0xbd, 0xe5, 0xc4, 0x7e, 0xda, 0xf9, 0x7f, 0x00, 0x00, 0x00, 0xff, 0xff,
-	0xd9, 0x29, 0xa9, 0xbf, 0x44, 0x01, 0x00, 0x00,
+	// 201 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x29, 0xc8, 0x48, 0xcd,
+	0xc9, 0xc9, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x57, 0x0a, 0xe7, 0x62, 0x77, 0xcb, 0xcc, 0x49,
+	0x0d, 0x4a, 0x2d, 0x14, 0x92, 0xe6, 0xe2, 0x4c, 0xcb, 0xcc, 0x49, 0x8d, 0xcf, 0x4b, 0xcc, 0x4d,
+	0x95, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c, 0xe2, 0x00, 0x09, 0xf8, 0x25, 0xe6, 0xa6, 0xc2, 0x25,
+	0x8b, 0x33, 0xab, 0x52, 0x25, 0x98, 0x14, 0x18, 0x35, 0x98, 0x21, 0x92, 0xc1, 0x99, 0x55, 0xa9,
+	0x42, 0x42, 0x5c, 0x2c, 0x49, 0xf9, 0x29, 0x95, 0x12, 0xcc, 0x0a, 0x8c, 0x1a, 0x3c, 0x41, 0x60,
+	0xb6, 0x92, 0x3e, 0xd4, 0xe0, 0xe2, 0x02, 0x90, 0x74, 0x72, 0x7e, 0x0a, 0xc4, 0x4c, 0xde, 0x20,
+	0x30, 0x5b, 0x48, 0x80, 0x8b, 0x39, 0xb7, 0x38, 0x1d, 0x6c, 0x12, 0x67, 0x10, 0x88, 0x69, 0xa4,
+	0xc6, 0xc5, 0x02, 0xd2, 0x20, 0x24, 0xc7, 0xc5, 0x16, 0x5a, 0x90, 0x93, 0x9f, 0x98, 0x22, 0xc4,
+	0xa1, 0x07, 0x75, 0x9a, 0x14, 0x94, 0x55, 0x5c, 0xa0, 0xc4, 0xe0, 0x24, 0x71, 0xe2, 0x91, 0x1c,
+	0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e, 0xc9, 0x31, 0x4e, 0x78, 0x2c, 0xc7, 0x70, 0xe1, 0xb1,
+	0x1c, 0xc3, 0x8d, 0xc7, 0x72, 0x0c, 0x49, 0x6c, 0x60, 0x2f, 0x19, 0x03, 0x02, 0x00, 0x00, 0xff,
+	0xff, 0xdc, 0xc0, 0x82, 0xae, 0xe2, 0x00, 0x00, 0x00,
 }
 
 func (m *FileReq) Marshal() (dAtA []byte, err error) {
@@ -241,25 +227,6 @@ func (m *FileRsp) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Data) > 0 {
-		for k := range m.Data {
-			v := m.Data[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintPhello(dAtA, i, uint64(len(v)))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintPhello(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintPhello(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x1a
-		}
-	}
 	if len(m.Msg) > 0 {
 		i -= len(m.Msg)
 		copy(dAtA[i:], m.Msg)
@@ -314,18 +281,18 @@ func NewFileClient(c *client.Client) FileClient {
 
 func (cc *fileClient) Upload(c *context.Context, req *FileReq, opts ...invoke.InvokeOptions) (*FileRsp, error) {
 	rsp := &FileRsp{}
-	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"File/Upload", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, service.GetApiPrefix()+"file/upload", req, rsp, opts...)
 	return rsp, err
 }
 
 // FileServer is the server API for File server.
 type FileServer interface {
-	Upload(c *context.Context, req *FileReq, rsp *FileRsp)
+	Upload(c *context.Context, req *FileReq, rsp *FileRsp) (err error)
 }
 
 func RegisterFileServer(s *server.Server, h FileServer) {
 	var r = &fileHandler{h: h, s: s}
-	s.RegisterHandler(service.GetApiPrefix()+"File/Upload", r.Upload)
+	s.RegisterHandler(service.GetApiPrefix()+"file/upload", r.Upload)
 }
 
 type fileHandler struct {
@@ -335,18 +302,18 @@ type fileHandler struct {
 
 func (r *fileHandler) Upload(c *context.Context, req *parcel.RocPacket, interrupt handler.Interceptor) (rsp proto.Message, err error) {
 	var in FileReq
-	err = codec.GetCodec(c.ContentType).Decode(req.Bytes(), &in)
+	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
 		return nil, err
 	}
 	var out = FileRsp{}
 	if interrupt == nil {
-		r.h.Upload(c, &in, &out)
-		return &out, nil
+		err = r.h.Upload(c, &in, &out)
+		return &out, err
 	}
 	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		r.h.Upload(c, req.(*FileReq), &out)
-		return &out, nil
+		err = r.h.Upload(c, req.(*FileReq), &out)
+		return &out, err
 	}
 	return interrupt(c, &in, f)
 }
@@ -383,14 +350,6 @@ func (m *FileRsp) Size() (n int) {
 	l = len(m.Msg)
 	if l > 0 {
 		n += 1 + l + sovPhello(uint64(l))
-	}
-	if len(m.Data) > 0 {
-		for k, v := range m.Data {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovPhello(uint64(len(k))) + 1 + len(v) + sovPhello(uint64(len(v)))
-			n += mapEntrySize + 1 + sovPhello(uint64(mapEntrySize))
-		}
 	}
 	return n
 }
@@ -579,7 +538,7 @@ func (m *FileRsp) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Code |= int32(b&0x7F) << shift
+				m.Code |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -615,133 +574,6 @@ func (m *FileRsp) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Msg = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPhello
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthPhello
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthPhello
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Data == nil {
-				m.Data = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowPhello
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowPhello
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthPhello
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthPhello
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowPhello
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthPhello
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthPhello
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipPhello(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if (skippy < 0) || (iNdEx+skippy) < 0 {
-						return ErrInvalidLengthPhello
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Data[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

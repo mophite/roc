@@ -27,13 +27,13 @@
 
 - install protoc-gen-roc
 
-```go
-    GO111MODULE= on go get github.com/go -roc/roc/cmd/protoc-gen-roc
+```shell
+    GO111MODULE=on go get github.com/go-roc/roc/cmd/protoc-gen-roc
 ```
 
 - generate proto file to go file,like [hello.proto](https://roc/_auxiliary/example/tutorials/proto/pbhello.proto)
 
-```go
+```shell
     protoc --roc_out = plugins = roc:.*.proto
 ```
 

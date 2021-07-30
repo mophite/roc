@@ -19,7 +19,6 @@ import (
     ctx "context"
     "runtime"
 
-    "github.com/go-roc/roc/parcel/codec"
     "github.com/go-roc/roc/parcel/context"
     "github.com/go-roc/roc/service/router"
     "github.com/jjeffcaii/reactor-go/scheduler"
@@ -160,7 +159,7 @@ func setupRequestResponse(router *router.Router) rsocket.OptAbstractSocket {
                 return mono.JustOneshot(
                     payload.New(
                         router.Error().
-                            Encode(codec.GetCodec(c.ContentType), parcel.ErrorCodeBadRequest, err), nil,
+                            Encode(c.Codec(), parcel.ErrorCodeBadRequest, err), nil,
                     ),
                 )
             }
@@ -192,7 +191,7 @@ func setupRequestStream(router *router.Router) rsocket.OptAbstractSocket {
                         select {
                         case b, ok := <-rsp:
                             if ok {
-                                data, err := codec.GetCodec(c.ContentType).Encode(b)
+                                data, err := c.Codec().Encode(b)
                                 if err != nil {
                                     rlog.Error(err)
                                     break
@@ -267,7 +266,7 @@ func setupRequestChannel(router *router.Router, buffSize int) rsocket.OptAbstrac
                         select {
                         case b, ok := <-rsp:
                             if ok {
-                                data, e := codec.GetCodec(c.ContentType).Encode(b)
+                                data, e := c.Codec().Encode(b)
                                 if e != nil {
                                     rlog.Error(e)
                                     break

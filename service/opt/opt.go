@@ -16,6 +16,7 @@
 package opt
 
 import (
+    "net/http"
     "os"
     "strconv"
     "strings"
@@ -33,6 +34,7 @@ import (
     "github.com/go-roc/roc/service/handler"
     "github.com/go-roc/roc/x"
     "github.com/go-roc/roc/x/fs"
+    "github.com/rs/cors"
 )
 
 type Options func(option *Option)
@@ -97,8 +99,8 @@ type Option struct {
     //service discover endpoint
     Endpoint *endpoint.Endpoint
 
-    //only need one middleware on roc http api POST/DELETE method
-    HttpMiddleware []handler.HttpInterceptor
+    //only need cors middleware on roc http api POST/DELETE/GET/PUT/OPTIONS method
+    CorsOptions *cors.Options
 }
 
 func NewOpts(opts ...Options) Option {
@@ -200,6 +202,23 @@ func NewOpts(opts ...Options) Option {
 
     if opt.Registry == nil {
         opt.Registry = registry.NewRegistry()
+    }
+
+    if opt.CorsOptions == nil {
+        //allowed all
+        opt.CorsOptions = &cors.Options{
+            AllowedOrigins: []string{"*"},
+            AllowedMethods: []string{
+                http.MethodGet,
+                http.MethodPost,
+                http.MethodPut,
+                http.MethodDelete,
+                http.MethodOptions,
+            },
+            AllowedHeaders:   []string{"*"},
+            AllowCredentials: false,
+            Debug:            false,
+        }
     }
 
     return opt

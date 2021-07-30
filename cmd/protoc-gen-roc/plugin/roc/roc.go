@@ -59,7 +59,6 @@ const (
 	invokePkgPath     = "github.com/go-roc/roc/service/invoke"
 	clientPkgPath     = "github.com/go-roc/roc/service/client"
 	serverPkgPath     = "github.com/go-roc/roc/service/server"
-	codecPkgPath      = "github.com/go-roc/roc/parcel/codec"
 )
 
 func init() {
@@ -88,7 +87,6 @@ var (
 	invokePkg     string
 	clientPkg     string
 	serverPkg     string
-	codecPkg      string
 )
 
 // Init initializes the plugin.
@@ -124,7 +122,6 @@ func (r *roc) Generate(file *generator.FileDescriptor) {
 	parcelPkg = string(r.gen.AddImport(parcelPkgPath))
 	clientPkg = string(r.gen.AddImport(clientPkgPath))
 	serverPkg = string(r.gen.AddImport(serverPkgPath))
-	codecPkg = string(r.gen.AddImport(codecPkgPath))
 
 	r.P("// Reference imports to suppress errors if they are not otherwise used.")
 	r.P("var _ ", contextPkg, ".Context")
@@ -344,7 +341,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 		r.P("go func() {")
 		r.P("for b := range data {")
 		r.P("v := &", outType, "{}")
-		r.P("err :=  codec.GetCodec(c.ContentType).Decode(b, v)")
+		r.P("err :=  c.Codec().Decode(b, v)")
 		r.P("if err != nil {")
 		r.P("errs <- err")
 		r.P("break")
@@ -363,7 +360,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 		r.P("var in = make(chan []byte)")
 		r.P("go func() {")
 		r.P("for b := range req {")
-		r.P("v, err := codec.GetCodec(c.ContentType).Encode(b)")
+		r.P("v, err := c.Codec().Encode(b)")
 		r.P("if err != nil {")
 		r.P("errIn <- err")
 		r.P("break")
@@ -378,7 +375,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 		r.P("go func() {")
 		r.P("for b := range data {")
 		r.P("v := &", outType, "{}")
-		r.P("err := codec.GetCodec(c.ContentType).Decode(b, v)")
+		r.P("err := c.Codec().Decode(b, v)")
 		r.P("if err != nil {")
 		r.P("errs <- err")
 		r.P("break")
@@ -451,7 +448,7 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
 			".Context, req *parcel.RocPacket,interrupt handler.Interceptor) (rsp proto.Message, err error) {",
 		)
 		r.P("var in ", inType)
-		r.P("err = codec.GetCodec(c.ContentType).Decode(req.Bytes(), &in)")
+		r.P("err = c.Codec().Decode(req.Bytes(), &in)")
 		r.P("if err != nil {")
 		r.P("return nil,err")
 		r.P("}")
@@ -482,7 +479,7 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
 		)
 		r.P("var errs = make(chan error)")
 		r.P("var in ", inType)
-		r.P("err := codec.GetCodec(c.ContentType).Decode(req.Bytes(), &in)")
+		r.P("err := c.Codec().Decode(req.Bytes(), &in)")
 		r.P("if err != nil {")
 		r.P("errs <- err")
 		r.P("close(errs)")
@@ -530,7 +527,7 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
 		r.P("go func() {")
 		r.P("for b := range req {")
 		r.P("var v = &", inType, "{}")
-		r.P("err := codec.GetCodec(c.ContentType).Decode(b.Bytes(), v)")
+		r.P("err := c.Codec().Decode(b.Bytes(), v)")
 		r.P("if err != nil {")
 		r.P("errIn <- err")
 		r.P("break")

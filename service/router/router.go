@@ -16,179 +16,178 @@
 package router
 
 import (
-	"errors"
-	"sync"
+    "errors"
+    "sync"
 
-	"github.com/gogo/protobuf/proto"
+    "github.com/gogo/protobuf/proto"
 
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/service/handler"
+    "github.com/go-roc/roc/parcel/context"
+    "github.com/go-roc/roc/service/handler"
 
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/codec"
-	"github.com/go-roc/roc/rlog"
+    "github.com/go-roc/roc/parcel"
+    "github.com/go-roc/roc/rlog"
 )
 
 var (
-	ErrNotFoundHandler = errors.New("not found route path")
+    ErrNotFoundHandler = errors.New("not found route path")
 )
 
 type Router struct {
-	sync.Mutex
-	//requestResponse map cache handler
-	rrRoute map[string]handler.Handler
+    sync.Mutex
+    //requestResponse map cache handler
+    rrRoute map[string]handler.Handler
 
-	//requestStream map cache streamHandler
-	rsRoute map[string]handler.StreamHandler
+    //requestStream map cache streamHandler
+    rsRoute map[string]handler.StreamHandler
 
-	//requestChannel map cache channelHandler
-	rcRoute map[string]handler.ChannelHandler
+    //requestChannel map cache channelHandler
+    rcRoute map[string]handler.ChannelHandler
 
-	//wrapper middleware
-	wrappers []handler.WrapperHandler
+    //wrapper middleware
+    wrappers []handler.WrapperHandler
 
-	//configurable error message return
-	errorPacket parcel.ErrorPackager
+    //configurable error message return
+    errorPacket parcel.ErrorPackager
 }
 
 // NewRouter create a new Router
 func NewRouter(wrappers []handler.WrapperHandler, err parcel.ErrorPackager) *Router {
-	return &Router{
-		rrRoute:     make(map[string]handler.Handler),
-		rsRoute:     make(map[string]handler.StreamHandler),
-		rcRoute:     make(map[string]handler.ChannelHandler),
-		wrappers:    wrappers,
-		errorPacket: err,
-	}
+    return &Router{
+        rrRoute:     make(map[string]handler.Handler),
+        rsRoute:     make(map[string]handler.StreamHandler),
+        rcRoute:     make(map[string]handler.ChannelHandler),
+        wrappers:    wrappers,
+        errorPacket: err,
+    }
 }
 
 func (r *Router) Error() parcel.ErrorPackager {
-	return r.errorPacket
+    return r.errorPacket
 }
 
 func (r *Router) RegisterHandler(method string, rr handler.Handler) {
-	r.Lock()
-	defer r.Unlock()
-	if _, ok := r.rrRoute[method]; ok {
-		panic("this rrRoute is already exist:" + method)
-	}
-	r.rrRoute[method] = rr
+    r.Lock()
+    defer r.Unlock()
+    if _, ok := r.rrRoute[method]; ok {
+        panic("this rrRoute is already exist:" + method)
+    }
+    r.rrRoute[method] = rr
 }
 
 func (r *Router) RegisterStreamHandler(method string, rs handler.StreamHandler) {
-	r.Lock()
-	defer r.Unlock()
-	if _, ok := r.rsRoute[method]; ok {
-		panic("this rsRoute is already exist:" + method)
-	}
+    r.Lock()
+    defer r.Unlock()
+    if _, ok := r.rsRoute[method]; ok {
+        panic("this rsRoute is already exist:" + method)
+    }
 
-	r.rsRoute[method] = rs
+    r.rsRoute[method] = rs
 }
 
 func (r *Router) RegisterChannelHandler(service string, rc handler.ChannelHandler) {
-	r.Lock()
-	defer r.Unlock()
-	if _, ok := r.rcRoute[service]; ok {
-		panic("this rcRoute is already exist:" + service)
-	}
+    r.Lock()
+    defer r.Unlock()
+    if _, ok := r.rcRoute[service]; ok {
+        panic("this rcRoute is already exist:" + service)
+    }
 
-	r.rcRoute[service] = rc
+    r.rcRoute[service] = rc
 }
 
 func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parcel.RocPacket) error {
-	rr, ok := r.rrRoute[c.Method()]
-	if !ok {
-		return ErrNotFoundHandler
-	}
-	resp, err := rr(c, req, r.interrupt())
-	if resp != nil {
-		b, err := codec.GetCodec(c.ContentType).Encode(resp)
-		if err != nil {
-			c.Error(err)
-			return err
-		}
+    rr, ok := r.rrRoute[c.Method()]
+    if !ok {
+        return ErrNotFoundHandler
+    }
+    resp, err := rr(c, req, r.interrupt())
+    if resp != nil {
+        b, err := c.Codec().Encode(resp)
+        if err != nil {
+            c.Error(err)
+            return err
+        }
 
-		rsp.Write(b)
-	}
+        rsp.Write(b)
+    }
 
-	if err != nil {
-		c.Error(err)
-		return err
-	}
+    if err != nil {
+        c.Error(err)
+        return err
+    }
 
-	return nil
+    return nil
 }
 
 func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket) (chan proto.Message, chan error) {
 
-	// interrupt
-	for i := range r.wrappers {
-		_, err := r.wrappers[i](c)
-		if err != nil {
-			c.Errorf("wrappers err=%v", err)
-			var errs = make(chan error)
-			errs <- err
-			close(errs)
-			return nil, errs
-		}
-	}
+    // interrupt
+    for i := range r.wrappers {
+        _, err := r.wrappers[i](c)
+        if err != nil {
+            c.Errorf("wrappers err=%v", err)
+            var errs = make(chan error)
+            errs <- err
+            close(errs)
+            return nil, errs
+        }
+    }
 
-	rs, ok := r.rsRoute[c.Method()]
-	if !ok {
-		return nil, nil
-	}
+    rs, ok := r.rsRoute[c.Method()]
+    if !ok {
+        return nil, nil
+    }
 
-	return rs(c, req)
+    return rs(c, req)
 }
 
 func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, errs chan error) (
-	chan proto.Message,
-	chan error,
+    chan proto.Message,
+    chan error,
 ) {
-	// interrupt when occur error
-	for i := range r.wrappers {
-		_, err := r.wrappers[i](c)
-		if err != nil {
-			c.Errorf("wrappers err=%v", err)
-			var errs = make(chan error)
-			errs <- err
-			close(errs)
-			return nil, errs
-		}
-	}
+    // interrupt when occur error
+    for i := range r.wrappers {
+        _, err := r.wrappers[i](c)
+        if err != nil {
+            c.Errorf("wrappers err=%v", err)
+            var errs = make(chan error)
+            errs <- err
+            close(errs)
+            return nil, errs
+        }
+    }
 
-	rc, ok := r.rcRoute[c.Method()]
-	if !ok {
-		return nil, nil
-	}
+    rc, ok := r.rcRoute[c.Method()]
+    if !ok {
+        return nil, nil
+    }
 
-	return rc(c, req, errs)
+    return rc(c, req, errs)
 }
 
 func (r *Router) interrupt() handler.Interceptor {
-	return func(c *context.Context, req proto.Message, fire handler.Fire) (proto.Message, error) {
-		// interrupt when occur error
-		for i := range r.wrappers {
-			rsp, err := r.wrappers[i](c)
-			if err != nil {
-				c.Errorf("wrappers err=%v", err)
-				return rsp, err
-			}
-		}
+    return func(c *context.Context, req proto.Message, fire handler.Fire) (proto.Message, error) {
+        // interrupt when occur error
+        for i := range r.wrappers {
+            rsp, err := r.wrappers[i](c)
+            if err != nil {
+                c.Errorf("wrappers err=%v", err)
+                return rsp, err
+            }
+        }
 
-		rsp, err := fire(c, req)
-		if err != nil {
-			c.Errorf("fire err=%v |FROM=%s", err, req.String())
-			return rsp, err
-		}
-		c.Infof("FROM=%s |TO=%s", req.String(), rsp.String())
-		return rsp, nil
-	}
+        rsp, err := fire(c, req)
+        if err != nil {
+            c.Errorf("fire err=%v |FROM=%s", err, req.String())
+            return rsp, err
+        }
+        c.Infof("FROM=%s |TO=%s", c.Codec().MustEncodeString(req), c.Codec().MustEncodeString(rsp))
+        return rsp, nil
+    }
 }
 
 func (r *Router) List() {
-	rlog.Info("registered Router list:")
-	for k := range r.rrRoute {
-		rlog.Infof("-------------------RR------------------- [%s]", k)
-	}
+    rlog.Info("registered Router list:")
+    for k := range r.rrRoute {
+        rlog.Infof("-------------------RR------------------- [%s]", k)
+    }
 }

@@ -17,6 +17,7 @@ require (
 	github.com/jjeffcaii/reactor-go v0.5.1
 	github.com/json-iterator/go v1.1.10
 	github.com/prometheus/client_golang v1.9.0 // indirect
+	github.com/rs/cors v1.8.0
 	github.com/rs/xid v1.3.0
 	github.com/rsocket/rsocket-go v0.8.4
 	github.com/stretchr/testify v1.6.1

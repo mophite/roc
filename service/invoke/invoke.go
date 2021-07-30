@@ -21,7 +21,6 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/go-roc/roc/parcel/codec"
 	"github.com/go-roc/roc/parcel/context"
 	"github.com/go-roc/roc/service/conn"
 	"github.com/go-roc/roc/x/backoff"
@@ -82,7 +81,7 @@ func (invoke *Invoke) Scope() string {
 // InvokeRR invokeRR is invokeRequestResponse
 func (invoke *Invoke) InvokeRR(c *context.Context, req, rsp proto.Message, cnn *conn.Conn) error {
 	// encoding req body to roc packet
-	b, err := codec.GetCodec(c.ContentType).Encode(req)
+	b, err := c.Codec().Encode(req)
 	if err != nil {
 		return err
 	}
@@ -117,5 +116,5 @@ func (invoke *Invoke) InvokeRR(c *context.Context, req, rsp proto.Message, cnn *
 		return err
 	}
 
-	return codec.GetCodec(c.ContentType).Decode(response.Bytes(), rsp)
+	return c.Codec().Decode(response.Bytes(), rsp)
 }

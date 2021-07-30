@@ -17,7 +17,6 @@ package client
 
 import (
     "github.com/go-roc/roc/parcel"
-    "github.com/go-roc/roc/parcel/codec"
     "github.com/go-roc/roc/parcel/context"
     "github.com/go-roc/roc/service/conn"
     "github.com/go-roc/roc/service/invoke"
@@ -100,7 +99,7 @@ func (s *Client) InvokeRS(c *context.Context, method string, req proto.Message, 
     }
 
     //encode req body to roc packet
-    b, err := codec.GetCodec(c.ContentType).Encode(req)
+    b, err := c.Codec().Encode(req)
 
     if err != nil {
         // create a chan error response

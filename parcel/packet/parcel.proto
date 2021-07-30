@@ -2,20 +2,23 @@ syntax = "proto3";
 
 package packet;
 
+//roc internal packet object
 message Packet {
   int32 code = 1;
   string msg = 2;
-  bytes data = 3;
 }
 
+//roc file upload request
+//you must defined a struct as FileReq
 message FileReq{
   string file_name = 1;
   int64 file_size = 2;
   bytes  body = 3;
 }
 
-message FileRsp{
-  int32 code = 1;
-  string msg = 2;
-  map<string, string>  data = 3;
+//roc http GET request
+//you must defined a struct as ApiReq
+message ApiReq{
+  map<string, string> params = 1;
 }
+
