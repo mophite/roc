@@ -16,6 +16,7 @@
 package log
 
 import (
+    "github.com/go-roc/roc/rlog/common"
     "github.com/go-roc/roc/rlog/format"
     "github.com/go-roc/roc/rlog/output"
 )
@@ -79,6 +80,10 @@ func Output(out output.Outputor) Options {
     return func(option *Option) {
         option.out = out
     }
+}
+
+func SetInfo() {
+    defaultLogger.Output().SetLevel(common.INFO)
 }
 
 func Name(name string) Options {

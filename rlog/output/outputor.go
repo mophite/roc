@@ -16,20 +16,20 @@
 package output
 
 import (
-	"bytes"
+    "bytes"
 
-	"github.com/go-roc/roc/rlog/common"
-	"github.com/go-roc/roc/rlog/output/console"
+    "github.com/go-roc/roc/rlog/common"
+    "github.com/go-roc/roc/rlog/output/console"
 )
 
 type Outputor interface {
-	Init(string)
-	Out(level common.Level, b *bytes.Buffer)
-	Level() common.Level
-	SetLevel(level common.Level)
-	Poller()
-	Close()
-	String() string
+    Init(string)
+    Out(level common.Level, b *bytes.Buffer)
+    Level() common.Level
+    SetLevel(level common.Level)
+    Poller()
+    Close()
+    String() string
 }
 
-var DefaultOutput Outputor = &console.Console{}
+var DefaultOutput Outputor = &console.Console{L: common.DEBUG}

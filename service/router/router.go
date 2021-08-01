@@ -180,7 +180,7 @@ func (r *Router) interrupt() handler.Interceptor {
             c.Errorf("fire err=%v |FROM=%s", err, req.String())
             return rsp, err
         }
-        c.Infof("FROM=%s |TO=%s", c.Codec().MustEncodeString(req), c.Codec().MustEncodeString(rsp))
+        c.Debugf("FROM=%s |TO=%s", c.Codec().MustEncodeString(req), c.Codec().MustEncodeString(rsp))
         return rsp, nil
     }
 }

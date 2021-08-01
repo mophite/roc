@@ -24,7 +24,7 @@ import (
 )
 
 type Console struct {
-    level common.Level
+    L common.Level
 }
 
 func (s *Console) Init(string) {
@@ -32,7 +32,8 @@ func (s *Console) Init(string) {
 }
 
 func (s *Console) Out(level common.Level, b *bytes.Buffer) {
-    if level < s.level {
+
+    if level < s.L {
         return
     }
 
@@ -42,11 +43,11 @@ func (s *Console) Out(level common.Level, b *bytes.Buffer) {
 }
 
 func (s *Console) Level() common.Level {
-    return s.level
+    return s.L
 }
 
 func (s *Console) SetLevel(l common.Level) {
-    s.level = l
+    s.L = l
 }
 
 func (s *Console) Poller() {

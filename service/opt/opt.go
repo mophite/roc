@@ -125,7 +125,7 @@ func NewOpts(opts ...Options) Option {
     }
 
     if opt.RandPort == nil {
-        opt.RandPort = &[2]int{10000, 19999}
+        opt.RandPort = &[2]int{10000, 59999}
     }
 
     // NOTICE: api service only support fixed tcpAddress ,not suggest rand tcpAddress in api service

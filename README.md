@@ -57,7 +57,7 @@ func main() {
         service.WssAddress("0.0.0.0:10000", "/hello"),
     )
 
-    phello.RegisterHelloWorldServer(s.Server(), &hello.Hello{Client: s.Client()})
+    phello.RegisterHelloServer(s.Server(), &say.Say{})
     err := s.Run()
     if err != nil {
         rlog.Error(err)
@@ -131,7 +131,6 @@ func coverPrivate(key string, v interface{}) {
 
 ### ✨ TODO ✨
 
-- [ ] bench test
 - [ ] sidecar
 - [ ] more example
 - [ ] more singleton tests

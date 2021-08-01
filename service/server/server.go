@@ -171,6 +171,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         if len(rsp.Bytes()) > 0 {
             w.WriteHeader(http.StatusOK)
             w.Write(rsp.Bytes())
+        } else {
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write([]byte(`500 Internal server error`))
         }
 
         return
@@ -222,15 +226,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         if len(rsp.Bytes()) > 0 {
             w.WriteHeader(http.StatusOK)
             w.Write(rsp.Bytes())
+        } else {
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write([]byte(`500 Internal server error`))
         }
 
         return
 
     case http.MethodGet:
-        _ = r.ParseForm()
 
-        var apiReq = &packet.ApiReq{Params: make(map[string]string, len(r.Form))}
-        for k, v := range r.Form {
+        values := r.URL.Query()
+
+        var apiReq = &packet.ApiReq{Params: make(map[string]string, len(values))}
+        for k, v := range values {
             if len(v) > 0 {
                 apiReq.Params[k] = v[0]
             }
@@ -249,7 +258,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         defer func() {
             parcel.Recycle(req, rsp)
         }()
-        _ = r.Body.Close()
 
         err = s.route.RRProcess(c, req, rsp)
 
@@ -263,6 +271,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         if len(rsp.Bytes()) > 0 {
             w.WriteHeader(http.StatusOK)
             w.Write(rsp.Bytes())
+        } else {
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write([]byte(`500 Internal server error`))
         }
 
         return

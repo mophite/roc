@@ -21,6 +21,7 @@ import (
     "time"
 
     "github.com/coreos/etcd/clientv3"
+    "github.com/go-roc/roc/rlog/log"
     "github.com/rs/cors"
 
     "github.com/go-roc/roc/config"
@@ -38,6 +39,10 @@ const SupportPackageIsVersion1 = 1
 
 //DefaultApiPrefix it must be unique in all of your handler path
 var DefaultApiPrefix = "/roc/"
+
+func Release() {
+    log.SetInfo()
+}
 
 func BuffSize(buffSize int) opt.Options {
     return func(o *opt.Option) {
@@ -63,10 +68,11 @@ func Signal(signal ...os.Signal) opt.Options {
     }
 }
 
+// Port port[0]:min port[1]:max
 func Port(port [2]int) opt.Options {
     return func(o *opt.Option) {
         if port[0] > port[1] {
-            panic("port index 0 must more than 1")
+            panic("port[1] must greater than port[0]")
         }
 
         if port[0] < 10000 {

@@ -13,74 +13,66 @@
 //  limitations under the License.
 //
 
-package hello
+package im
 
 import (
-    "strconv"
-    "sync/atomic"
-    "time"
-
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
     "github.com/go-roc/roc/parcel/context"
 )
 
-type Hello struct{}
+type Im struct {
+    H *Hub
+    p *point
+}
 
-func (h *Hello) SaySrv(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) (err error) {
-    rsp.Pong = "pong"
+func (i *Im) Connect(c *context.Context, req *phello.ConnectReq, rsp *phello.ConnectRsp) (err error) {
+    i.p = &point{userName: req.UserName, message: make(chan *phello.SendMessageRsp)}
+    i.H.addClient(i.p)
+    rsp.IsConnect = true
     return nil
 }
 
-func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) (chan *phello.SayRsp, chan error) {
-    var rsp = make(chan *phello.SayRsp)
-    var err = make(chan error)
-
-    go func() {
-        var count uint32
-        for i := 0; i < 200; i++ {
-            rsp <- &phello.SayRsp{Pong: strconv.Itoa(i)}
-            atomic.AddUint32(&count, 1)
-            time.Sleep(time.Second * 1)
-        }
-
-        c.Info("say stream example count is: ", atomic.LoadUint32(&count))
-
-        close(rsp)
-        close(err)
-    }()
-
-    return rsp, err
+func (i *Im) Count(c *context.Context, req *phello.CountReq, rsp *phello.CountRsp) (err error) {
+    rsp.Count = i.H.count()
+    return nil
 }
 
-func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, errIn chan error) (
-    chan *phello.SayRsp,
-    chan error,
-) {
-    var rsp = make(chan *phello.SayRsp)
+func (i *Im) SendMessage(
+    c *context.Context,
+    req chan *phello.SendMessageReq,
+    errIn chan error,
+) (chan *phello.SendMessageRsp, chan error) {
+    var rsp = make(chan *phello.SendMessageRsp)
     var errs = make(chan error)
+
+    go func() {
+        for data := range i.p.message {
+            rsp <- data
+        }
+        close(rsp)
+    }()
 
     go func() {
     QUIT:
         for {
             select {
-            case _, ok := <-req:
+            case data, ok := <-req:
                 if !ok {
                     break QUIT
                 }
 
-                //test channel sending frequency
-                time.Sleep(time.Second)
-                rsp <- &phello.SayRsp{Pong: "pong"}
+                i.H.broadCast <- data
 
             case e := <-errIn:
                 if e != nil {
                     errs <- e
+                    break QUIT
                 }
             }
         }
 
-        close(rsp)
         close(errs)
+        i.H.removeClient(i.p)
     }()
 
     return rsp, errs

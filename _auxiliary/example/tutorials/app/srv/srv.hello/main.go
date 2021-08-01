@@ -16,27 +16,19 @@
 package main
 
 import (
-	"fmt"
-
-	"tutorials/proto/phello"
-
-	"github.com/coreos/etcd/clientv3"
-	hello2 "tutorials/app/srv/srv.hello/hello"
-
-	"github.com/go-roc/roc"
+    "github.com/go-roc/roc/_auxiliary/example/tutorials/app/srv/srv.hello/hello"
+    "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
+    "github.com/go-roc/roc/rlog"
+    "github.com/go-roc/roc/service"
 )
 
 func main() {
-	var s = roc.NewService(
-		//roc.TCPAddress("127.0.0.1:8888"),
-		roc.Namespace("srv.hello"),
-		roc.EtcdConfig(&clientv3.Config{
-			Endpoints: []string{"127.0.0.1:2379"},
-		}),
-	)
+    s := service.New(service.Namespace("srv.hello"))
 
-	phello.RegisterHelloWorldServer(s, &hello2.Hello{})
-	if err := s.Run(); err != nil {
-		fmt.Println(err)
-	}
+    phello.RegisterHelloSrvServer(s.Server(), &hello.Hello{})
+
+    err := s.Run()
+    if err != nil {
+        rlog.Error(err)
+    }
 }

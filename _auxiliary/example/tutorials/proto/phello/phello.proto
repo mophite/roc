@@ -1,22 +1,33 @@
 syntax = "proto3";
 
+package phello;
 // this proto file is for api.hello/srv.hello
 
 // request params.
 message SayReq {
-  uint32 inc = 1;
+  string ping = 1;
 }
 
 // response content.
 message SayRsp {
-  uint32 inc = 1;
+  string pong = 1;
 }
 
-// HelloWorld is service API for client and server.
-service HelloWorld {
+// HelloApi is service api for client and server.
+service Hello {
 
   // requestResponse or fireAndForget.
   rpc Say(SayReq) returns (SayRsp) {}
+
+  // get http request api
+  rpc SayGet(ApiReq)returns(ApiRsp){}
+}
+
+// HelloSrv is service server for client and server.
+service HelloSrv {
+
+  // requestResponse or fireAndForget.
+  rpc SaySrv(SayReq) returns (SayRsp) {}
 
   // requestStream.
   // SayReq is channel params.
@@ -25,4 +36,31 @@ service HelloWorld {
   // requestChannel.
   // SayReq and SayRsp is channel.
   rpc SayChannel(stream SayReq) returns (stream SayRsp) {}
+}
+
+message ApiReq{
+  //params is URL query url.Values
+  map<string, string> params = 1;
+}
+
+message ApiRsp{
+  int32 code = 1;
+  string msg = 2;
+}
+
+//file service
+service File{
+  rpc Upload(FileReq)returns(FileRsp){}
+}
+
+//FileReq must equals to github.com/go-roc/roc/parcel/packet/parcel.proto FileReq
+message FileReq{
+  string file_name = 1;
+  int64 file_size = 2;
+  bytes  body = 3;
+}
+
+message FileRsp{
+  uint32 code = 1;
+  string msg = 2;
 }
