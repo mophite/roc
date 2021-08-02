@@ -16,17 +16,9 @@
 package parcel
 
 import (
-    "github.com/go-roc/roc/parcel/codec"
+    "github.com/go-roc/roc/parcel/context"
 
     "github.com/go-roc/roc/parcel/packet"
-)
-
-type ErrorCode = int32
-
-const (
-    ErrorCodeInternalServer ErrorCode = 500
-    ErrorCodeBadRequest               = 400
-    ErrCodeNotFoundHandler            = 401
 )
 
 var (
@@ -34,21 +26,42 @@ var (
 )
 
 type ErrorPackager interface {
-    Encode(c codec.Codec, code ErrorCode, err error) []byte
+    Error400(c *context.Context) []byte
+    Error500(c *context.Context) []byte
+    Error404(c *context.Context) []byte
+    Error405(c *context.Context) []byte
 }
 
-type ErrorPacket struct {
-    data packet.Packet
+type ErrorPacket struct{}
+
+func (e *ErrorPacket) Error400(c *context.Context) []byte {
+    p := new(packet.Packet)
+    p.Code = 400
+    p.Msg = "Bad Request"
+    return c.Codec().MustEncode(p)
+}
+
+func (e *ErrorPacket) Error500(c *context.Context) []byte {
+    p := new(packet.Packet)
+    p.Code = 500
+    p.Msg = "Internal server error"
+    return c.Codec().MustEncode(p)
+}
+
+func (e *ErrorPacket) Error404(c *context.Context) []byte {
+    p := new(packet.Packet)
+    p.Code = 404
+    p.Msg = "Not Found"
+    return c.Codec().MustEncode(p)
+}
+
+func (e *ErrorPacket) Error405(c *context.Context) []byte {
+    p := new(packet.Packet)
+    p.Code = 405
+    p.Msg = "Method Not Allowed"
+    return c.Codec().MustEncode(p)
 }
 
 func NewErrorPacket() *ErrorPacket {
     return &ErrorPacket{}
-}
-
-func (e *ErrorPacket) Encode(c codec.Codec, code ErrorCode, err error) []byte {
-    ep := *e
-    ep.data.Code = code
-    ep.data.Msg = err.Error()
-    b, _ := c.Encode(&ep.data)
-    return b
 }

@@ -186,8 +186,16 @@ func (r *Router) interrupt() handler.Interceptor {
 }
 
 func (r *Router) List() {
-    rlog.Info("registered Router list:")
+    rlog.Info("Registered router list:")
     for k := range r.rrRoute {
-        rlog.Infof("-------------------RR------------------- [%s]", k)
+        rlog.Infof("☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵ RR ☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵ [%s]", k)
+    }
+
+    for k := range r.rsRoute {
+        rlog.Infof("☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵ RS ☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵ [%s]", k)
+    }
+
+    for k := range r.rcRoute {
+        rlog.Infof("☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵ RC ☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵☵ [%s]", k)
     }
 }

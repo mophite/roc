@@ -580,7 +580,7 @@ func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, er
 		close(in)
 	}()
 
-	data, errs := cc.c.InvokeRC(c, "im/sendmessage", in, errIn, opts...)
+	data, errs := cc.c.InvokeRC(c, service.GetApiPrefix()+"im/sendmessage", in, errIn, opts...)
 	var rsp = make(chan *SendMessageRsp)
 	go func() {
 		for b := range data {
@@ -611,7 +611,7 @@ func RegisterImServer(s *server.Server, h ImServer) {
 	var r = &imHandler{h: h, s: s}
 	s.RegisterHandler(service.GetApiPrefix()+"im/connect", r.Connect)
 	s.RegisterHandler(service.GetApiPrefix()+"im/count", r.Count)
-	s.RegisterChannelHandler("im/sendmessage", r.SendMessage)
+	s.RegisterChannelHandler(service.GetApiPrefix()+"im/sendmessage", r.SendMessage)
 }
 
 type imHandler struct {

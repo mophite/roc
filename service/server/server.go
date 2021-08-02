@@ -24,7 +24,6 @@ import (
 
     "github.com/go-roc/roc/internal/namespace"
     "github.com/go-roc/roc/parcel"
-    "github.com/go-roc/roc/parcel/codec"
     "github.com/go-roc/roc/parcel/context"
     "github.com/go-roc/roc/parcel/packet"
     "github.com/go-roc/roc/rlog"
@@ -145,13 +144,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     switch r.Method {
     case http.MethodPost, http.MethodDelete:
 
-        if _, ok := codec.DefaultCodecs[c.ContentType]; !ok {
-            w.Header().Set("Content-type", "text/plain")
-            w.WriteHeader(http.StatusBadRequest)
-            w.Write([]byte(`400 Bad Request`))
-            return
-        }
-
         var req, rsp = parcel.PayloadIo(r.Body), parcel.NewPacket()
         defer func() {
             parcel.Recycle(req, rsp)
@@ -162,19 +154,18 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         err := s.route.RRProcess(c, req, rsp)
 
         if err == router.ErrNotFoundHandler {
-            w.Header().Set("Content-type", "text/plain")
             w.WriteHeader(http.StatusNotFound)
-            w.Write([]byte(`404 Not Found`))
+            w.Write(s.opts.Err.Error404(c))
             return
         }
 
         if len(rsp.Bytes()) > 0 {
             w.WriteHeader(http.StatusOK)
             w.Write(rsp.Bytes())
-        } else {
-            w.Header().Set("Content-type", "text/plain")
+        } else if err != nil {
+            rlog.Error(err)
             w.WriteHeader(http.StatusInternalServerError)
-            w.Write([]byte(`500 Internal server error`))
+            w.Write(s.opts.Err.Error500(c))
         }
 
         return
@@ -184,9 +175,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         f, h, err := r.FormFile("file")
         if err != nil {
             rlog.Error(err)
-            w.Header().Set("Content-type", "text/plain")
             w.WriteHeader(http.StatusBadRequest)
-            w.Write([]byte(`400 Bad Request`))
+            w.Write(s.opts.Err.Error400(c))
             return
         }
 
@@ -202,9 +192,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         fb, err := c.Codec().Encode(fileReq)
         if err != nil {
             rlog.Error(err)
-            w.Header().Set("Content-type", "text/plain")
             w.WriteHeader(http.StatusBadRequest)
-            w.Write([]byte(`400 Bad Request`))
+            w.Write(s.opts.Err.Error400(c))
             return
         }
 
@@ -219,17 +208,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         if err == router.ErrNotFoundHandler {
             w.Header().Set("Content-type", "text/plain")
             w.WriteHeader(http.StatusNotFound)
-            w.Write([]byte(`404 Not Found`))
+            w.Write(s.opts.Err.Error404(c))
             return
         }
 
         if len(rsp.Bytes()) > 0 {
             w.WriteHeader(http.StatusOK)
             w.Write(rsp.Bytes())
-        } else {
-            w.Header().Set("Content-type", "text/plain")
+        } else if err != nil {
+            rlog.Error(err)
             w.WriteHeader(http.StatusInternalServerError)
-            w.Write([]byte(`500 Internal server error`))
+            w.Write(s.opts.Err.Error500(c))
         }
 
         return
@@ -248,9 +237,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         fb, err := c.Codec().Encode(apiReq)
         if err != nil {
             rlog.Error(err)
-            w.Header().Set("Content-type", "text/plain")
             w.WriteHeader(http.StatusBadRequest)
-            w.Write([]byte(`400 Bad Request`))
+            w.Write(s.opts.Err.Error400(c))
             return
         }
 
@@ -262,19 +250,19 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         err = s.route.RRProcess(c, req, rsp)
 
         if err == router.ErrNotFoundHandler {
-            w.Header().Set("Content-type", "text/plain")
             w.WriteHeader(http.StatusNotFound)
-            w.Write([]byte(`404 Not Found`))
+            w.Write(s.opts.Err.Error404(c))
             return
         }
 
         if len(rsp.Bytes()) > 0 {
             w.WriteHeader(http.StatusOK)
             w.Write(rsp.Bytes())
-        } else {
+        } else if err != nil {
+            rlog.Error(err)
             w.Header().Set("Content-type", "text/plain")
             w.WriteHeader(http.StatusInternalServerError)
-            w.Write([]byte(`500 Internal server error`))
+            w.Write(s.opts.Err.Error500(c))
         }
 
         return
@@ -284,9 +272,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    w.Header().Set("Content-type", "text/plain")
     w.WriteHeader(http.StatusMethodNotAllowed)
-    w.Write([]byte(`405 Method Not Allowed`))
+    w.Write(s.opts.Err.Error405(c))
     return
 }
 

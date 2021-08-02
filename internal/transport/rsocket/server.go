@@ -143,7 +143,7 @@ func mustGetMetadata(p payload.Payload) []byte {
     return b
 }
 
-func setupRequestResponse(router *router.Router) rsocket.OptAbstractSocket {
+func setupRequestResponse(r *router.Router) rsocket.OptAbstractSocket {
     return rsocket.RequestResponse(
         func(p payload.Payload) mono.Mono {
 
@@ -153,15 +153,16 @@ func setupRequestResponse(router *router.Router) rsocket.OptAbstractSocket {
             }()
 
             var c = context.FromMetadata(mustGetMetadata(p))
-            err := router.RRProcess(c, req, rsp)
+            err := r.RRProcess(c, req, rsp)
+
+            if err == router.ErrNotFoundHandler {
+                c.Error(err)
+                return mono.JustOneshot(payload.New(r.Error().Error404(c), nil))
+            }
+
             if err != nil {
                 c.Error(err)
-                return mono.JustOneshot(
-                    payload.New(
-                        router.Error().
-                            Encode(c.Codec(), parcel.ErrorCodeBadRequest, err), nil,
-                    ),
-                )
+                return mono.JustOneshot(payload.New(r.Error().Error400(c), nil))
             }
 
             return mono.JustOneshot(payload.New(rsp.Bytes(), nil))

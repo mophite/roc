@@ -43,8 +43,8 @@
 package main
 
 import (
-    "github.com/go-roc/roc/_auxiliary/example/hello/app/api/api.hello/hello"
-    "github.com/go-roc/roc/_auxiliary/example/hello/proto/phello"
+    "tutorials/app/api/api.hello/hello"
+    "tutorials/proto/phello"
     "github.com/go-roc/roc/rlog"
     "github.com/go-roc/roc/service"
 )
@@ -74,8 +74,6 @@ import (
     "fmt"
 
     "github.com/go-roc/roc/config"
-
-    _ "github.com/go-roc/roc/internal/etcd/mock"
 )
 
 func main() {
@@ -131,6 +129,8 @@ func coverPrivate(key string, v interface{}) {
 
 ### ✨ TODO ✨
 
+- [ ] broadcast
+- [ ] topic publish/subscript
 - [ ] sidecar
 - [ ] more example
 - [ ] more singleton tests

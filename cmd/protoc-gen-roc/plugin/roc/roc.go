@@ -230,11 +230,11 @@ func (r *roc) generateService(file *generator.FileDescriptor, service *pb.Servic
 			r.P(`s.RegisterHandler(service.GetApiPrefix()+"`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
 		}
 		if v.GetClientStreaming() && !v.GetServerStreaming() {
-			r.P(`s.RegisterStreamHandler("`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
+			r.P(`s.RegisterStreamHandler(service.GetApiPrefix()+"`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
 		}
 
 		if v.GetClientStreaming() && v.GetServerStreaming() {
-			r.P(`s.RegisterChannelHandler("`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
+			r.P(`s.RegisterChannelHandler(service.GetApiPrefix()+"`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
 		}
 	}
 	r.P("}")
@@ -336,7 +336,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 
 	if method.GetClientStreaming() && !method.GetServerStreaming() {
 		r.P("func (cc *", unexport(serverName), "Client) ", r.generateClientSignature(serverName, method), "{")
-		r.P(`data, errs :=cc.c.InvokeRS(c, "`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", req, opts...)`)
+		r.P(`data, errs :=cc.c.InvokeRS(c, service.GetApiPrefix()+"`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", req, opts...)`)
 		r.P("var rsp = make(chan *", outType, ")")
 		r.P("go func() {")
 		r.P("for b := range data {")
@@ -370,7 +370,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 		r.P("close(in)")
 		r.P("}()")
 		r.P()
-		r.P(`data, errs :=cc.c.InvokeRC(c, "`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", in, errIn, opts...)`)
+		r.P(`data, errs :=cc.c.InvokeRC(c, service.GetApiPrefix()+"`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", in, errIn, opts...)`)
 		r.P("var rsp = make(chan *", outType, ")")
 		r.P("go func() {")
 		r.P("for b := range data {")

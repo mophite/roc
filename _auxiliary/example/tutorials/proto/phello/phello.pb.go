@@ -718,7 +718,7 @@ func (cc *helloSrvClient) SaySrv(c *context.Context, req *SayReq, opts ...invoke
 }
 
 func (cc *helloSrvClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
-	data, errs := cc.c.InvokeRS(c, "hellosrv/saystream", req, opts...)
+	data, errs := cc.c.InvokeRS(c, service.GetApiPrefix()+"hellosrv/saystream", req, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
 		for b := range data {
@@ -749,7 +749,7 @@ func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, errIn
 		close(in)
 	}()
 
-	data, errs := cc.c.InvokeRC(c, "hellosrv/saychannel", in, errIn, opts...)
+	data, errs := cc.c.InvokeRC(c, service.GetApiPrefix()+"hellosrv/saychannel", in, errIn, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
 		for b := range data {
@@ -781,8 +781,8 @@ type HelloSrvServer interface {
 func RegisterHelloSrvServer(s *server.Server, h HelloSrvServer) {
 	var r = &helloSrvHandler{h: h, s: s}
 	s.RegisterHandler(service.GetApiPrefix()+"hellosrv/saysrv", r.SaySrv)
-	s.RegisterStreamHandler("hellosrv/saystream", r.SayStream)
-	s.RegisterChannelHandler("hellosrv/saychannel", r.SayChannel)
+	s.RegisterStreamHandler(service.GetApiPrefix()+"hellosrv/saystream", r.SayStream)
+	s.RegisterChannelHandler(service.GetApiPrefix()+"hellosrv/saychannel", r.SayChannel)
 }
 
 type helloSrvHandler struct {
