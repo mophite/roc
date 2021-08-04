@@ -6,36 +6,24 @@ proto:
 		    protoc  --roc_out=plugins=roc:. $$f; \
 			echo compiled: $$f; \
 		done; \
-#	    for f in $$d/**/*.pb.go; do \
-#    		    protoc-go-inject-tag -input=$$f;\
-#    			echo compiled: $$f; \
-#    	done; \
 	done
 
-deploy:
-	./bin/build.sh; \
-	./bin/deploy.sh; \
-	./bin/run.sh
-
-# build编译
-b:
+# build
+build:
 	./bin/build.sh
 
 
-# 重启本地
-r:
+# build and stop ,then restart
+run:
 	./bin/build.sh; \
 	./bin/stop.sh;\
 	./bin/restart.sh;\
 
-# 停止所有
-s:
+# stop
+stop:
 	./bin/stop.sh
 
-# 本地连接远程，重启远程
-rr:
-	./bin/run.sh
-
+# restart
 restart:
 	./bin/restart.sh
 

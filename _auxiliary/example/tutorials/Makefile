@@ -9,23 +9,20 @@ proto:
 	done
 
 # build
-b:
+build:
 	./bin/build.sh
 
 
 # build and stop ,then restart
-r:
+run:
 	./bin/build.sh; \
 	./bin/stop.sh;\
 	./bin/restart.sh;\
 
 # stop
-s:
+stop:
 	./bin/stop.sh
 
 # restart
-rs:
+restart:
 	./bin/restart.sh
-
-
-
