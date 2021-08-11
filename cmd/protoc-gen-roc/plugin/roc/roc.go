@@ -405,7 +405,7 @@ func (r *roc) generateServerSignature(method *pb.MethodDescriptorProto) string {
 		return methodName + "(" + strings.Join(
 			reqArgs,
 			", ",
-		) + ")(err error)"
+		) + ")"
 	}
 
 	if method.GetClientStreaming() && !method.GetServerStreaming() {
@@ -454,12 +454,12 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
 		r.P("}")
 		r.P("var out = ", outType, "{}")
 		r.P("if interrupt == nil {")
-		r.P("err = r.h.", methodName, "(c, &in,&out)")
+		r.P("r.h.", methodName, "(c, &in,&out)")
 		r.P("return &out, err")
 		r.P("}")
-		r.P("f := func(c *context.Context, req proto.Message) (proto.Message, error) {")
-		r.P("err = r.h.", methodName, "(c, req.(*", inType, "),&out)")
-		r.P("return &out,err")
+		r.P("f := func(c *context.Context, req proto.Message) proto.Message {")
+		r.P("r.h.", methodName, "(c, req.(*", inType, "),&out)")
+		r.P("return &out")
 		r.P("}")
 		r.P("return interrupt(c, &in, f)")
 		r.P("}")

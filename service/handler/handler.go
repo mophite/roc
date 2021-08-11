@@ -35,7 +35,7 @@ type ChannelHandler func(c *context.Context, req chan *parcel.RocPacket, errs ch
 )
 
 //Fire run interceptor action
-type Fire func(c *context.Context, req proto.Message) (proto.Message, error)
+type Fire func(c *context.Context, req proto.Message) proto.Message
 
 // Interceptor for rpc request response interceptor function
 type Interceptor func(c *context.Context, req proto.Message, fire Fire) (proto.Message, error)

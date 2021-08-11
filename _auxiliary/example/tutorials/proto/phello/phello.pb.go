@@ -640,9 +640,9 @@ func (cc *helloClient) SayGet(c *context.Context, req *ApiReq, opts ...invoke.In
 // HelloServer is the server API for Hello server.
 type HelloServer interface {
 	// requestResponse or fireAndForget.
-	Say(c *context.Context, req *SayReq, rsp *SayRsp) (err error)
+	Say(c *context.Context, req *SayReq, rsp *SayRsp)
 	// get http request api
-	SayGet(c *context.Context, req *ApiReq, rsp *ApiRsp) (err error)
+	SayGet(c *context.Context, req *ApiReq, rsp *ApiRsp)
 }
 
 func RegisterHelloServer(s *server.Server, h HelloServer) {
@@ -664,12 +664,12 @@ func (r *helloHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt 
 	}
 	var out = SayRsp{}
 	if interrupt == nil {
-		err = r.h.Say(c, &in, &out)
+		r.h.Say(c, &in, &out)
 		return &out, err
 	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		err = r.h.Say(c, req.(*SayReq), &out)
-		return &out, err
+	f := func(c *context.Context, req proto.Message) proto.Message {
+		r.h.Say(c, req.(*SayReq), &out)
+		return &out
 	}
 	return interrupt(c, &in, f)
 }
@@ -682,12 +682,12 @@ func (r *helloHandler) SayGet(c *context.Context, req *parcel.RocPacket, interru
 	}
 	var out = ApiRsp{}
 	if interrupt == nil {
-		err = r.h.SayGet(c, &in, &out)
+		r.h.SayGet(c, &in, &out)
 		return &out, err
 	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		err = r.h.SayGet(c, req.(*ApiReq), &out)
-		return &out, err
+	f := func(c *context.Context, req proto.Message) proto.Message {
+		r.h.SayGet(c, req.(*ApiReq), &out)
+		return &out
 	}
 	return interrupt(c, &in, f)
 }
@@ -769,7 +769,7 @@ func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, errIn
 // HelloSrvServer is the server API for HelloSrv server.
 type HelloSrvServer interface {
 	// requestResponse or fireAndForget.
-	SaySrv(c *context.Context, req *SayReq, rsp *SayRsp) (err error)
+	SaySrv(c *context.Context, req *SayReq, rsp *SayRsp)
 	// requestStream.
 	// SayReq is channel params.
 	SayStream(c *context.Context, req *SayReq) (chan *SayRsp, chan error)
@@ -798,12 +798,12 @@ func (r *helloSrvHandler) SaySrv(c *context.Context, req *parcel.RocPacket, inte
 	}
 	var out = SayRsp{}
 	if interrupt == nil {
-		err = r.h.SaySrv(c, &in, &out)
+		r.h.SaySrv(c, &in, &out)
 		return &out, err
 	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		err = r.h.SaySrv(c, req.(*SayReq), &out)
-		return &out, err
+	f := func(c *context.Context, req proto.Message) proto.Message {
+		r.h.SaySrv(c, req.(*SayReq), &out)
+		return &out
 	}
 	return interrupt(c, &in, f)
 }
@@ -889,7 +889,7 @@ func (cc *fileClient) Upload(c *context.Context, req *FileReq, opts ...invoke.In
 
 // FileServer is the server API for File server.
 type FileServer interface {
-	Upload(c *context.Context, req *FileReq, rsp *FileRsp) (err error)
+	Upload(c *context.Context, req *FileReq, rsp *FileRsp)
 }
 
 func RegisterFileServer(s *server.Server, h FileServer) {
@@ -910,12 +910,12 @@ func (r *fileHandler) Upload(c *context.Context, req *parcel.RocPacket, interrup
 	}
 	var out = FileRsp{}
 	if interrupt == nil {
-		err = r.h.Upload(c, &in, &out)
+		r.h.Upload(c, &in, &out)
 		return &out, err
 	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		err = r.h.Upload(c, req.(*FileReq), &out)
-		return &out, err
+	f := func(c *context.Context, req proto.Message) proto.Message {
+		r.h.Upload(c, req.(*FileReq), &out)
+		return &out
 	}
 	return interrupt(c, &in, f)
 }

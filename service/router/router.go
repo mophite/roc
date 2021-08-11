@@ -175,11 +175,8 @@ func (r *Router) interrupt() handler.Interceptor {
             }
         }
 
-        rsp, err := fire(c, req)
-        if err != nil {
-            c.Errorf("fire err=%v |FROM=%s", err, req.String())
-            return rsp, err
-        }
+        rsp := fire(c, req)
+
         c.Debugf("FROM=%s |TO=%s", c.Codec().MustEncodeString(req), c.Codec().MustEncodeString(rsp))
         return rsp, nil
     }

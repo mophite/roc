@@ -28,10 +28,9 @@ Running 10s test @ http://127.0.0.1:9999/roc/hello/sayget
 Requests/sec:  40821.21
 Transfer/sec:      4.67MB
 */
-func (h *Say) SayGet(c *context.Context, req *phello.ApiReq, rsp *phello.ApiRsp) (err error) {
+func (h *Say) SayGet(c *context.Context, req *phello.ApiReq, rsp *phello.ApiRsp) {
     rsp.Code = 200
     rsp.Msg = "success"
-    return nil
 }
 
 // Say http post+rpc
@@ -53,16 +52,14 @@ Requests/sec:  27041.90
 Transfer/sec:      3.17MB
 
 */
-func (h *Say) Say(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) error {
+func (h *Say) Say(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
     //send a rr rpc request
     sayRsp, err := ipc.SaySrv(c, req)
     if err != nil {
         rlog.Error(err)
         rsp.Pong = "error"
-        return err
+        return
     }
 
     rsp.Pong = sayRsp.Pong
-
-    return nil
 }

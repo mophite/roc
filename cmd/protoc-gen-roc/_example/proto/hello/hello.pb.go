@@ -301,7 +301,7 @@ func (cc *helloWorldClient) SayChannel(c *context.Context, req chan *SayReq, err
 // HelloWorldServer is the server API for HelloWorld server.
 type HelloWorldServer interface {
 	// requestResponse or fireAndForget.
-	Say(c *context.Context, req *SayReq, rsp *SayRsp) (err error)
+	Say(c *context.Context, req *SayReq, rsp *SayRsp)
 	// requestStream.
 	// SayReq is channel params.
 	SayStream(c *context.Context, req *SayReq) (chan *SayRsp, chan error)
@@ -330,12 +330,12 @@ func (r *helloWorldHandler) Say(c *context.Context, req *parcel.RocPacket, inter
 	}
 	var out = SayRsp{}
 	if interrupt == nil {
-		err = r.h.Say(c, &in, &out)
+		r.h.Say(c, &in, &out)
 		return &out, err
 	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		err = r.h.Say(c, req.(*SayReq), &out)
-		return &out, err
+	f := func(c *context.Context, req proto.Message) proto.Message {
+		r.h.Say(c, req.(*SayReq), &out)
+		return &out
 	}
 	return interrupt(c, &in, f)
 }

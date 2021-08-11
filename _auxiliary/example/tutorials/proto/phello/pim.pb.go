@@ -600,9 +600,9 @@ func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, er
 // ImServer is the server API for Im server.
 type ImServer interface {
 	// Connect server for wait message
-	Connect(c *context.Context, req *ConnectReq, rsp *ConnectRsp) (err error)
+	Connect(c *context.Context, req *ConnectReq, rsp *ConnectRsp)
 	// Count online member
-	Count(c *context.Context, req *CountReq, rsp *CountRsp) (err error)
+	Count(c *context.Context, req *CountReq, rsp *CountRsp)
 	// SendMessage is the im kernel
 	SendMessage(c *context.Context, req chan *SendMessageReq, errIn chan error) (chan *SendMessageRsp, chan error)
 }
@@ -627,12 +627,12 @@ func (r *imHandler) Connect(c *context.Context, req *parcel.RocPacket, interrupt
 	}
 	var out = ConnectRsp{}
 	if interrupt == nil {
-		err = r.h.Connect(c, &in, &out)
+		r.h.Connect(c, &in, &out)
 		return &out, err
 	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		err = r.h.Connect(c, req.(*ConnectReq), &out)
-		return &out, err
+	f := func(c *context.Context, req proto.Message) proto.Message {
+		r.h.Connect(c, req.(*ConnectReq), &out)
+		return &out
 	}
 	return interrupt(c, &in, f)
 }
@@ -645,12 +645,12 @@ func (r *imHandler) Count(c *context.Context, req *parcel.RocPacket, interrupt h
 	}
 	var out = CountRsp{}
 	if interrupt == nil {
-		err = r.h.Count(c, &in, &out)
+		r.h.Count(c, &in, &out)
 		return &out, err
 	}
-	f := func(c *context.Context, req proto.Message) (proto.Message, error) {
-		err = r.h.Count(c, req.(*CountReq), &out)
-		return &out, err
+	f := func(c *context.Context, req proto.Message) proto.Message {
+		r.h.Count(c, req.(*CountReq), &out)
+		return &out
 	}
 	return interrupt(c, &in, f)
 }
