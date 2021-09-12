@@ -22,10 +22,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+//roc internal packet object
 type Packet struct {
-	Code int32             `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Msg  string            `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
-	Data map[string]string `protobuf:"bytes,3,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Code int32  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	Msg  string `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
 }
 
 func (m *Packet) Reset()         { *m = Packet{} }
@@ -75,17 +75,13 @@ func (m *Packet) GetMsg() string {
 	return ""
 }
 
-func (m *Packet) GetData() map[string]string {
-	if m != nil {
-		return m.Data
-	}
-	return nil
-}
-
+//roc file upload request
+//you must defined a struct as FileReq
 type FileReq struct {
 	FileName string `protobuf:"bytes,1,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
 	FileSize int64  `protobuf:"varint,2,opt,name=file_size,json=fileSize,proto3" json:"file_size,omitempty"`
 	Body     []byte `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
+	Extra    string `protobuf:"bytes,4,opt,name=extra,proto3" json:"extra,omitempty"`
 }
 
 func (m *FileReq) Reset()         { *m = FileReq{} }
@@ -142,6 +138,15 @@ func (m *FileReq) GetBody() []byte {
 	return nil
 }
 
+func (m *FileReq) GetExtra() string {
+	if m != nil {
+		return m.Extra
+	}
+	return ""
+}
+
+//roc http GET request
+//you must defined a struct as ApiReq
 type ApiReq struct {
 	Params map[string]string `protobuf:"bytes,1,rep,name=params,proto3" json:"params,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
@@ -188,7 +193,6 @@ func (m *ApiReq) GetParams() map[string]string {
 
 func init() {
 	proto.RegisterType((*Packet)(nil), "packet.Packet")
-	proto.RegisterMapType((map[string]string)(nil), "packet.Packet.DataEntry")
 	proto.RegisterType((*FileReq)(nil), "packet.FileReq")
 	proto.RegisterType((*ApiReq)(nil), "packet.ApiReq")
 	proto.RegisterMapType((map[string]string)(nil), "packet.ApiReq.ParamsEntry")
@@ -197,26 +201,24 @@ func init() {
 func init() { proto.RegisterFile("parcel.proto", fileDescriptor_b8764ff728ca52e9) }
 
 var fileDescriptor_b8764ff728ca52e9 = []byte{
-	// 293 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x91, 0xbd, 0x4e, 0xf3, 0x30,
-	0x14, 0x86, 0xe3, 0xa6, 0xcd, 0xf7, 0xe5, 0xb4, 0x03, 0xb2, 0x18, 0xac, 0x20, 0x59, 0x51, 0xa6,
-	0x0c, 0x28, 0x43, 0x19, 0xf8, 0xd9, 0x40, 0xc0, 0x88, 0x2a, 0x33, 0x30, 0x22, 0x37, 0x39, 0xa0,
-	0xa8, 0x49, 0x13, 0x92, 0x00, 0x4a, 0xaf, 0x82, 0x85, 0x7b, 0x62, 0xec, 0xc8, 0x88, 0x92, 0x1b,
-	0x41, 0xb6, 0x43, 0xc5, 0xca, 0xf6, 0xfa, 0xbc, 0xc7, 0x8f, 0xf5, 0xc8, 0x30, 0x2b, 0x65, 0x15,
-	0x63, 0x16, 0x95, 0x55, 0xd1, 0x14, 0xd4, 0x29, 0x65, 0xbc, 0xc2, 0x26, 0x78, 0x27, 0xe0, 0x2c,
-	0x74, 0xa4, 0x14, 0xc6, 0x71, 0x91, 0x20, 0x23, 0x3e, 0x09, 0x27, 0x42, 0x67, 0xba, 0x07, 0x76,
-	0x5e, 0x3f, 0xb2, 0x91, 0x4f, 0x42, 0x57, 0xa8, 0x48, 0x0f, 0x61, 0x9c, 0xc8, 0x46, 0x32, 0xdb,
-	0xb7, 0xc3, 0xe9, 0x9c, 0x45, 0x86, 0x13, 0x19, 0x46, 0x74, 0x29, 0x1b, 0x79, 0xb5, 0x6e, 0xaa,
-	0x56, 0xe8, 0x2d, 0xef, 0x18, 0xdc, 0xdd, 0x48, 0xc1, 0x56, 0xd8, 0x6a, 0xbe, 0x2b, 0x54, 0xa4,
-	0xfb, 0x30, 0x79, 0x91, 0xd9, 0x33, 0x0e, 0x0f, 0x98, 0xc3, 0xd9, 0xe8, 0x84, 0x04, 0x77, 0xf0,
-	0xef, 0x3a, 0xcd, 0x50, 0xe0, 0x13, 0x3d, 0x00, 0xf7, 0x21, 0xcd, 0xf0, 0x7e, 0x2d, 0x73, 0x1c,
-	0x2e, 0xff, 0x57, 0x83, 0x1b, 0x99, 0xe3, 0xae, 0xac, 0xd3, 0x8d, 0xa1, 0xd8, 0xa6, 0xbc, 0x4d,
-	0x37, 0xa8, 0x8c, 0x96, 0x45, 0xd2, 0x32, 0xdb, 0x27, 0xe1, 0x4c, 0xe8, 0x1c, 0xbc, 0x82, 0x73,
-	0x5e, 0xa6, 0x8a, 0x3b, 0x07, 0xa7, 0x94, 0x95, 0xcc, 0x6b, 0x46, 0xb4, 0x8b, 0xf7, 0xe3, 0x62,
-	0xfa, 0x68, 0xa1, 0x4b, 0x63, 0x33, 0x6c, 0x7a, 0xa7, 0x30, 0xfd, 0x35, 0xfe, 0x8b, 0xd1, 0x05,
-	0xfb, 0xe8, 0x38, 0xd9, 0x76, 0x9c, 0x7c, 0x75, 0x9c, 0xbc, 0xf5, 0xdc, 0xda, 0xf6, 0xdc, 0xfa,
-	0xec, 0xb9, 0xb5, 0x74, 0xf4, 0x97, 0x1c, 0x7d, 0x07, 0x00, 0x00, 0xff, 0xff, 0x4b, 0x50, 0xec,
-	0x87, 0xa2, 0x01, 0x00, 0x00,
+	// 269 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0x90, 0xbd, 0x4e, 0xc3, 0x30,
+	0x14, 0x85, 0xeb, 0xa6, 0x0d, 0xe4, 0xb6, 0x03, 0xb2, 0x18, 0xac, 0x22, 0x59, 0x51, 0xa6, 0x4c,
+	0x19, 0xca, 0x02, 0x6c, 0x20, 0xc1, 0x88, 0x2a, 0xf3, 0x00, 0xc8, 0x4d, 0x2f, 0x28, 0x6a, 0xdc,
+	0x18, 0x27, 0xfc, 0xa4, 0x4f, 0xc1, 0x63, 0x31, 0x76, 0x64, 0x44, 0xc9, 0x8b, 0x20, 0xdb, 0x11,
+	0x62, 0xfb, 0xee, 0x3d, 0x3e, 0x3e, 0x3e, 0x86, 0xb9, 0x96, 0x26, 0xc7, 0x32, 0xd3, 0xa6, 0x6a,
+	0x2a, 0x1a, 0x6a, 0x99, 0x6f, 0xb1, 0x49, 0x32, 0x08, 0x57, 0x8e, 0x28, 0x85, 0x49, 0x5e, 0x6d,
+	0x90, 0x91, 0x98, 0xa4, 0x53, 0xe1, 0x98, 0x9e, 0x40, 0xa0, 0xea, 0x67, 0x36, 0x8e, 0x49, 0x1a,
+	0x09, 0x8b, 0x89, 0x82, 0xa3, 0xbb, 0xa2, 0x44, 0x81, 0x2f, 0xf4, 0x0c, 0xa2, 0xa7, 0xa2, 0xc4,
+	0xc7, 0x9d, 0x54, 0xde, 0x15, 0x89, 0x63, 0xbb, 0xb8, 0x97, 0x0a, 0xff, 0xc4, 0xba, 0xd8, 0xa3,
+	0xf3, 0x07, 0x5e, 0x7c, 0x28, 0xf6, 0x68, 0xa3, 0xd6, 0xd5, 0xa6, 0x65, 0x41, 0x4c, 0xd2, 0xb9,
+	0x70, 0x4c, 0x4f, 0x61, 0x8a, 0x1f, 0x8d, 0x91, 0x6c, 0xe2, 0x6e, 0xf2, 0x43, 0xf2, 0x0e, 0xe1,
+	0xb5, 0x2e, 0x6c, 0xda, 0x12, 0x42, 0x2d, 0x8d, 0x54, 0x35, 0x23, 0x71, 0x90, 0xce, 0x96, 0x8b,
+	0xcc, 0x37, 0xc8, 0xbc, 0x9e, 0xad, 0x9c, 0x78, 0xbb, 0x6b, 0x4c, 0x2b, 0x86, 0x93, 0x8b, 0x4b,
+	0x98, 0xfd, 0x5b, 0xdb, 0x36, 0x5b, 0x6c, 0x87, 0xa7, 0x5a, 0xb4, 0xa1, 0x6f, 0xb2, 0x7c, 0xc5,
+	0xa1, 0xa1, 0x1f, 0xae, 0xc6, 0x17, 0xe4, 0x86, 0x7d, 0x75, 0x9c, 0x1c, 0x3a, 0x4e, 0x7e, 0x3a,
+	0x4e, 0x3e, 0x7b, 0x3e, 0x3a, 0xf4, 0x7c, 0xf4, 0xdd, 0xf3, 0xd1, 0x3a, 0x74, 0x1f, 0x78, 0xfe,
+	0x1b, 0x00, 0x00, 0xff, 0xff, 0x29, 0x0e, 0x18, 0x53, 0x50, 0x01, 0x00, 0x00,
 }
 
 func (m *Packet) Marshal() (dAtA []byte, err error) {
@@ -239,25 +241,6 @@ func (m *Packet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Data) > 0 {
-		for k := range m.Data {
-			v := m.Data[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintParcel(dAtA, i, uint64(len(v)))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintParcel(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintParcel(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x1a
-		}
-	}
 	if len(m.Msg) > 0 {
 		i -= len(m.Msg)
 		copy(dAtA[i:], m.Msg)
@@ -293,6 +276,13 @@ func (m *FileReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Extra) > 0 {
+		i -= len(m.Extra)
+		copy(dAtA[i:], m.Extra)
+		i = encodeVarintParcel(dAtA, i, uint64(len(m.Extra)))
+		i--
+		dAtA[i] = 0x22
+	}
 	if len(m.Body) > 0 {
 		i -= len(m.Body)
 		copy(dAtA[i:], m.Body)
@@ -381,14 +371,6 @@ func (m *Packet) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovParcel(uint64(l))
 	}
-	if len(m.Data) > 0 {
-		for k, v := range m.Data {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovParcel(uint64(len(k))) + 1 + len(v) + sovParcel(uint64(len(v)))
-			n += mapEntrySize + 1 + sovParcel(uint64(mapEntrySize))
-		}
-	}
 	return n
 }
 
@@ -406,6 +388,10 @@ func (m *FileReq) Size() (n int) {
 		n += 1 + sovParcel(uint64(m.FileSize))
 	}
 	l = len(m.Body)
+	if l > 0 {
+		n += 1 + l + sovParcel(uint64(l))
+	}
+	l = len(m.Extra)
 	if l > 0 {
 		n += 1 + l + sovParcel(uint64(l))
 	}
@@ -514,133 +500,6 @@ func (m *Packet) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Msg = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParcel
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthParcel
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthParcel
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Data == nil {
-				m.Data = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowParcel
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowParcel
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthParcel
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthParcel
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowParcel
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthParcel
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthParcel
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipParcel(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if (skippy < 0) || (iNdEx+skippy) < 0 {
-						return ErrInvalidLengthParcel
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Data[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -776,6 +635,38 @@ func (m *FileReq) Unmarshal(dAtA []byte) error {
 			if m.Body == nil {
 				m.Body = []byte{}
 			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Extra", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParcel
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParcel
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParcel
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Extra = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
