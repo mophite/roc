@@ -17,12 +17,12 @@ package service
 
 import (
     "os"
-    "strings"
     "time"
 
     "github.com/coreos/etcd/clientv3"
-    "github.com/go-roc/roc/rlog/log"
     "github.com/rs/cors"
+
+    "github.com/go-roc/roc/rlog/log"
 
     "github.com/go-roc/roc/config"
     "github.com/go-roc/roc/internal/endpoint"
@@ -36,9 +36,6 @@ import (
 )
 
 const SupportPackageIsVersion1 = 1
-
-//DefaultApiPrefix it must be unique in all of your handler path
-var DefaultApiPrefix = "/roc/"
 
 func Release() {
     log.SetInfo()
@@ -148,18 +145,6 @@ func Version(version string) opt.Options {
 func Registry(r registry.Registry) opt.Options {
     return func(o *opt.Option) {
         o.Registry = r
-    }
-}
-
-func ApiPrefix(apiPrefix string) opt.Options {
-    return func(o *opt.Option) {
-        if !strings.HasPrefix(apiPrefix, "/") {
-            apiPrefix = "/" + apiPrefix
-        }
-        if !strings.HasSuffix(apiPrefix, "/") {
-            apiPrefix += "/"
-        }
-        DefaultApiPrefix = apiPrefix
     }
 }
 

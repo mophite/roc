@@ -84,9 +84,6 @@ type Option struct {
     //when transportServer exit,will do exit func
     Exit []func()
 
-    //it must be unique in all of your handler path
-    ApiPrefix string
-
     //etcd config
     EtcdConfig *clientv3.Config
 
@@ -168,18 +165,6 @@ func NewOpts(opts ...Options) Option {
 
     if opt.Signal == nil {
         opt.Signal = sig.DefaultSignal
-    }
-
-    if opt.ApiPrefix == "" {
-        opt.ApiPrefix = "roc"
-    }
-
-    if !strings.HasPrefix(opt.ApiPrefix, "/") {
-        opt.ApiPrefix = "/" + opt.ApiPrefix
-    }
-
-    if !strings.HasSuffix(opt.ApiPrefix, "/") {
-        opt.ApiPrefix = opt.ApiPrefix + "/"
     }
 
     if opt.EtcdConfig == nil {

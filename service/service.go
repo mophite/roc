@@ -53,10 +53,6 @@ func New(opts ...opt.Options) *Service {
     return s
 }
 
-func GetApiPrefix() string {
-    return DefaultApiPrefix
-}
-
 func (s *Service) Client() *client.Client {
     if s.client == nil {
         s.client = client.NewClient(s.opts)

@@ -20,6 +20,7 @@ import (
 	ctx "context"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rs/cors"
@@ -48,6 +49,10 @@ type Server struct {
 	httpServer *http.Server
 }
 
+func (s *Server) Name() string {
+	return s.opts.Name
+}
+
 func NewServer(opts opt.Option) *Server {
 	s := &Server{
 		opts: opts,
@@ -71,7 +76,17 @@ func (s *Server) Run() {
 	if s.opts.HttpAddress != "" {
 		go func() {
 
-			http.Handle(s.opts.ApiPrefix, cors.New(*s.opts.CorsOptions).Handler(s))
+			prefix := s.opts.Name
+
+			if !strings.HasPrefix(prefix, "/") {
+				prefix= "/" + prefix
+			}
+
+			if !strings.HasSuffix(prefix, "/") {
+				prefix = prefix + "/"
+			}
+
+			http.Handle(prefix, cors.New(*s.opts.CorsOptions).Handler(s))
 
 			s.httpServer = &http.Server{
 				Handler:      s,

@@ -46,6 +46,8 @@ func NewInvoke(c *context.Context, method string, opts ...InvokeOptions) (*Invok
 		return nil, errors.New("not set rpc service name")
 	}
 
+	method = "/" + method+"/"
+
 	// initialize tunnel for requestChannel only
 	if invoke.opts.buffSize == 0 {
 		invoke.opts.buffSize = 10
