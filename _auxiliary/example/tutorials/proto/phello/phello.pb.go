@@ -627,13 +627,13 @@ func NewHelloClient(c *client.Client) HelloClient {
 
 func (cc *helloClient) Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error) {
 	rsp := &SayRsp{}
-	err := cc.c.InvokeRR(c, "hello/say", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, "/hello/say", req, rsp, opts...)
 	return rsp, err
 }
 
 func (cc *helloClient) SayGet(c *context.Context, req *ApiReq, opts ...invoke.InvokeOptions) (*ApiRsp, error) {
 	rsp := &ApiRsp{}
-	err := cc.c.InvokeRR(c, "hello/sayget", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, "/hello/sayget", req, rsp, opts...)
 	return rsp, err
 }
 
@@ -647,8 +647,8 @@ type HelloServer interface {
 
 func RegisterHelloServer(s *server.Server, h HelloServer) {
 	var r = &helloHandler{h: h, s: s}
-	s.RegisterHandler(s.Name()+"hello/say", r.Say)
-	s.RegisterHandler(s.Name()+"hello/sayget", r.SayGet)
+	s.RegisterHandler("/"+s.Name()+"/hello/say", r.Say)
+	s.RegisterHandler("/"+s.Name()+"/hello/sayget", r.SayGet)
 }
 
 type helloHandler struct {
@@ -713,12 +713,12 @@ func NewHelloSrvClient(c *client.Client) HelloSrvClient {
 
 func (cc *helloSrvClient) SaySrv(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error) {
 	rsp := &SayRsp{}
-	err := cc.c.InvokeRR(c, "hellosrv/saysrv", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, "/hellosrv/saysrv", req, rsp, opts...)
 	return rsp, err
 }
 
 func (cc *helloSrvClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
-	data, errs := cc.c.InvokeRS(c, "hellosrv/saystream", req, opts...)
+	data, errs := cc.c.InvokeRS(c, "/hellosrv/saystream", req, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
 		for b := range data {
@@ -749,7 +749,7 @@ func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, errIn
 		close(in)
 	}()
 
-	data, errs := cc.c.InvokeRC(c, "hellosrv/saychannel", in, errIn, opts...)
+	data, errs := cc.c.InvokeRC(c, "/hellosrv/saychannel", in, errIn, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
 		for b := range data {
@@ -780,9 +780,9 @@ type HelloSrvServer interface {
 
 func RegisterHelloSrvServer(s *server.Server, h HelloSrvServer) {
 	var r = &helloSrvHandler{h: h, s: s}
-	s.RegisterHandler(s.Name()+"hellosrv/saysrv", r.SaySrv)
-	s.RegisterStreamHandler(s.Name()+"hellosrv/saystream", r.SayStream)
-	s.RegisterChannelHandler(s.Name()+"hellosrv/saychannel", r.SayChannel)
+	s.RegisterHandler("/"+s.Name()+"/hellosrv/saysrv", r.SaySrv)
+	s.RegisterStreamHandler("/"+s.Name()+"/hellosrv/saystream", r.SayStream)
+	s.RegisterChannelHandler("/"+s.Name()+"/hellosrv/saychannel", r.SayChannel)
 }
 
 type helloSrvHandler struct {
@@ -883,7 +883,7 @@ func NewFileClient(c *client.Client) FileClient {
 
 func (cc *fileClient) Upload(c *context.Context, req *FileReq, opts ...invoke.InvokeOptions) (*FileRsp, error) {
 	rsp := &FileRsp{}
-	err := cc.c.InvokeRR(c, "file/upload", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, "/file/upload", req, rsp, opts...)
 	return rsp, err
 }
 
@@ -894,7 +894,7 @@ type FileServer interface {
 
 func RegisterFileServer(s *server.Server, h FileServer) {
 	var r = &fileHandler{h: h, s: s}
-	s.RegisterHandler(s.Name()+"file/upload", r.Upload)
+	s.RegisterHandler("/"+s.Name()+"/file/upload", r.Upload)
 }
 
 type fileHandler struct {

@@ -13,10 +13,11 @@
 //  limitations under the License.
 //
 
-
 package invoke
 
 import (
+    "strings"
+
     "github.com/go-roc/roc/internal/namespace"
     "github.com/go-roc/roc/parcel/codec"
 )
@@ -40,8 +41,9 @@ type InvokeOption struct {
     //buffSize effective only requestChannel
     buffSize int
 
-
     trace string
+
+    prefix string
 
     //for requestResponse try to retry request
     retry int
@@ -83,6 +85,19 @@ func WithName(name string, version ...string) InvokeOptions {
         invokeOption.scope = name + "/" + ver
         invokeOption.serviceName = name
         invokeOption.version = ver
+
+        invokeOption.prefix = name
+
+        ss := strings.Split(invokeOption.prefix, ".")
+        invokeOption.prefix = ss[len(ss)-1]
+
+        if strings.HasSuffix(invokeOption.prefix, "/") {
+            invokeOption.prefix = strings.TrimSuffix(invokeOption.prefix, "/")
+        }
+
+        if !strings.HasPrefix(invokeOption.prefix, "/") {
+            invokeOption.prefix = "/" + invokeOption.prefix
+        }
     }
 }
 

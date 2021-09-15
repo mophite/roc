@@ -245,12 +245,12 @@ func NewHelloWorldClient(c *client.Client) HelloWorldClient {
 
 func (cc *helloWorldClient) Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error) {
 	rsp := &SayRsp{}
-	err := cc.c.InvokeRR(c, "helloworld/say", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, "/helloworld/say", req, rsp, opts...)
 	return rsp, err
 }
 
 func (cc *helloWorldClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
-	data, errs := cc.c.InvokeRS(c, "helloworld/saystream", req, opts...)
+	data, errs := cc.c.InvokeRS(c, "/helloworld/saystream", req, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
 		for b := range data {
@@ -281,7 +281,7 @@ func (cc *helloWorldClient) SayChannel(c *context.Context, req chan *SayReq, err
 		close(in)
 	}()
 
-	data, errs := cc.c.InvokeRC(c, "helloworld/saychannel", in, errIn, opts...)
+	data, errs := cc.c.InvokeRC(c, "/helloworld/saychannel", in, errIn, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
 		for b := range data {
@@ -312,9 +312,9 @@ type HelloWorldServer interface {
 
 func RegisterHelloWorldServer(s *server.Server, h HelloWorldServer) {
 	var r = &helloWorldHandler{h: h, s: s}
-	s.RegisterHandler(s.Name()+"helloworld/say", r.Say)
-	s.RegisterStreamHandler(s.Name()+"helloworld/saystream", r.SayStream)
-	s.RegisterChannelHandler(s.Name()+"helloworld/saychannel", r.SayChannel)
+	s.RegisterHandler("/"+s.Name()+"/helloworld/say", r.Say)
+	s.RegisterStreamHandler("/"+s.Name()+"/helloworld/saystream", r.SayStream)
+	s.RegisterChannelHandler("/"+s.Name()+"/helloworld/saychannel", r.SayChannel)
 }
 
 type helloWorldHandler struct {

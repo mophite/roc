@@ -556,13 +556,13 @@ func NewImClient(c *client.Client) ImClient {
 
 func (cc *imClient) Connect(c *context.Context, req *ConnectReq, opts ...invoke.InvokeOptions) (*ConnectRsp, error) {
 	rsp := &ConnectRsp{}
-	err := cc.c.InvokeRR(c, "im/connect", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, "/im/connect", req, rsp, opts...)
 	return rsp, err
 }
 
 func (cc *imClient) Count(c *context.Context, req *CountReq, opts ...invoke.InvokeOptions) (*CountRsp, error) {
 	rsp := &CountRsp{}
-	err := cc.c.InvokeRR(c, "im/count", req, rsp, opts...)
+	err := cc.c.InvokeRR(c, "/im/count", req, rsp, opts...)
 	return rsp, err
 }
 
@@ -580,7 +580,7 @@ func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, er
 		close(in)
 	}()
 
-	data, errs := cc.c.InvokeRC(c, "im/sendmessage", in, errIn, opts...)
+	data, errs := cc.c.InvokeRC(c, "/im/sendmessage", in, errIn, opts...)
 	var rsp = make(chan *SendMessageRsp)
 	go func() {
 		for b := range data {
@@ -609,9 +609,9 @@ type ImServer interface {
 
 func RegisterImServer(s *server.Server, h ImServer) {
 	var r = &imHandler{h: h, s: s}
-	s.RegisterHandler(s.Name()+"im/connect", r.Connect)
-	s.RegisterHandler(s.Name()+"im/count", r.Count)
-	s.RegisterChannelHandler(s.Name()+"im/sendmessage", r.SendMessage)
+	s.RegisterHandler("/"+s.Name()+"/im/connect", r.Connect)
+	s.RegisterHandler("/"+s.Name()+"/im/count", r.Count)
+	s.RegisterChannelHandler("/"+s.Name()+"/im/sendmessage", r.SendMessage)
 }
 
 type imHandler struct {

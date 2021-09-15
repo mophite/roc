@@ -24,7 +24,7 @@ const (
     //default bytes buffer cap size
     defaultCapSize = 512
     //default packet pool size
-    defaultPoolSize = 102400
+    defaultPoolSize = 1024000
     //default bytes buffer cap max size
     //if defaultCapSize > defaultMaxCapSize ? defaultCapSize
     defaultMaxCapSize = 4096

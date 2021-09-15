@@ -26,9 +26,8 @@ import (
 
 type Hello struct{}
 
-func (h *Hello) SaySrv(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) (err error) {
+func (h *Hello) SaySrv(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
     rsp.Pong = "pong"
-    return nil
 }
 
 func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) (chan *phello.SayRsp, chan error) {
