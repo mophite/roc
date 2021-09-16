@@ -177,6 +177,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         err := s.route.RRProcess(c, req, rsp)
 
         if err == router.ErrNotFoundHandler {
+            c.Errorf("path=%s |service=%s",r.URL.Path,s.opts.Name)
             w.WriteHeader(http.StatusNotFound)
             w.Write(s.opts.Err.Error404(c))
             return
