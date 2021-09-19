@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-package main
+package imStrem
 
 import (
     "fmt"
@@ -26,7 +26,8 @@ import (
 
 func Stream() {
 
-    rsp, errs := ipc.SayStream(context.Background(), &phello.SayReq{Ping: "ping"})
+    var exit = make(chan error)
+    rsp := ipc.SayStream(context.Background(), &phello.SayReq{Ping: "ping"}, exit)
 
     var count uint32
 
@@ -43,7 +44,10 @@ func Stream() {
                 } else {
                     break QUIT
                 }
-            case err = <-errs:
+                if count == 3 {
+                    close(rsp)
+                }
+            case err = <-exit:
                 if err != nil {
                     break QUIT
                 }
@@ -55,5 +59,4 @@ func Stream() {
     }()
 
     <-done
-
 }

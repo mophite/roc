@@ -29,7 +29,7 @@ var (
     // DefaultConnectTimeout dial rpc connection timeout
     // connect server within connectTimeout
     // if out of ranges,will be timeout
-    DefaultConnectTimeout    = time.Second * 5
+    DefaultConnectTimeout = time.Second * 5
     // DefaultKeepaliveInterval rpc keepalive interval time
     //keepalive setting,the period for requesting heartbeat to stay connected
     DefaultKeepaliveInterval = time.Second * 5
@@ -164,11 +164,12 @@ func (c *Conn) Client() transport.Client {
     return c.client
 }
 
-// Close close client
-func (c *Conn) Close() {
+// CloseConn close client connection
+func (c *Conn) CloseConn() {
     c.Block()
 
-    c.Client().Close()
-
-    c.client = nil
+    if c.client != nil {
+        c.Client().CloseClient()
+        c.client = nil
+    }
 }

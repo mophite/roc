@@ -17,7 +17,6 @@ func Count(c *context.Context, req *phello.CountReq) (rsp *phello.CountRsp, err 
 
 func SendMessage(c *context.Context, req chan *phello.SendMessageReq, errsIn chan error) (
     rsp chan *phello.SendMessageRsp,
-    err chan error,
 ) {
     return imClient.SendMessage(c, req, errsIn, invokeHello)
 }

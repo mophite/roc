@@ -11,16 +11,10 @@ func SaySrv(c *context.Context, req *phello.SayReq) (rsp *phello.SayRsp, err err
     return sayClient.SaySrv(c, req, invokeHello)
 }
 
-func SayChannel(c *context.Context, req chan *phello.SayReq, errsIn chan error) (
-    rsp chan *phello.SayRsp,
-    err chan error,
-) {
-    return sayClient.SayChannel(c, req, errsIn, invokeHello)
+func SayChannel(c *context.Context, req chan *phello.SayReq, errSig chan error) chan *phello.SayRsp {
+    return sayClient.SayChannel(c, req, errSig, invokeHello)
 }
 
-func SayStream(c *context.Context, req *phello.SayReq) (
-    rsp chan *phello.SayRsp,
-    err chan error,
-) {
-    return sayClient.SayStream(c, req, invokeHello)
+func SayStream(c *context.Context, req *phello.SayReq,errSig chan error) chan *phello.SayRsp {
+    return sayClient.SayStream(c, req, errSig,invokeHello)
 }

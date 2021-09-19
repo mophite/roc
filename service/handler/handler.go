@@ -26,13 +26,10 @@ import (
 type Handler func(c *context.Context, req *parcel.RocPacket, interrupt Interceptor) (rsp proto.Message, err error)
 
 // StreamHandler for rpc service stream handler
-type StreamHandler func(c *context.Context, req *parcel.RocPacket) (chan proto.Message, chan error)
+type StreamHandler func(c *context.Context, req *parcel.RocPacket, exit chan struct{}) chan proto.Message
 
 // ChannelHandler for rpc service channel handler
-type ChannelHandler func(c *context.Context, req chan *parcel.RocPacket, errs chan error) (
-    chan proto.Message,
-    chan error,
-)
+type ChannelHandler func(c *context.Context, req chan *parcel.RocPacket, exit chan struct{}) chan proto.Message
 
 //Fire run interceptor action
 type Fire func(c *context.Context, req proto.Message) proto.Message

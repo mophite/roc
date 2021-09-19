@@ -18,6 +18,7 @@ package im
 import (
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
     "github.com/go-roc/roc/parcel/context"
+    "github.com/gogo/protobuf/proto"
 )
 
 type Im struct {
@@ -25,55 +26,40 @@ type Im struct {
     p *point
 }
 
-func (i *Im) Connect(c *context.Context, req *phello.ConnectReq, rsp *phello.ConnectRsp) (err error) {
-    i.p = &point{userName: req.UserName, message: make(chan *phello.SendMessageRsp)}
+func (i *Im) Connect(c *context.Context, req *phello.ConnectReq, rsp *phello.ConnectRsp) {
+    i.p = &point{userName: req.UserName, message: make(chan proto.Message)}
     i.H.addClient(i.p)
     rsp.IsConnect = true
-    return nil
 }
 
-func (i *Im) Count(c *context.Context, req *phello.CountReq, rsp *phello.CountRsp) (err error) {
+func (i *Im) Count(c *context.Context, req *phello.CountReq, rsp *phello.CountRsp) {
     rsp.Count = i.H.count()
-    return nil
 }
 
 func (i *Im) SendMessage(
     c *context.Context,
     req chan *phello.SendMessageReq,
-    errIn chan error,
-) (chan *phello.SendMessageRsp, chan error) {
-    var rsp = make(chan *phello.SendMessageRsp)
-    var errs = make(chan error)
-
-    go func() {
-        for data := range i.p.message {
-            rsp <- data
-        }
-        close(rsp)
-    }()
-
+    exit chan struct{},
+) chan proto.Message {
     go func() {
     QUIT:
         for {
             select {
             case data, ok := <-req:
                 if !ok {
+
                     break QUIT
                 }
 
                 i.H.broadCast <- data
-
-            case e := <-errIn:
-                if e != nil {
-                    errs <- e
-                    break QUIT
-                }
+            case <-exit:
+                //client is closed
+                close(i.p.message)
             }
         }
 
-        close(errs)
         i.H.removeClient(i.p)
     }()
 
-    return rsp, errs
+    return i.p.message
 }

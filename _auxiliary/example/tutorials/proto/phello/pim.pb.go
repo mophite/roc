@@ -543,7 +543,7 @@ type ImClient interface {
 	// Count online member
 	Count(c *context.Context, req *CountReq, opts ...invoke.InvokeOptions) (*CountRsp, error)
 	// SendMessage is the im kernel
-	SendMessage(c *context.Context, req chan *SendMessageReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SendMessageRsp, chan error)
+	SendMessage(c *context.Context, req chan *SendMessageReq, errSig chan error, opts ...invoke.InvokeOptions) chan *SendMessageRsp
 }
 
 type imClient struct {
@@ -566,35 +566,35 @@ func (cc *imClient) Count(c *context.Context, req *CountReq, opts ...invoke.Invo
 	return rsp, err
 }
 
-func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SendMessageRsp, chan error) {
-	var in = make(chan []byte)
+func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, errSig chan error, opts ...invoke.InvokeOptions) chan *SendMessageRsp {
+	var in = make(chan []byte, cap(req))
 	go func() {
 		for b := range req {
 			v, err := c.Codec().Encode(b)
 			if err != nil {
-				errIn <- err
-				break
+				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Method(), b.String())
+				continue
 			}
 			in <- v
 		}
 		close(in)
 	}()
 
-	data, errs := cc.c.InvokeRC(c, "/im/sendmessage", in, errIn, opts...)
-	var rsp = make(chan *SendMessageRsp)
+	data := cc.c.InvokeRC(c, "/im/sendmessage", in, errSig, opts...)
+	var rsp = make(chan *SendMessageRsp, cap(data))
 	go func() {
 		for b := range data {
 			v := &SendMessageRsp{}
 			err := c.Codec().Decode(b, v)
 			if err != nil {
-				errs <- err
+				errSig <- err
 				break
 			}
 			rsp <- v
 		}
 		close(rsp)
 	}()
-	return rsp, errs
+	return rsp
 }
 
 // ImServer is the server API for Im server.
@@ -604,7 +604,7 @@ type ImServer interface {
 	// Count online member
 	Count(c *context.Context, req *CountReq, rsp *CountRsp)
 	// SendMessage is the im kernel
-	SendMessage(c *context.Context, req chan *SendMessageReq, errIn chan error) (chan *SendMessageRsp, chan error)
+	SendMessage(c *context.Context, req chan *SendMessageReq, exit chan struct{}) chan proto.Message
 }
 
 func RegisterImServer(s *server.Server, h ImServer) {
@@ -623,6 +623,7 @@ func (r *imHandler) Connect(c *context.Context, req *parcel.RocPacket, interrupt
 	var in ConnectReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = ConnectRsp{}
@@ -641,6 +642,7 @@ func (r *imHandler) Count(c *context.Context, req *parcel.RocPacket, interrupt h
 	var in CountReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = CountRsp{}
@@ -655,31 +657,23 @@ func (r *imHandler) Count(c *context.Context, req *parcel.RocPacket, interrupt h
 	return interrupt(c, &in, f)
 }
 
-func (r *imHandler) SendMessage(c *context.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
-	var in = make(chan *SendMessageReq)
+func (r *imHandler) SendMessage(c *context.Context, req chan *parcel.RocPacket, exit chan struct{}) chan proto.Message {
+	var in = make(chan *SendMessageReq, cap(req)<<5)
 	go func() {
 		for b := range req {
 			var v = &SendMessageReq{}
 			err := c.Codec().Decode(b.Bytes(), v)
 			if err != nil {
-				errIn <- err
-				break
+				c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), b.String())
+				continue
 			}
 			in <- v
+			parcel.Recycle(b)
 		}
 		close(in)
 	}()
 
-	out, outErrs := r.h.SendMessage(c, in, errIn)
-	var rsp = make(chan proto.Message)
-
-	go func() {
-		for d := range out {
-			rsp <- d
-		}
-		close(rsp)
-	}()
-	return rsp, outErrs
+	return r.h.SendMessage(c, in, exit)
 }
 
 func (m *ConnectReq) Size() (n int) {

@@ -16,7 +16,6 @@
 package service
 
 import (
-    "errors"
     "os"
     "os/signal"
 
@@ -65,7 +64,7 @@ func (s *Service) Server() *server.Server {
     return s.server
 }
 
-func (s *Service) Run() error {
+func (s *Service) Run()  {
     defer func() {
         if r := recover(); r != nil {
             rlog.Stack(r)
@@ -80,7 +79,7 @@ func (s *Service) Run() error {
         select {
         case c := <-ch:
 
-            rlog.Infof("received signal %s [%s] transportServer exit!", c.String(), s.opts.Name)
+            rlog.Infof("received signal %s ,service [%s] exit!", c.String(), s.opts.Name)
 
             s.Close()
 
@@ -99,14 +98,14 @@ func (s *Service) Run() error {
     case <-s.exit:
     }
 
-    return errors.New(s.opts.Name + " service is exit!")
+    os.Exit(0)
 }
 
 func (s *Service) Close() {
     //close registry service discover
     if s.opts.Registry != nil {
         _ = s.opts.Registry.Deregister(s.opts.Endpoint)
-        s.opts.Registry.Close()
+        s.opts.Registry.CloseRegistry()
         s.opts.Registry = nil
     }
 
@@ -119,12 +118,10 @@ func (s *Service) Close() {
     if s.server != nil {
         s.server.Close()
     }
-
     //close config setting
     config.Close()
-
     //close etcd client
-    etcd.DefaultEtcd.Close()
+    etcd.DefaultEtcd.CloseEtcd()
 
     //todo flush rlog content
     log.Close()

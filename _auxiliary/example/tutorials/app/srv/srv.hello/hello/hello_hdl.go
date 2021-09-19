@@ -22,6 +22,7 @@ import (
 
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
     "github.com/go-roc/roc/parcel/context"
+    "github.com/gogo/protobuf/proto"
 )
 
 type Hello struct{}
@@ -30,9 +31,8 @@ func (h *Hello) SaySrv(c *context.Context, req *phello.SayReq, rsp *phello.SayRs
     rsp.Pong = "pong"
 }
 
-func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) (chan *phello.SayRsp, chan error) {
-    var rsp = make(chan *phello.SayRsp)
-    var err = make(chan error)
+func (h *Hello) SayStream(c *context.Context, req *phello.SayReq, exit chan struct{}) chan proto.Message {
+    var rsp = make(chan proto.Message)
 
     go func() {
         var count uint32
@@ -45,17 +45,13 @@ func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) (chan *phello.
         c.Info("say stream example count is: ", atomic.LoadUint32(&count))
 
         close(rsp)
-        close(err)
     }()
 
-    return rsp, err
+    return rsp
 }
 
-func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, errIn chan error) (
-    chan *phello.SayRsp,
-    chan error,
-) {
-    var rsp = make(chan *phello.SayRsp)
+func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit chan struct{}) chan proto.Message {
+    var rsp = make(chan proto.Message)
     var errs = make(chan error)
 
     go func() {
@@ -70,11 +66,8 @@ func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, errIn ch
                 //test channel sending frequency
                 time.Sleep(time.Second)
                 rsp <- &phello.SayRsp{Pong: "pong"}
-
-            case e := <-errIn:
-                if e != nil {
-                    errs <- e
-                }
+            case <-exit:
+                break QUIT
             }
         }
 
@@ -82,5 +75,5 @@ func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, errIn ch
         close(errs)
     }()
 
-    return rsp, errs
+    return rsp
 }

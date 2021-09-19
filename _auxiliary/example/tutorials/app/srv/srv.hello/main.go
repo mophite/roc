@@ -17,8 +17,8 @@ package main
 
 import (
     "github.com/go-roc/roc/_auxiliary/example/tutorials/app/srv/srv.hello/hello"
+    "github.com/go-roc/roc/_auxiliary/example/tutorials/app/srv/srv.hello/im"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
-    "github.com/go-roc/roc/rlog"
     "github.com/go-roc/roc/service"
 )
 
@@ -26,9 +26,7 @@ func main() {
     s := service.New(service.Namespace("srv.hello"))
 
     phello.RegisterHelloSrvServer(s.Server(), &hello.Hello{})
+    phello.RegisterImServer(s.Server(), &im.Im{H: im.NewHub()})
 
-    err := s.Run()
-    if err != nil {
-        rlog.Error(err)
-    }
+    s.Run()
 }

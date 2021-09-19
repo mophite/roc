@@ -232,7 +232,7 @@ func (s *Etcd) revoke() error {
     return err
 }
 
-func (s *Etcd) Close() {
+func (s *Etcd) CloseEtcd() {
     s.lock.Lock()
     defer s.lock.Unlock()
 
@@ -240,17 +240,13 @@ func (s *Etcd) Close() {
         if s.leaseId > 0 {
             err := s.revoke()
             if err != nil {
-                rlog.Error(err)
+               rlog.Error(err)
             }
-        }
-
-        if s.leaseKeepaliveChan != nil {
-            close(s.leaseKeepaliveChan)
         }
 
         err := s.client.Close()
         if err != nil {
-            rlog.Error(err)
+           rlog.Error(err)
         }
     }
 }

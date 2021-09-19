@@ -13,7 +13,6 @@
 //  limitations under the License.
 //
 
-
 package strategy
 
 import (
@@ -90,7 +89,7 @@ func (p *pod) Del(addr string) {
 
     c, ok := p.clientsMap[addr]
     if ok {
-        c.Close()
+        c.CloseConn()
         p.clients = append(p.clients[:c.Cursor()], p.clients[c.Cursor()+1:]...)
         delete(p.clientsMap, addr)
         p.count -= 1

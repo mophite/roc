@@ -277,9 +277,6 @@ func (c *config) update() {
 
 func Close() {
     gRConfig.lock.Lock()
-    if gRConfig.watch != nil {
-        gRConfig.watch.Close()
-    }
     gRConfig.data = nil
     gRConfig.lock.Unlock()
     gRConfig.close <- struct{}{}

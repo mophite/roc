@@ -231,7 +231,7 @@ func (s *strategy) update(act *registry.Action) {
 func (s *strategy) Close() {
     for _, p := range s.connPerService {
         for _, client := range p.clientsMap {
-            client.Close()
+            client.CloseConn()
         }
     }
 

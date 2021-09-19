@@ -46,17 +46,17 @@ type Client interface {
     //FF(c *context.Context, req *parcel.RocPacket)
 
     // RS request/stream
-    RS(c *context.Context, req *parcel.RocPacket) (chan []byte, chan error)
+    RS(c *context.Context, req *parcel.RocPacket,errsIn chan error) chan []byte
 
     // RC request/channel
-    RC(c *context.Context, req chan []byte, errsIn chan error) (chan []byte, chan error)
+    RC(c *context.Context, req chan []byte, errsIn chan error) chan []byte
 
     // MP metadata
     //MP(c *context.Context)
 
     String() string
 
-    Close()
+    CloseClient()
 }
 
 // CallOptions todo call server Options

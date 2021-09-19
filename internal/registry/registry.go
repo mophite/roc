@@ -40,8 +40,8 @@ type Registry interface {
     // Name return the tool's name like "etcd"
     Name() string
 
-    // Close close registry
-    Close()
+    // CloseRegistry close registry
+    CloseRegistry()
 }
 
 type Watcher interface {

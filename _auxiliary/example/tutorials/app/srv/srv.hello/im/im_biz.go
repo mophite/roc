@@ -18,8 +18,8 @@ package im
 import (
     "sync"
 
-
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
+    "github.com/gogo/protobuf/proto"
 )
 
 func NewHub() *Hub {
@@ -42,7 +42,7 @@ type Hub struct {
 
 type point struct {
     userName string
-    message  chan *phello.SendMessageRsp
+    message  chan proto.Message
 }
 
 func (h *Hub) count() uint32 {

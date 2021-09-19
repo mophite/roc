@@ -17,6 +17,7 @@ package rs
 
 import (
     ctx "context"
+    "errors"
     "runtime"
     "time"
 
@@ -73,7 +74,12 @@ func (cli *client) Dial(e *endpoint.Endpoint, ch chan string) (err error) {
         ).
         OnClose(
             func(err error) { //when net occur some error,it's will be callback the error server ip address
-                rlog.Debugf("server [%s %s] is closed |err=%v", e.Name, e.Address, err)
+                if err != nil {
+                    rlog.Errorf("server [%s %s] is closed |err=%v", e.Name, e.Address, err)
+                } else {
+                    rlog.Debugf("server [%s %s] is closed", e.Name, e.Address)
+                }
+
                 ch <- e.Address
             },
         ).
@@ -101,21 +107,21 @@ func (cli *client) RR(c *context.Context, req *parcel.RocPacket, rsp *parcel.Roc
     return nil
 }
 
+var errSocketDone = errors.New("socket is closed")
+
 // RS requestStream
-func (cli *client) RS(c *context.Context, req *parcel.RocPacket) (chan []byte, chan error) {
+func (cli *client) RS(c *context.Context, req *parcel.RocPacket, exit chan error) chan []byte {
     var (
-        f    = cli.client.RequestStream(payload.New(req.Bytes(), c.Payload()))
-        rsp  = make(chan []byte)
-        errs = make(chan error)
+        f   = cli.client.RequestStream(payload.New(req.Bytes(), c.Payload()))
+        rsp = make(chan []byte)
     )
 
     f.
         SubscribeOn(scheduler.Parallel()).
         DoFinally(
             func(s rx.SignalType) {
-                //todo handler rx.SignalType
+                exit <- errSocketDone
                 close(rsp)
-                close(errs)
             },
         ).
         Subscribe(
@@ -127,21 +133,21 @@ func (cli *client) RS(c *context.Context, req *parcel.RocPacket) (chan []byte, c
                 },
             ),
             rx.OnError(
-                func(e error) {
-                    errs <- e
+                func(err error) {
+                    c.Error(err)
                 },
             ),
         )
 
     parcel.Recycle(req)
 
-    return rsp, errs
+    return rsp
 }
 
 // RC requestChannel
-func (cli *client) RC(c *context.Context, req chan []byte, errIn chan error) (chan []byte, chan error) {
+func (cli *client) RC(c *context.Context, req chan []byte, exit chan error) chan []byte {
     var (
-        sendPayload = make(chan payload.Payload, cap(req))
+        sendPayload = make(chan payload.Payload, cap(req)<<5)
     )
 
     go func() {
@@ -155,9 +161,8 @@ func (cli *client) RC(c *context.Context, req chan []byte, errIn chan error) (ch
     }()
 
     var (
-        f    = cli.client.RequestChannel(flux.CreateFromChannel(sendPayload, errIn))
-        rsp  = make(chan []byte)
-        errs = make(chan error)
+        f   = cli.client.RequestChannel(flux.CreateFromChannel(sendPayload, exit))
+        rsp = make(chan []byte, cap(req)<<5)
     )
 
     f.
@@ -165,8 +170,8 @@ func (cli *client) RC(c *context.Context, req chan []byte, errIn chan error) (ch
         DoFinally(
             func(s rx.SignalType) {
                 //todo handler rx.SignalType
+                exit <- errSocketDone
                 close(rsp)
-                close(errs)
             },
         ).
         Subscribe(
@@ -178,20 +183,20 @@ func (cli *client) RC(c *context.Context, req chan []byte, errIn chan error) (ch
                 },
             ),
             rx.OnError(
-                func(e error) {
-                    errs <- e
+                func(err error) {
+                    c.Error(err)
                 },
             ),
         )
 
-    return rsp, errs
+    return rsp
 }
 
 func (cli *client) String() string {
     return "rsocket"
 }
 
-func (cli *client) Close() {
+func (cli *client) CloseClient() {
     if cli.client != nil {
         _ = cli.client.Close()
     }

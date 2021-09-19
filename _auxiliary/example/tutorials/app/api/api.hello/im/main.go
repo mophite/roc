@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-package main
+package ImTest
 
 import (
     "fmt"
@@ -23,13 +23,15 @@ import (
     "github.com/go-roc/roc/_auxiliary/example/tutorials/internal/ipc"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
     "github.com/go-roc/roc/parcel/context"
+    "github.com/go-roc/roc/rlog"
 )
 
-func main() {
+func Im() {
 
     cRsp, err := ipc.Connect(context.Background(), &phello.ConnectReq{UserName: "roc"})
     if err != nil {
-        panic(err)
+        rlog.Error(err)
+        return
     }
 
     if !cRsp.IsConnect {
@@ -37,17 +39,17 @@ func main() {
     }
 
     var req = make(chan *phello.SendMessageReq)
-    var errsIn = make(chan error)
+    var errSig = make(chan error)
     go func() {
         for i := 0; i < 3; i++ {
             req <- &phello.SendMessageReq{Message: "im - " + strconv.Itoa(i)}
         }
 
         //close(req)
-        //close(errsIn)
+        //close(errSig)
     }()
 
-    rsp, errs := ipc.SendMessage(context.Background(), req, errsIn)
+    rsp := ipc.SendMessage(context.Background(), req, errSig)
 
     var count uint32
 
@@ -64,7 +66,11 @@ func main() {
                 } else {
                     break QUIT
                 }
-            case err = <-errs:
+
+                if count == 3 {
+                    close(rsp)
+                }
+            case err = <-errSig:
                 if err != nil {
                     break QUIT
                 }

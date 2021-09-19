@@ -1,11 +1,12 @@
 package main
 
 import (
+    ImTest "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/im"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/say"
+    imStrem "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/stream"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/upload"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/internal/ipc"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
-    "github.com/go-roc/roc/rlog"
     "github.com/go-roc/roc/service"
 )
 
@@ -21,8 +22,8 @@ func main() {
 
     ipc.InitIpc(s)
 
-    err := s.Run()
-    if err != nil {
-        rlog.Error(err)
-    }
+    ImTest.Im()
+    imStrem.Stream()
+
+    s.Run()
 }

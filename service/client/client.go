@@ -73,19 +73,21 @@ func (s *Client) InvokeRR(
 }
 
 // InvokeRS rpc request requestStream,it's one request and multiple response
-func (s *Client) InvokeRS(c *context.Context, method string, req proto.Message, opts ...invoke.InvokeOptions) (
-    chan []byte,
-    chan error,
-) {
+func (s *Client) InvokeRS(
+    c *context.Context,
+    method string,
+    req proto.Message,
+    errIn chan error,
+    opts ...invoke.InvokeOptions,
+) chan []byte {
 
     // new a newInvoke setting
-    newInvoke, err := invoke.NewInvoke(c, method)
+    newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         // create a chan error response
-        var errs = make(chan error)
-        errs <- err
-        close(errs)
-        return nil, errs
+        c.Error(err)
+        errIn <- err
+        return nil
     }
 
     var cnn *conn.Conn
@@ -103,13 +105,11 @@ func (s *Client) InvokeRS(c *context.Context, method string, req proto.Message, 
 
     if err != nil {
         // create a chan error response
-        var errs = make(chan error)
-        errs <- err
-        close(errs)
-        return nil, errs
+        c.Error(err)
+        return nil
     }
 
-    return cnn.Client().RS(c, parcel.Payload(b))
+    return cnn.Client().RS(c, parcel.Payload(b), errIn)
 }
 
 // InvokeRC rpc request requestChannel,it's multiple request and multiple response
@@ -119,16 +119,14 @@ func (s *Client) InvokeRC(
     req chan []byte,
     errIn chan error,
     opts ...invoke.InvokeOptions,
-) (chan []byte, chan error) {
+) chan []byte {
 
     // new a newInvoke setting
     newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
+        c.Error(err)
         // create a chan error response
-        var errs = make(chan error)
-        errs <- err
-        close(errs)
-        return nil, errs
+        return nil
     }
 
     var cnn *conn.Conn
@@ -141,11 +139,9 @@ func (s *Client) InvokeRC(
         cnn, err = s.strategy.Next(newInvoke.Scope())
     }
     if err != nil {
+        c.Error(err)
         // create a chan error response
-        var errs = make(chan error)
-        errs <- err
-        close(errs)
-        return nil, errs
+        return nil
     }
 
     return cnn.Client().RC(c, req, errIn)

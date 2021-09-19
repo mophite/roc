@@ -120,12 +120,8 @@ func (s *etcdRegistry) Watch() chan *Action {
     return r
 }
 
-func (s *etcdRegistry) Close() {
-    if s.e != nil {
-        s.e.Close()
-    }
-
+func (s *etcdRegistry) CloseRegistry() {
     if s.watch != nil {
-        s.watch.Close()
+        s.watch.CloseWatch()
     }
 }

@@ -38,23 +38,24 @@ type Action struct {
 
 type Watch struct {
 
-    //exit signal
-    exit chan struct{}
-
     //etcd client
     client *clientv3.Client
 
     //etcd watch channel
     wc clientv3.WatchChan
+
+    //exit cancel
+    cancel func()
 }
 
 func NewEtcdWatch(prefix string, client *clientv3.Client) *Watch {
     var w = &Watch{
-        exit:   make(chan struct{}),
         client: client,
     }
 
-    w.wc = client.Watch(context.Background(), prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
+    ctx, cancel := context.WithCancel(context.Background())
+    w.wc = client.Watch(ctx, prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
+    w.cancel = cancel
     return w
 }
 
@@ -113,8 +114,6 @@ func (w *Watch) Watch(prefix string) chan *Action {
     return c
 }
 
-// Close close watch
-func (w *Watch) Close() {
-    w.exit <- struct{}{}
-    close(w.exit)
+func (w *Watch) CloseWatch() {
+    w.cancel()
 }

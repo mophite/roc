@@ -118,50 +118,41 @@ func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parce
     return nil
 }
 
-func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket) (chan proto.Message, chan error) {
+func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket, exit chan struct{}) (chan proto.Message, error) {
 
     // interrupt
     for i := range r.wrappers {
         _, err := r.wrappers[i](c)
         if err != nil {
             c.Errorf("wrappers err=%v", err)
-            var errs = make(chan error)
-            errs <- err
-            close(errs)
-            return nil, errs
+            return nil, err
         }
     }
 
     rs, ok := r.rsRoute[c.Method()]
     if !ok {
-        return nil, nil
+        return nil, ErrNotFoundHandler
     }
 
-    return rs(c, req)
+    return rs(c, req, exit), nil
 }
 
-func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, errs chan error) (
-    chan proto.Message,
-    chan error,
-) {
+func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, exit chan struct{}) (chan proto.Message, error) {
     // interrupt when occur error
     for i := range r.wrappers {
         _, err := r.wrappers[i](c)
         if err != nil {
             c.Errorf("wrappers err=%v", err)
-            var errs = make(chan error)
-            errs <- err
-            close(errs)
-            return nil, errs
+            return nil, err
         }
     }
 
     rc, ok := r.rcRoute[c.Method()]
     if !ok {
-        return nil, nil
+        return nil, ErrNotFoundHandler
     }
 
-    return rc(c, req, errs)
+    return rc(c, req,exit), nil
 }
 
 func (r *Router) interrupt() handler.Interceptor {

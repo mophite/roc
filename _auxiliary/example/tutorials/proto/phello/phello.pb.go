@@ -660,6 +660,7 @@ func (r *helloHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt 
 	var in SayReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = SayRsp{}
@@ -678,6 +679,7 @@ func (r *helloHandler) SayGet(c *context.Context, req *parcel.RocPacket, interru
 	var in ApiReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = ApiRsp{}
@@ -697,10 +699,10 @@ type HelloSrvClient interface {
 	SaySrv(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error)
 	// requestStream.
 	// SayReq is channel params.
-	SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error)
+	SayStream(c *context.Context, req *SayReq, errSig chan error, opts ...invoke.InvokeOptions) chan *SayRsp
 	// requestChannel.
 	// SayReq and SayRsp is channel.
-	SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error)
+	SayChannel(c *context.Context, req chan *SayReq, errSig chan error, opts ...invoke.InvokeOptions) chan *SayRsp
 }
 
 type helloSrvClient struct {
@@ -717,53 +719,53 @@ func (cc *helloSrvClient) SaySrv(c *context.Context, req *SayReq, opts ...invoke
 	return rsp, err
 }
 
-func (cc *helloSrvClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
-	data, errs := cc.c.InvokeRS(c, "/hellosrv/saystream", req, opts...)
+func (cc *helloSrvClient) SayStream(c *context.Context, req *SayReq, errSig chan error, opts ...invoke.InvokeOptions) chan *SayRsp {
+	data := cc.c.InvokeRS(c, "/hellosrv/saystream", req, errSig, opts...)
 	var rsp = make(chan *SayRsp)
 	go func() {
 		for b := range data {
 			v := &SayRsp{}
 			err := c.Codec().Decode(b, v)
 			if err != nil {
-				errs <- err
-				break
+				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Method(), req.String())
+				continue
 			}
 			rsp <- v
 		}
 		close(rsp)
 	}()
-	return rsp, errs
+	return rsp
 }
 
-func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
-	var in = make(chan []byte)
+func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, errSig chan error, opts ...invoke.InvokeOptions) chan *SayRsp {
+	var in = make(chan []byte, cap(req))
 	go func() {
 		for b := range req {
 			v, err := c.Codec().Encode(b)
 			if err != nil {
-				errIn <- err
-				break
+				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Method(), b.String())
+				continue
 			}
 			in <- v
 		}
 		close(in)
 	}()
 
-	data, errs := cc.c.InvokeRC(c, "/hellosrv/saychannel", in, errIn, opts...)
-	var rsp = make(chan *SayRsp)
+	data := cc.c.InvokeRC(c, "/hellosrv/saychannel", in, errSig, opts...)
+	var rsp = make(chan *SayRsp, cap(data))
 	go func() {
 		for b := range data {
 			v := &SayRsp{}
 			err := c.Codec().Decode(b, v)
 			if err != nil {
-				errs <- err
+				errSig <- err
 				break
 			}
 			rsp <- v
 		}
 		close(rsp)
 	}()
-	return rsp, errs
+	return rsp
 }
 
 // HelloSrvServer is the server API for HelloSrv server.
@@ -772,10 +774,10 @@ type HelloSrvServer interface {
 	SaySrv(c *context.Context, req *SayReq, rsp *SayRsp)
 	// requestStream.
 	// SayReq is channel params.
-	SayStream(c *context.Context, req *SayReq) (chan *SayRsp, chan error)
+	SayStream(c *context.Context, req *SayReq, exit chan struct{}) chan proto.Message
 	// requestChannel.
 	// SayReq and SayRsp is channel.
-	SayChannel(c *context.Context, req chan *SayReq, errIn chan error) (chan *SayRsp, chan error)
+	SayChannel(c *context.Context, req chan *SayReq, exit chan struct{}) chan proto.Message
 }
 
 func RegisterHelloSrvServer(s *server.Server, h HelloSrvServer) {
@@ -794,6 +796,7 @@ func (r *helloSrvHandler) SaySrv(c *context.Context, req *parcel.RocPacket, inte
 	var in SayReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = SayRsp{}
@@ -808,65 +811,33 @@ func (r *helloSrvHandler) SaySrv(c *context.Context, req *parcel.RocPacket, inte
 	return interrupt(c, &in, f)
 }
 
-func (r *helloSrvHandler) SayStream(c *context.Context, req *parcel.RocPacket) (chan proto.Message, chan error) {
-	var errs = make(chan error)
+func (r *helloSrvHandler) SayStream(c *context.Context, req *parcel.RocPacket, exit chan struct{}) chan proto.Message {
 	var in SayReq
 	err := c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		errs <- err
-		close(errs)
-		return nil, errs
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
+		return nil
 	}
 
-	out, outErrs := r.h.SayStream(c, &in)
-	var rsp = make(chan proto.Message, len(out))
-
-	go func() {
-	QUIT:
-		for {
-			select {
-			case d, ok := <-out:
-				if ok {
-					rsp <- d
-				} else {
-					break QUIT
-				}
-			case err := <-outErrs:
-				errs <- err
-				break QUIT
-			}
-		}
-		close(rsp)
-		close(errs)
-	}()
-	return rsp, errs
+	return r.h.SayStream(c, &in, exit)
 }
-
-func (r *helloSrvHandler) SayChannel(c *context.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
-	var in = make(chan *SayReq)
+func (r *helloSrvHandler) SayChannel(c *context.Context, req chan *parcel.RocPacket, exit chan struct{}) chan proto.Message {
+	var in = make(chan *SayReq, cap(req)<<5)
 	go func() {
 		for b := range req {
 			var v = &SayReq{}
 			err := c.Codec().Decode(b.Bytes(), v)
 			if err != nil {
-				errIn <- err
-				break
+				c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), b.String())
+				continue
 			}
 			in <- v
+			parcel.Recycle(b)
 		}
 		close(in)
 	}()
 
-	out, outErrs := r.h.SayChannel(c, in, errIn)
-	var rsp = make(chan proto.Message)
-
-	go func() {
-		for d := range out {
-			rsp <- d
-		}
-		close(rsp)
-	}()
-	return rsp, outErrs
+	return r.h.SayChannel(c, in, exit)
 }
 
 type FileClient interface {
@@ -906,6 +877,7 @@ func (r *fileHandler) Upload(c *context.Context, req *parcel.RocPacket, interrup
 	var in FileReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = FileRsp{}
