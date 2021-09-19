@@ -242,7 +242,7 @@ func setupRequestChannel(router *router.Router, buffSize int, exit chan struct{}
                     ),
                     rx.OnError(
                         func(e error) {
-                            rlog.Error("setupRequestChannel OnError |err=%v", e)
+                            rlog.Errorf("setupRequestChannel OnError |err=%v", e)
                             exitRead <- e
                         },
                     ),
