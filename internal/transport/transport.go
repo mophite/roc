@@ -46,10 +46,10 @@ type Client interface {
     //FF(c *context.Context, req *parcel.RocPacket)
 
     // RS request/stream
-    RS(c *context.Context, req *parcel.RocPacket,errsIn chan error) chan []byte
+    RS(c *context.Context, req *parcel.RocPacket) (chan []byte, chan struct{})
 
     // RC request/channel
-    RC(c *context.Context, req chan []byte, errsIn chan error) chan []byte
+    RC(c *context.Context, req chan []byte) (chan []byte, chan struct{})
 
     // MP metadata
     //MP(c *context.Context)

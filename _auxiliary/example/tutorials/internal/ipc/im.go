@@ -15,8 +15,8 @@ func Count(c *context.Context, req *phello.CountReq) (rsp *phello.CountRsp, err 
     return imClient.Count(c, req, invokeHello)
 }
 
-func SendMessage(c *context.Context, req chan *phello.SendMessageReq, errsIn chan error) (
-    rsp chan *phello.SendMessageRsp,
+func SendMessage(c *context.Context, req chan *phello.SendMessageReq) (
+    rsp chan *phello.SendMessageRsp, exit chan struct{},
 ) {
-    return imClient.SendMessage(c, req, errsIn, invokeHello)
+    return imClient.SendMessage(c, req, invokeHello)
 }

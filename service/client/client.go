@@ -77,17 +77,15 @@ func (s *Client) InvokeRS(
     c *context.Context,
     method string,
     req proto.Message,
-    errIn chan error,
     opts ...invoke.InvokeOptions,
-) chan []byte {
+) (chan []byte, chan struct{}) {
 
     // new a newInvoke setting
     newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         // create a chan error response
         c.Error(err)
-        errIn <- err
-        return nil
+        return nil, nil
     }
 
     var cnn *conn.Conn
@@ -106,10 +104,10 @@ func (s *Client) InvokeRS(
     if err != nil {
         // create a chan error response
         c.Error(err)
-        return nil
+        return nil, nil
     }
 
-    return cnn.Client().RS(c, parcel.Payload(b), errIn)
+    return cnn.Client().RS(c, parcel.Payload(b))
 }
 
 // InvokeRC rpc request requestChannel,it's multiple request and multiple response
@@ -117,16 +115,15 @@ func (s *Client) InvokeRC(
     c *context.Context,
     method string,
     req chan []byte,
-    errIn chan error,
     opts ...invoke.InvokeOptions,
-) chan []byte {
+) (chan []byte, chan struct{}) {
 
     // new a newInvoke setting
     newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         c.Error(err)
         // create a chan error response
-        return nil
+        return nil, nil
     }
 
     var cnn *conn.Conn
@@ -141,14 +138,14 @@ func (s *Client) InvokeRC(
     if err != nil {
         c.Error(err)
         // create a chan error response
-        return nil
+        return nil, nil
     }
 
-    return cnn.Client().RC(c, req, errIn)
+    return cnn.Client().RC(c, req)
 }
 
-func (s *Client) Close() {
+func (s *Client) CloseClient() {
     if s.strategy != nil {
-        s.strategy.Close()
+        s.strategy.CloseStrategy()
     }
 }

@@ -26,14 +26,12 @@ import (
 
 func Stream() {
 
-    var exit = make(chan error)
-    rsp := ipc.SayStream(context.Background(), &phello.SayReq{Ping: "ping"}, exit)
+    rsp,exit := ipc.SayStream(context.Background(), &phello.SayReq{Ping: "ping"})
 
     var count uint32
 
     var done = make(chan struct{})
     go func() {
-        var err error
     QUIT:
         for {
             select {
@@ -45,18 +43,15 @@ func Stream() {
                     break QUIT
                 }
                 if count == 3 {
-                    close(rsp)
-                }
-            case err = <-exit:
-                if err != nil {
                     break QUIT
                 }
+            case <-exit:
+                break QUIT
             }
         }
         done <- struct{}{}
 
         fmt.Println("say handler count is: ", atomic.LoadUint32(&count))
     }()
-
     <-done
 }

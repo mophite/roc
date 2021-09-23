@@ -1,1 +1,1 @@
-{"roc.Global":{},"roc.RWRedis":{"Password":"000000","DB":0,"Address":"127.0.0.1:6379"}}
+{"roc.RWRedis":{"Address":"127.0.0.1:6379","Password":"000000","DB":0},"roc.Global":{}}

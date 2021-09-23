@@ -17,7 +17,6 @@ package rs
 
 import (
     ctx "context"
-    "errors"
     "runtime"
     "time"
 
@@ -107,23 +106,27 @@ func (cli *client) RR(c *context.Context, req *parcel.RocPacket, rsp *parcel.Roc
     return nil
 }
 
-var errSocketDone = errors.New("socket is closed")
-
 // RS requestStream
-func (cli *client) RS(c *context.Context, req *parcel.RocPacket, exit chan error) chan []byte {
+func (cli *client) RS(c *context.Context, req *parcel.RocPacket) (chan []byte, chan struct{}) {
     var (
-        f   = cli.client.RequestStream(payload.New(req.Bytes(), c.Payload()))
-        rsp = make(chan []byte)
+        f    = cli.client.RequestStream(payload.New(req.Bytes(), c.Payload()))
+        rsp  = make(chan []byte, 2<<5)
+        exit = make(chan struct{})
     )
 
     f.
         SubscribeOn(scheduler.Parallel()).
         DoFinally(
             func(s rx.SignalType) {
-                exit <- errSocketDone
+                exit <- struct{}{}
+                close(exit)
                 close(rsp)
             },
-        ).
+        ).DoOnError(
+        func(e error) {
+            c.Error(e)
+        },
+    ).
         Subscribe(
             ctx.Background(),
             rx.OnNext(
@@ -141,13 +144,14 @@ func (cli *client) RS(c *context.Context, req *parcel.RocPacket, exit chan error
 
     parcel.Recycle(req)
 
-    return rsp
+    return rsp, exit
 }
 
 // RC requestChannel
-func (cli *client) RC(c *context.Context, req chan []byte, exit chan error) chan []byte {
+func (cli *client) RC(c *context.Context, req chan []byte) (chan []byte, chan struct{}) {
     var (
-        sendPayload = make(chan payload.Payload, cap(req)<<5)
+        sendPayload = make(chan payload.Payload, cap(req))
+        exit        = make(chan struct{})
     )
 
     go func() {
@@ -161,8 +165,30 @@ func (cli *client) RC(c *context.Context, req chan []byte, exit chan error) chan
     }()
 
     var (
-        f   = cli.client.RequestChannel(flux.CreateFromChannel(sendPayload, exit))
-        rsp = make(chan []byte, cap(req)<<5)
+        f = cli.client.RequestChannel(
+            flux.Create(
+                func(ctx ctx.Context, s flux.Sink) {
+                    go func() {
+                    loop:
+                        for {
+                            select {
+                            case <-ctx.Done():
+                                s.Error(ctx.Err())
+                                break loop
+                            case p, ok := <-sendPayload:
+                                if ok {
+                                    s.Next(p)
+                                } else {
+                                    s.Complete()
+                                    break loop
+                                }
+                            }
+                        }
+                    }()
+                },
+            ),
+        )
+        rsp = make(chan []byte, cap(req))
     )
 
     f.
@@ -170,8 +196,9 @@ func (cli *client) RC(c *context.Context, req chan []byte, exit chan error) chan
         DoFinally(
             func(s rx.SignalType) {
                 //todo handler rx.SignalType
-                exit <- errSocketDone
+                exit <- struct{}{}
                 close(rsp)
+                close(exit)
             },
         ).
         Subscribe(
@@ -184,12 +211,12 @@ func (cli *client) RC(c *context.Context, req chan []byte, exit chan error) chan
             ),
             rx.OnError(
                 func(err error) {
-                    c.Error(err)
+                    c.Debug(err)
                 },
             ),
         )
 
-    return rsp
+    return rsp, exit
 }
 
 func (cli *client) String() string {
@@ -198,6 +225,9 @@ func (cli *client) String() string {
 
 func (cli *client) CloseClient() {
     if cli.client != nil {
-        _ = cli.client.Close()
+
+        //todo here must go func
+        go cli.client.Close()
+        //cli.client = nil
     }
 }

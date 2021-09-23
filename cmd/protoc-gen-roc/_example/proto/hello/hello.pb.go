@@ -125,18 +125,19 @@ func init() {
 func init() { proto.RegisterFile("hello.proto", fileDescriptor_61ef911816e0a8ce) }
 
 var fileDescriptor_61ef911816e0a8ce = []byte{
-	// 176 bytes of a gzipped FileDescriptorProto
+	// 178 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xce, 0x48, 0xcd, 0xc9,
 	0xc9, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x73, 0x94, 0x64, 0xb8, 0xd8, 0x82,
 	0x13, 0x2b, 0x83, 0x52, 0x0b, 0x85, 0x84, 0xb8, 0x58, 0xf2, 0x12, 0x73, 0x53, 0x25, 0x18, 0x15,
 	0x18, 0x35, 0x38, 0x83, 0xc0, 0x6c, 0x98, 0x6c, 0x71, 0x01, 0x36, 0x59, 0xa3, 0x29, 0x8c, 0x5c,
 	0x5c, 0x1e, 0x20, 0x53, 0xc2, 0xf3, 0x8b, 0x72, 0x52, 0x84, 0x54, 0xb9, 0x98, 0x83, 0x13, 0x2b,
 	0x85, 0x78, 0xf5, 0x20, 0xd6, 0x40, 0x8c, 0x95, 0x42, 0xe6, 0x16, 0x17, 0x28, 0x31, 0x08, 0xe9,
-	0x72, 0x71, 0x06, 0x27, 0x56, 0x06, 0x97, 0x14, 0xa5, 0x26, 0xe6, 0x12, 0x52, 0xac, 0xc1, 0x28,
-	0x64, 0xc0, 0xc5, 0x15, 0x9c, 0x58, 0xe9, 0x9c, 0x91, 0x98, 0x97, 0x97, 0x9a, 0x43, 0x58, 0xbd,
-	0x01, 0xa3, 0x93, 0xc4, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7,
-	0x38, 0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x24, 0xb1, 0x81,
-	0xbd, 0x6e, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x3c, 0x0b, 0x23, 0x43, 0x09, 0x01, 0x00, 0x00,
+	0x72, 0x71, 0x06, 0x27, 0x56, 0x06, 0x97, 0x14, 0xa5, 0x26, 0xe6, 0x12, 0x52, 0x6c, 0xc0, 0x28,
+	0x64, 0xc0, 0xc5, 0x15, 0x9c, 0x58, 0xe9, 0x9c, 0x91, 0x98, 0x97, 0x97, 0x9a, 0x43, 0x48, 0xbd,
+	0x06, 0xa3, 0x01, 0xa3, 0x93, 0xc4, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78,
+	0x24, 0xc7, 0x38, 0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x24,
+	0xb1, 0x81, 0xbd, 0x6e, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x46, 0x80, 0xab, 0x50, 0x09, 0x01,
+	0x00, 0x00,
 }
 
 func (m *SayReq) Marshal() (dAtA []byte, err error) {
@@ -229,10 +230,10 @@ type HelloWorldClient interface {
 	Say(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error)
 	// requestStream.
 	// SayReq is channel params.
-	SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error)
+	SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan struct{})
 	// requestChannel.
 	// SayReq and SayRsp is channel.
-	SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error)
+	SayChannel(c *context.Context, req chan *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan struct{})
 }
 
 type helloWorldClient struct {
@@ -249,53 +250,53 @@ func (cc *helloWorldClient) Say(c *context.Context, req *SayReq, opts ...invoke.
 	return rsp, err
 }
 
-func (cc *helloWorldClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
-	data, errs := cc.c.InvokeRS(c, "/helloworld/saystream", req, opts...)
-	var rsp = make(chan *SayRsp)
+func (cc *helloWorldClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan struct{}) {
+	data, exit := cc.c.InvokeRS(c, "/helloworld/saystream", req, opts...)
+	var rsp = make(chan *SayRsp, cap(data))
 	go func() {
 		for b := range data {
 			v := &SayRsp{}
 			err := c.Codec().Decode(b, v)
 			if err != nil {
-				errs <- err
-				break
+				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Method(), req.String())
+				continue
 			}
 			rsp <- v
 		}
 		close(rsp)
 	}()
-	return rsp, errs
+	return rsp, exit
 }
 
-func (cc *helloWorldClient) SayChannel(c *context.Context, req chan *SayReq, errIn chan error, opts ...invoke.InvokeOptions) (chan *SayRsp, chan error) {
-	var in = make(chan []byte)
+func (cc *helloWorldClient) SayChannel(c *context.Context, req chan *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan struct{}) {
+	var in = make(chan []byte, cap(req))
 	go func() {
 		for b := range req {
 			v, err := c.Codec().Encode(b)
 			if err != nil {
-				errIn <- err
-				break
+				c.Errorf("client encode pakcet err=%v |method=%s |data=%s", err, c.Method(), b.String())
+				continue
 			}
 			in <- v
 		}
 		close(in)
 	}()
 
-	data, errs := cc.c.InvokeRC(c, "/helloworld/saychannel", in, errIn, opts...)
-	var rsp = make(chan *SayRsp)
+	data, exit := cc.c.InvokeRC(c, "/helloworld/saychannel", in, opts...)
+	var rsp = make(chan *SayRsp, cap(data))
 	go func() {
 		for b := range data {
 			v := &SayRsp{}
 			err := c.Codec().Decode(b, v)
 			if err != nil {
-				errs <- err
-				break
+				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Method(), string(b))
+				continue
 			}
 			rsp <- v
 		}
 		close(rsp)
 	}()
-	return rsp, errs
+	return rsp, exit
 }
 
 // HelloWorldServer is the server API for HelloWorld server.
@@ -304,10 +305,10 @@ type HelloWorldServer interface {
 	Say(c *context.Context, req *SayReq, rsp *SayRsp)
 	// requestStream.
 	// SayReq is channel params.
-	SayStream(c *context.Context, req *SayReq) (chan *SayRsp, chan error)
+	SayStream(c *context.Context, req *SayReq) chan *SayRsp
 	// requestChannel.
 	// SayReq and SayRsp is channel.
-	SayChannel(c *context.Context, req chan *SayReq, errIn chan error) (chan *SayRsp, chan error)
+	SayChannel(c *context.Context, req chan *SayReq, exit chan struct{}) chan *SayRsp
 }
 
 func RegisterHelloWorldServer(s *server.Server, h HelloWorldServer) {
@@ -326,6 +327,7 @@ func (r *helloWorldHandler) Say(c *context.Context, req *parcel.RocPacket, inter
 	var in SayReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = SayRsp{}
@@ -340,57 +342,16 @@ func (r *helloWorldHandler) Say(c *context.Context, req *parcel.RocPacket, inter
 	return interrupt(c, &in, f)
 }
 
-func (r *helloWorldHandler) SayStream(c *context.Context, req *parcel.RocPacket) (chan proto.Message, chan error) {
-	var errs = make(chan error)
+func (r *helloWorldHandler) SayStream(c *context.Context, req *parcel.RocPacket) chan proto.Message {
 	var in SayReq
 	err := c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		errs <- err
-		close(errs)
-		return nil, errs
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
+		return nil
 	}
 
-	out, outErrs := r.h.SayStream(c, &in)
-	var rsp = make(chan proto.Message, len(out))
-
-	go func() {
-	QUIT:
-		for {
-			select {
-			case d, ok := <-out:
-				if ok {
-					rsp <- d
-				} else {
-					break QUIT
-				}
-			case err := <-outErrs:
-				errs <- err
-				break QUIT
-			}
-		}
-		close(rsp)
-		close(errs)
-	}()
-	return rsp, errs
-}
-
-func (r *helloWorldHandler) SayChannel(c *context.Context, req chan *parcel.RocPacket, errIn chan error) (chan proto.Message, chan error) {
-	var in = make(chan *SayReq)
-	go func() {
-		for b := range req {
-			var v = &SayReq{}
-			err := c.Codec().Decode(b.Bytes(), v)
-			if err != nil {
-				errIn <- err
-				break
-			}
-			in <- v
-		}
-		close(in)
-	}()
-
-	out, outErrs := r.h.SayChannel(c, in, errIn)
-	var rsp = make(chan proto.Message)
+	out := r.h.SayStream(c, &in)
+	var rsp = make(chan proto.Message, cap(out))
 
 	go func() {
 		for d := range out {
@@ -398,7 +359,34 @@ func (r *helloWorldHandler) SayChannel(c *context.Context, req chan *parcel.RocP
 		}
 		close(rsp)
 	}()
-	return rsp, outErrs
+	return rsp
+}
+
+func (r *helloWorldHandler) SayChannel(c *context.Context, req chan *parcel.RocPacket, exit chan struct{}) chan proto.Message {
+	var in = make(chan *SayReq, cap(req))
+	go func() {
+		for b := range req {
+			var v = &SayReq{}
+			err := c.Codec().Decode(b.Bytes(), v)
+			if err != nil {
+				c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), b.String())
+				continue
+			}
+			in <- v
+			parcel.Recycle(b)
+		}
+		close(in)
+	}()
+	out := r.h.SayChannel(c, in, exit)
+	var rsp = make(chan proto.Message, cap(out))
+
+	go func() {
+		for d := range out {
+			rsp <- d
+		}
+		close(rsp)
+	}()
+	return rsp
 }
 
 func (m *SayReq) Size() (n int) {

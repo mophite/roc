@@ -43,8 +43,8 @@ type Strategy interface {
     //Straight direct call
     Straight(scope, address string) (next *conn.Conn, err error)
 
-    //Close Strategy
-    Close()
+    //CloseStrategy Strategy
+    CloseStrategy()
 }
 
 var _ Strategy = &strategy{}
@@ -227,13 +227,14 @@ func (s *strategy) update(act *registry.Action) {
     }
 }
 
-// Close strategy close
-func (s *strategy) Close() {
+// CloseStrategy strategy close
+func (s *strategy) CloseStrategy() {
     for _, p := range s.connPerService {
         for _, client := range p.clientsMap {
             client.CloseConn()
         }
     }
+
 
     s.close <- struct{}{}
 }

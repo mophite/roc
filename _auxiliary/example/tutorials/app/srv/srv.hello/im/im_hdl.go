@@ -16,9 +16,10 @@
 package im
 
 import (
+    "fmt"
+
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
     "github.com/go-roc/roc/parcel/context"
-    "github.com/gogo/protobuf/proto"
 )
 
 type Im struct {
@@ -27,7 +28,7 @@ type Im struct {
 }
 
 func (i *Im) Connect(c *context.Context, req *phello.ConnectReq, rsp *phello.ConnectRsp) {
-    i.p = &point{userName: req.UserName, message: make(chan proto.Message)}
+    i.p = &point{userName: req.UserName, message: make(chan *phello.SendMessageRsp)}
     i.H.addClient(i.p)
     rsp.IsConnect = true
 }
@@ -40,26 +41,29 @@ func (i *Im) SendMessage(
     c *context.Context,
     req chan *phello.SendMessageReq,
     exit chan struct{},
-) chan proto.Message {
+) chan *phello.SendMessageRsp {
+
+    var rsp = make(chan *phello.SendMessageRsp, cap(req))
     go func() {
     QUIT:
         for {
             select {
             case data, ok := <-req:
                 if !ok {
-
                     break QUIT
                 }
 
                 i.H.broadCast <- data
+                rsp <- &phello.SendMessageRsp{Message: "pong"}
             case <-exit:
                 //client is closed
-                close(i.p.message)
+                //close(i.p.message)
+                fmt.Println("---exit---")
             }
         }
 
         i.H.removeClient(i.p)
     }()
 
-    return i.p.message
+    return rsp
 }

@@ -118,7 +118,7 @@ func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parce
     return nil
 }
 
-func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket, exit chan struct{}) (chan proto.Message, error) {
+func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket) (chan proto.Message, error) {
 
     // interrupt
     for i := range r.wrappers {
@@ -134,7 +134,7 @@ func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket, exit chan 
         return nil, ErrNotFoundHandler
     }
 
-    return rs(c, req, exit), nil
+    return rs(c, req), nil
 }
 
 func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, exit chan struct{}) (chan proto.Message, error) {
@@ -152,7 +152,7 @@ func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, exit 
         return nil, ErrNotFoundHandler
     }
 
-    return rc(c, req,exit), nil
+    return rc(c, req, exit), nil
 }
 
 func (r *Router) interrupt() handler.Interceptor {

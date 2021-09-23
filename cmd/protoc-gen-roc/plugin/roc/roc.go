@@ -229,7 +229,7 @@ func (r *roc) generateService(file *generator.FileDescriptor, service *pb.Servic
         if !v.GetClientStreaming() && !v.GetServerStreaming() {
             r.P(`s.RegisterHandler("/"+s.Name()+"/`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
         }
-        if v.GetClientStreaming() && !v.GetServerStreaming() {
+        if !v.GetClientStreaming() && v.GetServerStreaming() {
             r.P(`s.RegisterStreamHandler("/"+s.Name()+"/`, strings.ToLower(serverName), "/", strings.ToLower(*v.Name), `",r.`, *v.Name, ")")
         }
 
@@ -278,13 +278,13 @@ func (r *roc) generateClientSignature(serverName string, method *pb.MethodDescri
         )
     }
 
-    if method.GetClientStreaming() && !method.GetServerStreaming() {
+    if !method.GetClientStreaming() && method.GetServerStreaming() {
         var (
             reqArg   = ", req *" + r.typeName(method.GetInputType())
-            respName = "chan *" + r.typeName(method.GetOutputType())
+            respName = "(chan *" + r.typeName(method.GetOutputType())+", chan struct{})"
         )
         return fmt.Sprintf(
-            "%s(c *%s.Context%s,errSig chan error, opts ...invoke.InvokeOptions) %s",
+            "%s(c *%s.Context%s, opts ...invoke.InvokeOptions) %s",
             methodName,
             contextPkg,
             reqArg,
@@ -295,10 +295,10 @@ func (r *roc) generateClientSignature(serverName string, method *pb.MethodDescri
     if method.GetClientStreaming() && method.GetServerStreaming() {
         var (
             reqArg   = ", req chan *" + r.typeName(method.GetInputType())
-            respName = "chan *" + r.typeName(method.GetOutputType())
+            respName = "(chan *" + r.typeName(method.GetOutputType())+", chan struct{})"
         )
         return fmt.Sprintf(
-            "%s(c *%s.Context%s, errSig chan error,opts ...invoke.InvokeOptions) %s",
+            "%s(c *%s.Context%s, opts ...invoke.InvokeOptions) %s",
             methodName,
             contextPkg,
             reqArg,
@@ -334,10 +334,10 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
         return
     }
 
-    if method.GetClientStreaming() && !method.GetServerStreaming() {
+    if !method.GetClientStreaming() && method.GetServerStreaming() {
         r.P("func (cc *", unexport(serverName), "Client) ", r.generateClientSignature(serverName, method), "{")
-        r.P(`data :=cc.c.InvokeRS(c, "/`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", req,errSig, opts...)`)
-        r.P("var rsp = make(chan *", outType, ")")
+        r.P(`data,exit :=cc.c.InvokeRS(c, "/`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", req, opts...)`)
+        r.P("var rsp = make(chan *", outType, ",cap(data))")
         r.P("go func() {")
         r.P("for b := range data {")
         r.P("v := &", outType, "{}")
@@ -350,7 +350,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
         r.P("}")
         r.P("close(rsp)")
         r.P("}()")
-        r.P("return rsp")
+        r.P("return rsp,exit")
         r.P("}")
         r.P()
     }
@@ -362,7 +362,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
         r.P("for b := range req {")
         r.P("v, err := c.Codec().Encode(b)")
         r.P("if err != nil {")
-        r.P(" c.Errorf(\"client decode pakcet err=%v |method=%s |data=%s\", err, c.Method(), b.String())")
+        r.P(" c.Errorf(\"client encode pakcet err=%v |method=%s |data=%s\", err, c.Method(), b.String())")
         r.P("continue")
         r.P("}")
         r.P("in <- v")
@@ -370,21 +370,21 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
         r.P("close(in)")
         r.P("}()")
         r.P()
-        r.P(`data :=cc.c.InvokeRC(c, "/`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", in, errSig, opts...)`)
+        r.P(`data,exit :=cc.c.InvokeRC(c, "/`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", in, opts...)`)
         r.P("var rsp = make(chan *", outType, ",cap(data))")
         r.P("go func() {")
         r.P("for b := range data {")
         r.P("v := &", outType, "{}")
         r.P("err := c.Codec().Decode(b, v)")
         r.P("if err != nil {")
-        r.P("errSig <- err")
-        r.P("break")
+        r.P(" c.Errorf(\"client decode pakcet err=%v |method=%s |data=%s\", err, c.Method(), string(b))")
+        r.P("continue")
         r.P("}")
         r.P("rsp <- v")
         r.P("}")
         r.P("close(rsp)")
         r.P("}()")
-        r.P("return rsp")
+        r.P("return rsp,exit")
         r.P("}")
         r.P()
     }
@@ -408,14 +408,13 @@ func (r *roc) generateServerSignature(method *pb.MethodDescriptorProto) string {
         ) + ")"
     }
 
-    if method.GetClientStreaming() && !method.GetServerStreaming() {
+    if !method.GetClientStreaming() && method.GetServerStreaming() {
         reqArgs = append(reqArgs, "c *"+contextPkg+".Context")
         reqArgs = append(reqArgs, "req *"+r.typeName(method.GetInputType()))
         return methodName + "(" + strings.Join(
             reqArgs,
             ", ",
-        //) + ",exit chan struct{}) " + "chan *" + r.typeName(method.GetOutputType())
-        ) + ",exit chan struct{}) " + "chan proto.Message"
+        ) + ") " + "chan *" + r.typeName(method.GetOutputType())
     }
 
     if method.GetClientStreaming() && method.GetServerStreaming() {
@@ -424,8 +423,7 @@ func (r *roc) generateServerSignature(method *pb.MethodDescriptorProto) string {
         return methodName + "(" + strings.Join(
             reqArgs,
             ", ",
-        //) + ",exit chan struct{}) " + "chan *" + r.typeName(method.GetOutputType())
-        ) + ",exit chan struct{}) " + "chan proto.Message"
+        ) + ",exit chan struct{}) " + "chan *" + r.typeName(method.GetOutputType())
     }
 
     return ""
@@ -470,7 +468,7 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
         return
     }
 
-    if method.GetClientStreaming() && !method.GetServerStreaming() {
+    if !method.GetClientStreaming() && method.GetServerStreaming() {
         r.P(
             "func (r *",
             unexport(serverName),
@@ -478,7 +476,7 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
             methodName,
             "(c *",
             contextPkg,
-            ".Context, req *parcel.RocPacket,exit chan struct{}) chan proto.Message {",
+            ".Context, req *parcel.RocPacket) chan proto.Message {",
         )
         r.P("var in ", inType)
         r.P("err := c.Codec().Decode(req.Bytes(), &in)")
@@ -487,8 +485,18 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
         r.P("return nil")
         r.P("}")
         r.P()
-        r.P("return r.h.", methodName, "(c, &in,exit)")
+        r.P("out := r.h.", methodName, "(c, &in)")
+        r.P("var rsp = make(chan proto.Message,cap(out))")
+        r.P()
+        r.P("go func() {")
+        r.P("for d := range out {")
+        r.P("rsp <- d")
         r.P("}")
+        r.P("close(rsp)")
+        r.P("}()")
+        r.P("return rsp")
+        r.P("}")
+        r.P()
         return
     }
 
@@ -502,7 +510,7 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
             contextPkg,
             ".Context, req chan *parcel.RocPacket,exit chan struct{}) chan proto.Message {",
         )
-        r.P("var in = make(chan *", inType, ",cap(req)<<5)")
+        r.P("var in = make(chan *", inType, ",cap(req))")
         r.P("go func() {")
         r.P("for b := range req {")
         r.P("var v = &", inType, "{}")
@@ -516,9 +524,18 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
         r.P("}")
         r.P("close(in)")
         r.P("}()")
+        r.P("out := r.h.", methodName, "(c, in,exit)")
+        r.P("var rsp = make(chan proto.Message,cap(out))")
         r.P()
-        r.P("return r.h.", methodName, "(c, in,exit)")
+        r.P("go func() {")
+        r.P("for d := range out {")
+        r.P("rsp <- d")
         r.P("}")
+        r.P("close(rsp)")
+        r.P("}()")
+        r.P("return rsp")
+        r.P("}")
+        r.P()
         return
     }
 }

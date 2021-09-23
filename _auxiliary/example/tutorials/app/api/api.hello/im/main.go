@@ -39,23 +39,20 @@ func Im() {
     }
 
     var req = make(chan *phello.SendMessageReq)
-    var errSig = make(chan error)
     go func() {
         for i := 0; i < 3; i++ {
             req <- &phello.SendMessageReq{Message: "im - " + strconv.Itoa(i)}
         }
 
-        //close(req)
-        //close(errSig)
+        //must be closed
+        close(req)
     }()
-
-    rsp := ipc.SendMessage(context.Background(), req, errSig)
+    rsp, exit := ipc.SendMessage(context.Background(), req)
 
     var count uint32
 
     var done = make(chan struct{})
     go func() {
-        var err error
     QUIT:
         for {
             select {
@@ -68,18 +65,15 @@ func Im() {
                 }
 
                 if count == 3 {
-                    close(rsp)
-                }
-            case err = <-errSig:
-                if err != nil {
                     break QUIT
                 }
+            case <-exit:
+                break QUIT
             }
         }
         done <- struct{}{}
 
         fmt.Println("say handler count is: ", atomic.LoadUint32(&count))
     }()
-
     <-done
 }

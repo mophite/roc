@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-package main
+package imChannel
 
 import (
     "fmt"
@@ -28,9 +28,8 @@ import (
 func Channel() {
 
     var req = make(chan *phello.SayReq, 100)
-    var errsIn = make(chan error)
     go func() {
-        for i := 0; i < 50; i++ {
+        for i := 0; i < 3; i++ {
 
             //test sending frequency
             //time.Sleep(time.Second)
@@ -43,16 +42,14 @@ func Channel() {
         }
 
         close(req)
-        close(errsIn)
     }()
 
-    rsp, errs := ipc.SayChannel(context.Background(), req, errsIn)
+    rsp, exit := ipc.SayChannel(context.Background(), req)
 
     var count uint32
 
     var done = make(chan struct{})
     go func() {
-        var err error
     QUIT:
         for {
             select {
@@ -63,10 +60,13 @@ func Channel() {
                 } else {
                     break QUIT
                 }
-            case err = <-errs:
-                if err != nil {
+
+                if atomic.LoadUint32(&count) == 3 {
                     break QUIT
                 }
+
+            case <-exit:
+                break QUIT
             }
         }
         done <- struct{}{}

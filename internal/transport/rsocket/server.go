@@ -86,17 +86,10 @@ func (r *server) Accept(route *router.Router) {
                 setup payload.SetupPayload,
                 sendingSocket rsocket.CloseableRSocket,
             ) (rsocket.RSocket, error) {
-                var ch = make(chan struct{}, 2)
-                sendingSocket.OnClose(
-                    func(err error) {
-                        ch <- struct{}{}
-                        ch <- struct{}{}
-                    },
-                )
                 return rsocket.NewAbstractSocket(
                     setupRequestResponse(route),
-                    setupRequestStream(route, ch),
-                    setupRequestChannel(route, r.buffSize, ch),
+                    setupRequestStream(route),
+                    setupRequestChannel(route, r.buffSize),
                 ), nil
             },
         )
@@ -181,7 +174,7 @@ func (r *server) Close() {
     return
 }
 
-func setupRequestStream(router *router.Router, exit chan struct{}) rsocket.OptAbstractSocket {
+func setupRequestStream(router *router.Router) rsocket.OptAbstractSocket {
     return rsocket.RequestStream(
         func(p payload.Payload) flux.Flux {
 
@@ -195,7 +188,7 @@ func setupRequestStream(router *router.Router, exit chan struct{}) rsocket.OptAb
                     //if you want to Disconnect channel
                     //you must close rsp from server handler
                     //this way is very friendly to closing channel transport
-                    rsp, err := router.RSProcess(c, req, exit)
+                    rsp, err := router.RSProcess(c, req)
 
                     //todo cannot know when socket will close to close(rsp)
                     //you must close rsp at where send
@@ -222,12 +215,12 @@ func setupRequestStream(router *router.Router, exit chan struct{}) rsocket.OptAb
     )
 }
 
-func setupRequestChannel(router *router.Router, buffSize int, exit chan struct{}) rsocket.OptAbstractSocket {
+func setupRequestChannel(router *router.Router, buffSize int) rsocket.OptAbstractSocket {
     return rsocket.RequestChannel(
         func(f flux.Flux) flux.Flux {
             var (
                 req      = make(chan *parcel.RocPacket, buffSize)
-                exitRead = make(chan error)
+                exitRead = make(chan struct{})
             )
 
             //read data from client by channel transport method
@@ -241,9 +234,12 @@ func setupRequestChannel(router *router.Router, buffSize int, exit chan struct{}
                         },
                     ),
                     rx.OnError(
+                        //if client is occurred error
                         func(e error) {
                             rlog.Errorf("setupRequestChannel OnError |err=%v", e)
-                            exitRead <- e
+                            exitRead <- struct{}{}
+                            close(req)
+                            close(exitRead)
                         },
                     ),
                 )
@@ -262,15 +258,7 @@ func setupRequestChannel(router *router.Router, buffSize int, exit chan struct{}
                     //if you want to Disconnect channel
                     //you must close rsp from server handler
                     //this way is very friendly to closing channel transport
-                    rsp, err := router.RCProcess(c, req, exit)
-
-                    go func() {
-                        for _ = range exitRead {
-                            close(req)
-                            close(exitRead)
-                            break
-                        }
-                    }()
+                    rsp, err := router.RCProcess(c, req, exitRead)
 
                     if err != nil {
                         c.Errorf("transport CC failure |method=%s |err=%v", c.Method(), err)

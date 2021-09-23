@@ -22,7 +22,6 @@ import (
 
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
     "github.com/go-roc/roc/parcel/context"
-    "github.com/gogo/protobuf/proto"
 )
 
 type Hello struct{}
@@ -31,8 +30,8 @@ func (h *Hello) SaySrv(c *context.Context, req *phello.SayReq, rsp *phello.SayRs
     rsp.Pong = "pong"
 }
 
-func (h *Hello) SayStream(c *context.Context, req *phello.SayReq, exit chan struct{}) chan proto.Message {
-    var rsp = make(chan proto.Message)
+func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) chan *phello.SayRsp {
+    var rsp = make(chan *phello.SayRsp)
 
     go func() {
         var count uint32
@@ -50,9 +49,8 @@ func (h *Hello) SayStream(c *context.Context, req *phello.SayReq, exit chan stru
     return rsp
 }
 
-func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit chan struct{}) chan proto.Message {
-    var rsp = make(chan proto.Message)
-    var errs = make(chan error)
+func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit chan struct{})  chan *phello.SayRsp{
+    var rsp = make(chan *phello.SayRsp)
 
     go func() {
     QUIT:
@@ -72,7 +70,6 @@ func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit cha
         }
 
         close(rsp)
-        close(errs)
     }()
 
     return rsp

@@ -31,7 +31,7 @@ service HelloSrv {
 
   // requestStream.
   // SayReq is channel params.
-  rpc SayStream(stream SayReq) returns (SayRsp) {}
+  rpc SayStream( SayReq) returns (stream SayRsp) {}
 
   // requestChannel.
   // SayReq and SayRsp is channel.

@@ -64,7 +64,7 @@ func (s *Service) Server() *server.Server {
     return s.server
 }
 
-func (s *Service) Run()  {
+func (s *Service) Run() {
     defer func() {
         if r := recover(); r != nil {
             rlog.Stack(r)
@@ -111,15 +111,17 @@ func (s *Service) Close() {
 
     //close service client
     if s.client != nil {
-        s.client.Close()
+        s.client.CloseClient()
     }
 
     //close service server
     if s.server != nil {
         s.server.Close()
     }
+
     //close config setting
     config.Close()
+
     //close etcd client
     etcd.DefaultEtcd.CloseEtcd()
 
