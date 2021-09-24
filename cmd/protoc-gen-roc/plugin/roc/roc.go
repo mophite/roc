@@ -281,7 +281,7 @@ func (r *roc) generateClientSignature(serverName string, method *pb.MethodDescri
     if !method.GetClientStreaming() && method.GetServerStreaming() {
         var (
             reqArg   = ", req *" + r.typeName(method.GetInputType())
-            respName = "(chan *" + r.typeName(method.GetOutputType())+", chan struct{})"
+            respName = "chan *" + r.typeName(method.GetOutputType())
         )
         return fmt.Sprintf(
             "%s(c *%s.Context%s, opts ...invoke.InvokeOptions) %s",
@@ -295,7 +295,7 @@ func (r *roc) generateClientSignature(serverName string, method *pb.MethodDescri
     if method.GetClientStreaming() && method.GetServerStreaming() {
         var (
             reqArg   = ", req chan *" + r.typeName(method.GetInputType())
-            respName = "(chan *" + r.typeName(method.GetOutputType())+", chan struct{})"
+            respName = "chan *" + r.typeName(method.GetOutputType())
         )
         return fmt.Sprintf(
             "%s(c *%s.Context%s, opts ...invoke.InvokeOptions) %s",
@@ -336,7 +336,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 
     if !method.GetClientStreaming() && method.GetServerStreaming() {
         r.P("func (cc *", unexport(serverName), "Client) ", r.generateClientSignature(serverName, method), "{")
-        r.P(`data,exit :=cc.c.InvokeRS(c, "/`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", req, opts...)`)
+        r.P(`data :=cc.c.InvokeRS(c, "/`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", req, opts...)`)
         r.P("var rsp = make(chan *", outType, ",cap(data))")
         r.P("go func() {")
         r.P("for b := range data {")
@@ -350,7 +350,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
         r.P("}")
         r.P("close(rsp)")
         r.P("}()")
-        r.P("return rsp,exit")
+        r.P("return rsp")
         r.P("}")
         r.P()
     }
@@ -370,7 +370,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
         r.P("close(in)")
         r.P("}()")
         r.P()
-        r.P(`data,exit :=cc.c.InvokeRC(c, "/`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", in, opts...)`)
+        r.P(`data :=cc.c.InvokeRC(c, "/`, strings.ToLower(serverName), "/", strings.ToLower(methodName), `", in, opts...)`)
         r.P("var rsp = make(chan *", outType, ",cap(data))")
         r.P("go func() {")
         r.P("for b := range data {")
@@ -384,7 +384,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
         r.P("}")
         r.P("close(rsp)")
         r.P("}()")
-        r.P("return rsp,exit")
+        r.P("return rsp")
         r.P("}")
         r.P()
     }

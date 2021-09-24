@@ -699,10 +699,10 @@ type HelloSrvClient interface {
 	SaySrv(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (*SayRsp, error)
 	// requestStream.
 	// SayReq is channel params.
-	SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan struct{})
+	SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) chan *SayRsp
 	// requestChannel.
 	// SayReq and SayRsp is channel.
-	SayChannel(c *context.Context, req chan *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan struct{})
+	SayChannel(c *context.Context, req chan *SayReq, opts ...invoke.InvokeOptions) chan *SayRsp
 }
 
 type helloSrvClient struct {
@@ -719,8 +719,8 @@ func (cc *helloSrvClient) SaySrv(c *context.Context, req *SayReq, opts ...invoke
 	return rsp, err
 }
 
-func (cc *helloSrvClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan struct{}) {
-	data, exit := cc.c.InvokeRS(c, "/hellosrv/saystream", req, opts...)
+func (cc *helloSrvClient) SayStream(c *context.Context, req *SayReq, opts ...invoke.InvokeOptions) chan *SayRsp {
+	data := cc.c.InvokeRS(c, "/hellosrv/saystream", req, opts...)
 	var rsp = make(chan *SayRsp, cap(data))
 	go func() {
 		for b := range data {
@@ -734,10 +734,10 @@ func (cc *helloSrvClient) SayStream(c *context.Context, req *SayReq, opts ...inv
 		}
 		close(rsp)
 	}()
-	return rsp, exit
+	return rsp
 }
 
-func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, opts ...invoke.InvokeOptions) (chan *SayRsp, chan struct{}) {
+func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, opts ...invoke.InvokeOptions) chan *SayRsp {
 	var in = make(chan []byte, cap(req))
 	go func() {
 		for b := range req {
@@ -751,7 +751,7 @@ func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, opts 
 		close(in)
 	}()
 
-	data, exit := cc.c.InvokeRC(c, "/hellosrv/saychannel", in, opts...)
+	data := cc.c.InvokeRC(c, "/hellosrv/saychannel", in, opts...)
 	var rsp = make(chan *SayRsp, cap(data))
 	go func() {
 		for b := range data {
@@ -765,7 +765,7 @@ func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, opts 
 		}
 		close(rsp)
 	}()
-	return rsp, exit
+	return rsp
 }
 
 // HelloSrvServer is the server API for HelloSrv server.

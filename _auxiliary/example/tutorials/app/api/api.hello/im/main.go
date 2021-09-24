@@ -47,7 +47,7 @@ func Im() {
         //must be closed
         close(req)
     }()
-    rsp, exit := ipc.SendMessage(context.Background(), req)
+    rsp := ipc.SendMessage(context.Background(), req)
 
     var count uint32
 
@@ -63,14 +63,9 @@ func Im() {
                 } else {
                     break QUIT
                 }
-
-                if count == 3 {
-                    break QUIT
-                }
-            case <-exit:
-                break QUIT
             }
         }
+
         done <- struct{}{}
 
         fmt.Println("say handler count is: ", atomic.LoadUint32(&count))

@@ -543,7 +543,7 @@ type ImClient interface {
 	// Count online member
 	Count(c *context.Context, req *CountReq, opts ...invoke.InvokeOptions) (*CountRsp, error)
 	// SendMessage is the im kernel
-	SendMessage(c *context.Context, req chan *SendMessageReq, opts ...invoke.InvokeOptions) (chan *SendMessageRsp, chan struct{})
+	SendMessage(c *context.Context, req chan *SendMessageReq, opts ...invoke.InvokeOptions) chan *SendMessageRsp
 }
 
 type imClient struct {
@@ -566,7 +566,7 @@ func (cc *imClient) Count(c *context.Context, req *CountReq, opts ...invoke.Invo
 	return rsp, err
 }
 
-func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, opts ...invoke.InvokeOptions) (chan *SendMessageRsp, chan struct{}) {
+func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, opts ...invoke.InvokeOptions) chan *SendMessageRsp {
 	var in = make(chan []byte, cap(req))
 	go func() {
 		for b := range req {
@@ -580,7 +580,7 @@ func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, op
 		close(in)
 	}()
 
-	data, exit := cc.c.InvokeRC(c, "/im/sendmessage", in, opts...)
+	data := cc.c.InvokeRC(c, "/im/sendmessage", in, opts...)
 	var rsp = make(chan *SendMessageRsp, cap(data))
 	go func() {
 		for b := range data {
@@ -594,7 +594,7 @@ func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, op
 		}
 		close(rsp)
 	}()
-	return rsp, exit
+	return rsp
 }
 
 // ImServer is the server API for Im server.

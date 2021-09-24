@@ -44,7 +44,7 @@ func Channel() {
         close(req)
     }()
 
-    rsp, exit := ipc.SayChannel(context.Background(), req)
+    rsp := ipc.SayChannel(context.Background(), req)
 
     var count uint32
 
@@ -60,13 +60,6 @@ func Channel() {
                 } else {
                     break QUIT
                 }
-
-                if atomic.LoadUint32(&count) == 3 {
-                    break QUIT
-                }
-
-            case <-exit:
-                break QUIT
             }
         }
         done <- struct{}{}

@@ -78,14 +78,14 @@ func (s *Client) InvokeRS(
     method string,
     req proto.Message,
     opts ...invoke.InvokeOptions,
-) (chan []byte, chan struct{}) {
+) chan []byte {
 
     // new a newInvoke setting
     newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         // create a chan error response
         c.Error(err)
-        return nil, nil
+        return nil
     }
 
     var cnn *conn.Conn
@@ -104,7 +104,7 @@ func (s *Client) InvokeRS(
     if err != nil {
         // create a chan error response
         c.Error(err)
-        return nil, nil
+        return nil
     }
 
     return cnn.Client().RS(c, parcel.Payload(b))
@@ -116,14 +116,14 @@ func (s *Client) InvokeRC(
     method string,
     req chan []byte,
     opts ...invoke.InvokeOptions,
-) (chan []byte, chan struct{}) {
+) chan []byte {
 
     // new a newInvoke setting
     newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         c.Error(err)
         // create a chan error response
-        return nil, nil
+        return nil
     }
 
     var cnn *conn.Conn
@@ -138,7 +138,7 @@ func (s *Client) InvokeRC(
     if err != nil {
         c.Error(err)
         // create a chan error response
-        return nil, nil
+        return nil
     }
 
     return cnn.Client().RC(c, req)

@@ -26,7 +26,7 @@ import (
 
 func Stream() {
 
-    rsp,exit := ipc.SayStream(context.Background(), &phello.SayReq{Ping: "ping"})
+    rsp := ipc.SayStream(context.Background(), &phello.SayReq{Ping: "ping"})
 
     var count uint32
 
@@ -42,11 +42,6 @@ func Stream() {
                 } else {
                     break QUIT
                 }
-                if count == 3 {
-                    break QUIT
-                }
-            case <-exit:
-                break QUIT
             }
         }
         done <- struct{}{}
