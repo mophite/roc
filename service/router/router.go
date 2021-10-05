@@ -110,12 +110,7 @@ func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parce
         rsp.Write(b)
     }
 
-    if err != nil {
-        c.Error(err)
-        return err
-    }
-
-    return nil
+    return err
 }
 
 func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket) (chan proto.Message, error) {

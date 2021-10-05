@@ -39,3 +39,6 @@ type Interceptor func(c *context.Context, req proto.Message, fire Fire) (proto.M
 
 // WrapperHandler for all rpc function middleware
 type WrapperHandler func(c *context.Context) (proto.Message, error)
+
+// DogHandler is before socket establish connection to check
+type DogHandler func(c *context.Context) (proto.Message, error)

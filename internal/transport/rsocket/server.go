@@ -20,6 +20,7 @@ import (
     "runtime"
 
     "github.com/go-roc/roc/parcel/context"
+    "github.com/go-roc/roc/service/handler"
     "github.com/go-roc/roc/service/router"
     "github.com/jjeffcaii/reactor-go/scheduler"
     "github.com/rsocket/rsocket-go"
@@ -51,6 +52,8 @@ type server struct {
 
     //rsocket serverStarter
     serverStart rsocket.ToServerStarter
+
+    dog []handler.DogHandler
 }
 
 func (r *server) Address() string {
@@ -61,12 +64,13 @@ func (r *server) String() string {
     return "rsocket"
 }
 
-func NewServer(tcpAddress, wssAddress, serverName string, buffSize int) *server {
+func NewServer(tcpAddress, wssAddress, serverName string, buffSize int, dog ...handler.DogHandler) *server {
     return &server{
         serverName: serverName,
         tcpAddress: tcpAddress,
         wssAddress: wssAddress,
         buffSize:   buffSize,
+        dog:        dog,
     }
 }
 
@@ -82,10 +86,20 @@ func (r *server) Accept(route *router.Router) {
     r.serverStart = r.serverBuilder.
         Acceptor(
             func(
-                ctx ctx.Context,
+                cc ctx.Context,
                 setup payload.SetupPayload,
                 sendingSocket rsocket.CloseableRSocket,
             ) (rsocket.RSocket, error) {
+
+                var c = context.FromMetadata(mustGetMetadata(setup))
+                for i := range r.dog {
+                    rsp, err := r.dog[i](c)
+                    if err != nil {
+                        c.Errorf("dog reject you |message=%s", c.Codec().MustEncodeString(rsp))
+                        return nil, err
+                    }
+                }
+
                 return rsocket.NewAbstractSocket(
                     setupRequestResponse(route),
                     setupRequestStream(route),
@@ -158,6 +172,11 @@ func setupRequestResponse(r *router.Router) rsocket.OptAbstractSocket {
             if err == router.ErrNotFoundHandler {
                 c.Error(err)
                 return mono.JustOneshot(payload.New(r.Error().Error404(c), nil))
+            }
+
+            if err != nil && rsp.Len() > 0 {
+                c.Error(err)
+                return mono.JustOneshot(payload.New(rsp.Bytes(), nil))
             }
 
             if err != nil {

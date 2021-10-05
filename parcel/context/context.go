@@ -39,12 +39,6 @@ type Context struct {
     //Content-Type
     ContentType string
 
-    //set http header
-    Header map[string]string
-
-    //setting http data context
-    Data map[string]interface{}
-
     ////http writer
     //Writer http.ResponseWriter
     //
@@ -58,26 +52,8 @@ type Context struct {
 func Background() *Context {
     return &Context{
         Trace:    simple.NewSimple(),
-        Header:   make(map[string]string, 10),
-        Data:     make(map[string]interface{}, 10),
-        Metadata: new(metadata.Metadata),
+        Metadata: metadata.MallocMetadata(),
     }
-}
-
-func (c *Context) SetHeader(key, value string) {
-    c.Header[key] = value
-}
-
-func (c *Context) GetHeader(key string) string {
-    return c.Header[key]
-}
-
-func (c *Context) Set(key string, value interface{}) {
-    c.Data[key] = value
-}
-
-func (c *Context) Get(key string) interface{} {
-    return c.Data[key]
 }
 
 func (c *Context) Codec() codec.Codec {

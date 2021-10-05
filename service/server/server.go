@@ -157,12 +157,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         if len(v) == 0 {
             continue
         }
-        c.SetHeader(k, v[0])
+        c.Set(k, v[0])
     }
 
-    c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
+    c.ContentType = c.Get(namespace.DefaultHeaderContentType)
 
     w.Header().Set(namespace.DefaultHeaderContentType, c.ContentType)
+
+    for i := range s.opts.Dog {
+        rsp, err := s.opts.Dog[i](c)
+        if err != nil {
+            c.Error(err)
+            w.WriteHeader(http.StatusBadRequest)
+            w.Write(c.Codec().MustEncode(rsp))
+            return
+        }
+    }
 
     switch r.Method {
     case http.MethodPost, http.MethodDelete:

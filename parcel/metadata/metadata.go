@@ -40,6 +40,10 @@ type Metadata struct {
     payload []byte
 }
 
+func MallocMetadata() *Metadata {
+    return &Metadata{meta: make(map[string]string, 10)}
+}
+
 func DecodeMetadata(b []byte) *Metadata {
     return decodeMetadata(b)
 }
@@ -231,7 +235,7 @@ func decodeMetadata(payload []byte) *Metadata {
 
     m.method = m.getMethod()
     m.service = m.getService()
-    m.trace = string(m.getTrace())
+    m.trace = x.BytesToString(m.getTrace())
     m.version = m.Get(namespace.DefaultHeaderVersion)
     m.address = m.Get(namespace.DefaultHeaderAddress)
 

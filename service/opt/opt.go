@@ -79,7 +79,11 @@ type Option struct {
 
     //wrapper some middleware
     //it's can be interrupt
+    //just for request response
     Wrappers []handler.WrapperHandler
+
+    //just for http request before or socket setup before
+    Dog []handler.DogHandler
 
     //when transportServer exit,will do exit func
     Exit []func()

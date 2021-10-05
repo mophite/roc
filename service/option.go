@@ -53,6 +53,12 @@ func Wrapper(wrappers ...handler.WrapperHandler) opt.Options {
     }
 }
 
+func WatchDog(wrappers ...handler.DogHandler) opt.Options {
+    return func(o *opt.Option) {
+        o.Dog = wrappers
+    }
+}
+
 func Exit(exit ...func()) opt.Options {
     return func(o *opt.Option) {
         o.Exit = exit
