@@ -61,11 +61,11 @@ func (p *Metadata) Payload() []byte {
     return p.payload
 }
 
-func (p *Metadata) Set(key, value string) {
+func (p *Metadata) SetMeta(key, value string) {
     p.meta[key] = value
 }
 
-func (p *Metadata) Get(key string) string {
+func (p *Metadata) GetMeta(key string) string {
     return p.meta[key]
 }
 
@@ -236,8 +236,8 @@ func decodeMetadata(payload []byte) *Metadata {
     m.method = m.getMethod()
     m.service = m.getService()
     m.trace = x.BytesToString(m.getTrace())
-    m.version = m.Get(namespace.DefaultHeaderVersion)
-    m.address = m.Get(namespace.DefaultHeaderAddress)
+    m.version = m.GetMeta(namespace.DefaultHeaderVersion)
+    m.address = m.GetMeta(namespace.DefaultHeaderAddress)
 
     return m
 }
