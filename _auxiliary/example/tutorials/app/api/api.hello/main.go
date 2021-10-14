@@ -1,7 +1,6 @@
 package main
 
 import (
-    ImTest "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/im"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/say"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/upload"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/internal/ipc"
@@ -23,6 +22,6 @@ func main() {
 
     //imChannel.Channel()
     //imStrem.Stream()
-    ImTest.Im()
+    //ImTest.Im()
     s.Run()
 }

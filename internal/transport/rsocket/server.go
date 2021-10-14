@@ -92,12 +92,14 @@ func (r *server) Accept(route *router.Router) {
 				sendingSocket rsocket.CloseableRSocket,
 			) (rsocket.RSocket, error) {
 
-				var c = context.FromMetadata(mustGetMetadata(setup))
-				for i := range r.dog {
-					rsp, err := r.dog[i](c)
-					if err != nil {
-						c.Errorf("dog reject you |message=%s", c.Codec().MustEncodeString(rsp))
-						return nil, err
+				if len(r.dog)>0{
+					var c = context.FromMetadata(mustGetMetadata(setup))
+					for i := range r.dog {
+						rsp, err := r.dog[i](c)
+						if err != nil {
+							c.Errorf("dog reject you |message=%s", c.Codec().MustEncodeString(rsp))
+							return nil, err
+						}
 					}
 				}
 
