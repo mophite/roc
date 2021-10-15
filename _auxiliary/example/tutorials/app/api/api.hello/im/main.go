@@ -19,6 +19,7 @@ import (
     "fmt"
     "strconv"
     "sync/atomic"
+    "time"
 
     "github.com/go-roc/roc/_auxiliary/example/tutorials/internal/ipc"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
@@ -45,6 +46,7 @@ func Im() {
         }
 
         //must be closed
+        time.Sleep(time.Second)
         close(req)
     }()
     rsp := ipc.SendMessage(context.Background(), req)

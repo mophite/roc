@@ -9,6 +9,10 @@ import (
 
 type Say struct{}
 
+func (h *Say) SayApi(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
+    rsp.Pong="pong"
+}
+
 // SayGet if err!=nil header status code will be 500
 // bench shell
 /*

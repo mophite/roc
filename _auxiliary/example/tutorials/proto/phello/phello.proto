@@ -21,6 +21,9 @@ service Hello {
 
   // get http request api
   rpc SayGet(ApiReq)returns(ApiRsp){}
+
+  //for api
+  rpc SayApi(SayReq)returns(SayRsp){}
 }
 
 // HelloSrv is service server for client and server.

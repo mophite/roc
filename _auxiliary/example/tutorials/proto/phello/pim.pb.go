@@ -572,7 +572,7 @@ func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, op
 		for b := range req {
 			v, err := c.Codec().Encode(b)
 			if err != nil {
-				c.Errorf("client encode pakcet err=%v |method=%s |data=%s", err, c.Method(), b.String())
+				c.Errorf("client encode pakcet err=%v |method=%s |data=%s", err, c.Metadata.Method(), b.String())
 				continue
 			}
 			in <- v
@@ -587,7 +587,7 @@ func (cc *imClient) SendMessage(c *context.Context, req chan *SendMessageReq, op
 			v := &SendMessageRsp{}
 			err := c.Codec().Decode(b, v)
 			if err != nil {
-				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Method(), string(b))
+				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Metadata.Method(), string(b))
 				continue
 			}
 			rsp <- v
@@ -623,7 +623,7 @@ func (r *imHandler) Connect(c *context.Context, req *parcel.RocPacket, interrupt
 	var in ConnectReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), req.String())
 		return nil, err
 	}
 	var out = ConnectRsp{}
@@ -642,7 +642,7 @@ func (r *imHandler) Count(c *context.Context, req *parcel.RocPacket, interrupt h
 	var in CountReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), req.String())
 		return nil, err
 	}
 	var out = CountRsp{}
@@ -664,7 +664,7 @@ func (r *imHandler) SendMessage(c *context.Context, req chan *parcel.RocPacket, 
 			var v = &SendMessageReq{}
 			err := c.Codec().Decode(b.Bytes(), v)
 			if err != nil {
-				c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), b.String())
+				c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), b.String())
 				continue
 			}
 			in <- v

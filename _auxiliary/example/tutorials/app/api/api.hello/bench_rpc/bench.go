@@ -10,6 +10,11 @@ import (
     "github.com/go-roc/roc/parcel/context"
 )
 
+func RPC() error {
+    _, err := ipc.SaySrv(context.Background(), &phello.SayReq{})
+    return err
+}
+
 func BenchRpc() {
 
     var (
@@ -19,7 +24,7 @@ func BenchRpc() {
     for i := 0; i < 500; i++ {
         go func() {
             for j := 0; j < 100000; j++ {
-                _, err := ipc.SaySrv(context.Background(), &phello.SayReq{})
+                err := RPC()
                 if err != nil {
                     atomic.AddInt64(&errCount, 1)
                     continue

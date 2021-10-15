@@ -13,54 +13,62 @@
 //  limitations under the License.
 //
 
-package im
+package hello
 
 import (
+    "strconv"
+    "sync/atomic"
+    "time"
+
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
     "github.com/go-roc/roc/parcel/context"
 )
 
-type Im struct {
-    H *Hub
-    p *point
+type Hello struct{}
+
+func (h *Hello) SaySrv(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
+    rsp.Pong = "pong"
 }
 
-func (i *Im) Connect(c *context.Context, req *phello.ConnectReq, rsp *phello.ConnectRsp) {
-    i.p = &point{userName: req.UserName, message: make(chan *phello.SendMessageRsp)}
-    i.H.addClient(i.p)
-    rsp.IsConnect = true
+func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) chan *phello.SayRsp {
+    var rsp = make(chan *phello.SayRsp)
+
+    go func() {
+        var count uint32
+        for i := 0; i < 200; i++ {
+            rsp <- &phello.SayRsp{Pong: strconv.Itoa(i)}
+            atomic.AddUint32(&count, 1)
+            time.Sleep(time.Second * 1)
+        }
+
+        c.Info("say stream example count is: ", atomic.LoadUint32(&count))
+
+        close(rsp)
+    }()
+
+    return rsp
 }
 
-func (i *Im) Count(c *context.Context, req *phello.CountReq, rsp *phello.CountRsp) {
-    rsp.Count = i.H.count()
-}
+func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit chan struct{})  chan *phello.SayRsp{
+    var rsp = make(chan *phello.SayRsp)
 
-func (i *Im) SendMessage(
-    c *context.Context,
-    req chan *phello.SendMessageReq,
-    exit chan struct{},
-) chan *phello.SendMessageRsp {
-
-    var rsp = make(chan *phello.SendMessageRsp, cap(req))
     go func() {
     QUIT:
         for {
             select {
-            case data, ok := <-req:
+            case _, ok := <-req:
                 if !ok {
                     break QUIT
                 }
 
-                i.H.broadCast <- data
-                rsp <- &phello.SendMessageRsp{Message: "pong"}
+                //test channel sending frequency
+                rsp <- &phello.SayRsp{Pong: "pong"}
             case <-exit:
-                close(rsp)
-                //client is closed
                 break QUIT
             }
         }
 
-        i.H.removeClient(i.p)
+        close(rsp)
     }()
 
     return rsp

@@ -16,118 +16,131 @@
 package context
 
 import (
-	"fmt"
+    "fmt"
 
-	"github.com/go-roc/roc/internal/namespace"
-	"github.com/go-roc/roc/internal/trace"
-	"github.com/go-roc/roc/internal/trace/simple"
-	"github.com/go-roc/roc/parcel/codec"
-	"github.com/go-roc/roc/parcel/metadata"
-	"github.com/go-roc/roc/rlog/log"
+    "github.com/go-roc/roc/internal/namespace"
+    "github.com/go-roc/roc/internal/trace"
+    "github.com/go-roc/roc/internal/trace/simple"
+    "github.com/go-roc/roc/parcel/codec"
+    "github.com/go-roc/roc/parcel/metadata"
+    "github.com/go-roc/roc/rlog/log"
+    "github.com/go-roc/roc/x"
 )
 
 type Context struct {
 
-	//rpc metadata
-	*metadata.Metadata
+    //rpc metadata
+    Metadata *metadata.Metadata
 
-	//Trace exists throughout the life cycle of the context
-	//trace is request flow trace
-	//it's will be from web client,or generated on initialize
-	Trace trace.Trace
+    //Trace exists throughout the life cycle of the context
+    //trace is request flow trace
+    //it's will be from web client,or generated on initialize
+    Trace trace.Trace
 
-	//Content-Type
-	ContentType string
+    //Content-Type
+    ContentType string
 
-	////http writer
-	//Writer http.ResponseWriter
-	//
-	////http request
-	//Request *http.Request
-	//
-	////http request body
-	//Body io.ReadCloser
-	data map[string]interface{}
+    //request Header
+    Header map[string]string
+
+    ////http writer
+    //Writer http.ResponseWriter
+    //
+    ////http request
+    //Request *http.Request
+    //
+    ////http request body
+    //Body io.ReadCloser
+    data map[string]interface{}
 }
 
 func Background() *Context {
-	return &Context{
-		Trace:    simple.NewSimple(),
-		Metadata: metadata.MallocMetadata(),
-		data:     make(map[string]interface{}, 10),
-	}
+    return &Context{
+        Trace:    simple.NewSimple(),
+        Metadata: metadata.MallocMetadata(),
+        data:     make(map[string]interface{}, 10),
+        Header:   make(map[string]string, 10),
+    }
 }
 
 func (c *Context) Codec() codec.Codec {
-	return codec.CodecType(c.ContentType)
+    return codec.CodecType(c.ContentType)
 }
 
 func (c *Context) WithMetadata(service, method string, meta map[string]string) error {
-	m, err := metadata.EncodeMetadata(service, method, c.Trace.TraceId(), meta)
-	if err != nil {
-		return err
-	}
-	c.Metadata = m
+    m, err := metadata.EncodeMetadata(service, method, c.Trace.TraceId(), meta)
+    if err != nil {
+        return err
+    }
+    c.Metadata = m
 
-	return nil
+    return nil
 }
 
-func NewContext(service, method, tracing string, meta map[string]string) (*Context, error) {
-	m, err := metadata.EncodeMetadata(service, method, tracing, meta)
-	if err != nil {
-		return nil, err
-	}
-	return &Context{
-		Metadata: m,
-		Trace:    simple.WithSimple(tracing),
-		data:     make(map[string]interface{}, 10),
-	}, nil
+func (c *Context) WithSetup(data, meta []byte) error {
+    if len(data) > 0 {
+        err := x.Jsoniter.Unmarshal(data, &c.data)
+        if err != nil {
+            return err
+        }
+    }
+
+    err := x.Jsoniter.Unmarshal(meta, &c.Header)
+    if err != nil {
+        return err
+    }
+    c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
+    return nil
 }
 
-func FromMetadata(b []byte) *Context {
-	m := metadata.DecodeMetadata(b)
-	return &Context{
-		Trace:       simple.WithSimple(m.Tracing()),
-		Metadata:    m,
-		ContentType: m.GetMeta(namespace.DefaultHeaderContentType),
-		data:        make(map[string]interface{}, 10),
-	}
+func (c *Context) FromMetadata(b []byte) {
+    m := metadata.DecodeMetadata(b)
+    c.Trace = simple.WithTrace(m.Tracing())
+    c.Metadata = m
 }
 
 func (c *Context) Get(key string) interface{} {
-	return c.data[key]
+    return c.data[key]
 }
 
 func (c *Context) Set(key string, value interface{}) {
-	c.data[key] = value
+    c.data[key] = value
+}
+
+func (c *Context) GetHeader(key string) string {
+    return c.Header[key]
+}
+
+func (c *Context) SetHeader(key, value string) {
+    c.Header[key] = value
 }
 
 func (c *Context) Debug(msg ...interface{}) {
-	c.Trace.Carrier()
-	log.Debug(c.Trace.TraceId() + " |" + fmt.Sprintln(msg...))
+    c.Trace.Carrier()
+    log.Debug(c.Trace.TraceId() + " |" + fmt.Sprintln(msg...))
 }
 
 func (c *Context) Info(msg ...interface{}) {
-	c.Trace.Carrier()
-	log.Info(c.Trace.TraceId() + " |" + fmt.Sprintln(msg...))
+    c.Trace.Carrier()
+    log.Info(c.Trace.TraceId() + " |" + fmt.Sprintln(msg...))
 }
 
 func (c *Context) Error(msg ...interface{}) {
-	c.Trace.Carrier()
-	log.Error(c.Trace.TraceId() + " |" + fmt.Sprintln(msg...))
+    c.Trace.Carrier()
+    log.Error(c.Trace.TraceId() + " |" + fmt.Sprintln(msg...))
 }
 
 func (c *Context) Debugf(f string, msg ...interface{}) {
-	c.Trace.Carrier()
-	log.Debug(c.Trace.TraceId() + " |" + fmt.Sprintf(f+"\n", msg...))
+    c.Trace.Carrier()
+    log.Debug(c.Trace.TraceId() + " |" + fmt.Sprintf(f+"\n", msg...))
 }
 
 func (c *Context) Infof(f string, msg ...interface{}) {
-	c.Trace.Carrier()
-	log.Info(c.Trace.TraceId() + " |" + fmt.Sprintf(f+"\n", msg...))
+    c.Trace.Carrier()
+    log.Info(c.Trace.TraceId() + " |" + fmt.Sprintf(f+"\n", msg...))
 }
 
 func (c *Context) Errorf(f string, msg ...interface{}) {
-	c.Trace.Carrier()
-	log.Error(c.Trace.TraceId() + " |" + fmt.Sprintf(f+"\n", msg...))
+    c.Trace.Carrier()
+    log.Error(c.Trace.TraceId() + " |" + fmt.Sprintf(f+"\n", msg...))
 }

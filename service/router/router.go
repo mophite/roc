@@ -95,7 +95,7 @@ func (r *Router) RegisterChannelHandler(service string, rc handler.ChannelHandle
 }
 
 func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parcel.RocPacket) error {
-    rr, ok := r.rrRoute[c.Method()]
+    rr, ok := r.rrRoute[c.Metadata.Method()]
     if !ok {
         return ErrNotFoundHandler
     }
@@ -124,7 +124,7 @@ func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket) (chan prot
         }
     }
 
-    rs, ok := r.rsRoute[c.Method()]
+    rs, ok := r.rsRoute[c.Metadata.Method()]
     if !ok {
         return nil, ErrNotFoundHandler
     }
@@ -142,7 +142,7 @@ func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, exit 
         }
     }
 
-    rc, ok := r.rcRoute[c.Method()]
+    rc, ok := r.rcRoute[c.Metadata.Method()]
     if !ok {
         return nil, ErrNotFoundHandler
     }
