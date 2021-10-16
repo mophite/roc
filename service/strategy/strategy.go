@@ -13,11 +13,11 @@
 //  limitations under the License.
 //
 
-
 package strategy
 
 import (
     "errors"
+    "fmt"
     "reflect"
     "sync"
     "sync/atomic"
@@ -112,7 +112,11 @@ func (s *strategy) getOrSet(scope string) (*pod, error) {
             }
         }
 
-        return s.connPerService[scope], nil
+        v, ok := s.connPerService[scope]
+        if !ok {
+            return nil, fmt.Errorf("no such scope node service [%s]", scope)
+        }
+        return v, nil
     }
     //pod must available
     return p, nil
@@ -234,7 +238,6 @@ func (s *strategy) CloseStrategy() {
             client.CloseConn()
         }
     }
-
 
     s.close <- struct{}{}
 }

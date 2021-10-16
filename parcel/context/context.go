@@ -24,13 +24,12 @@ import (
     "github.com/go-roc/roc/parcel/codec"
     "github.com/go-roc/roc/parcel/metadata"
     "github.com/go-roc/roc/rlog/log"
-    "github.com/go-roc/roc/x"
 )
 
 type Context struct {
 
     //rpc metadata
-    Metadata *metadata.Metadata
+    *metadata.Metadata
 
     //Trace exists throughout the life cycle of the context
     //trace is request flow trace
@@ -39,9 +38,6 @@ type Context struct {
 
     //Content-Type
     ContentType string
-
-    //request Header
-    Header map[string]string
 
     ////http writer
     //Writer http.ResponseWriter
@@ -59,7 +55,6 @@ func Background() *Context {
         Trace:    simple.NewSimple(),
         Metadata: metadata.MallocMetadata(),
         data:     make(map[string]interface{}, 10),
-        Header:   make(map[string]string, 10),
     }
 }
 
@@ -77,25 +72,18 @@ func (c *Context) WithMetadata(service, method string, meta map[string]string) e
     return nil
 }
 
-func (c *Context) WithSetup(data, meta []byte) error {
-    if len(data) > 0 {
-        err := x.Jsoniter.Unmarshal(data, &c.data)
-        if err != nil {
-            return err
-        }
-    }
+func (c *Context) SetSetupData(value []byte) {
+    c.data[namespace.DefaultHeaderSetup] = value
+}
 
-    err := x.Jsoniter.Unmarshal(meta, &c.Header)
-    if err != nil {
-        return err
-    }
-    c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
-    return nil
+func (c *Context) GetSetupData() []byte {
+    b, _ := c.data[namespace.DefaultHeaderSetup].([]byte)
+    return b
 }
 
 func (c *Context) FromMetadata(b []byte) {
     m := metadata.DecodeMetadata(b)
-    c.Trace = simple.WithTrace(m.Tracing())
+    c.Trace.SpreadOnce()
     c.Metadata = m
 }
 
@@ -108,11 +96,11 @@ func (c *Context) Set(key string, value interface{}) {
 }
 
 func (c *Context) GetHeader(key string) string {
-    return c.Header[key]
+    return c.GetMeta(key)
 }
 
 func (c *Context) SetHeader(key, value string) {
-    c.Header[key] = value
+    c.SetMeta(key, value)
 }
 
 func (c *Context) Debug(msg ...interface{}) {

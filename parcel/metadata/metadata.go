@@ -44,133 +44,132 @@ func MallocMetadata() *Metadata {
     return &Metadata{meta: make(map[string]string, 10)}
 }
 
-func DecodeMetadata(b []byte) *Metadata {
-    return decodeMetadata(b)
-}
-
 func EncodeMetadata(service, method, tracing string, meta map[string]string) (*Metadata, error) {
     b, err := encodeMetadata(service, method, tracing, meta)
     if err != nil {
         return nil, err
     }
 
-    return decodeMetadata(b), nil
+    return DecodeMetadata(b), nil
 }
 
-func (p *Metadata) Payload() []byte {
-    return p.payload
+func (m *Metadata) Payload() []byte {
+    return m.payload
 }
 
-
-func (p *Metadata) getMeta(key string) string {
-    return p.meta[key]
+func (m *Metadata) GetMeta(key string) string {
+    return m.meta[key]
 }
 
-func (p *Metadata) Service() string {
-    return p.service
+func (m *Metadata) SetMeta(key, value string) {
+    m.meta[key] = value
 }
 
-func (p *Metadata) Method() string {
-    return p.method
+func (m *Metadata) Service() string {
+    return m.service
 }
 
-func (p *Metadata) SetMethod(method string) {
-    p.method = method
+func (m *Metadata) Method() string {
+    return m.method
 }
 
-func (p *Metadata) Version() string {
-    return p.version
+func (m *Metadata) SetMethod(method string) {
+    m.method = method
 }
 
-func (p *Metadata) Tracing() string {
-    return p.trace
+func (m *Metadata) Version() string {
+    return m.version
 }
 
-func (p *Metadata) Address() string {
-    return p.address
+func (m *Metadata) Tracing() string {
+    return m.trace
 }
 
-func (p *Metadata) String() string {
+func (m *Metadata) Address() string {
+    return m.address
+}
+
+func (m *Metadata) String() string {
     var tr string
-    if b := p.Tracing(); len(b) < 1 {
+    if b := m.Tracing(); len(b) < 1 {
         tr = "<nil>"
     } else {
         tr = "0x" + hex.EncodeToString([]byte(b))
     }
 
-    var m string
-    if b := p.meta; len(b) < 1 {
-        m = "<nil>"
+    var s string
+    if b := m.meta; len(b) < 1 {
+        s = "<nil>"
     } else {
-        m = "0x" + hex.EncodeToString(p.getMetadata())
+        s = "0x" + hex.EncodeToString(m.getMetadata())
     }
     return fmt.Sprintf(
         "Metadata{version=%s, service=%s, method=%s, tracing=%s, metadata=%s}",
-        p.Version(),
-        p.Service(),
-        p.Method(),
+        m.Version(),
+        m.Service(),
+        m.Method(),
         tr,
-        m,
+        s,
     )
 }
 
-func (p *Metadata) VersionUint16() uint16 {
-    return binary.BigEndian.Uint16(p.payload)
+func (m *Metadata) VersionUint16() uint16 {
+    return binary.BigEndian.Uint16(m.payload)
 }
 
-func (p *Metadata) getService() string {
+func (m *Metadata) getService() string {
     offset := 2
 
-    serviceLen := int(binary.BigEndian.Uint16(p.payload[offset : offset+2]))
+    serviceLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
     offset += 2
 
-    return string(p.payload[offset : offset+serviceLen])
+    return string(m.payload[offset : offset+serviceLen])
 }
 
-func (p *Metadata) getMethod() string {
+func (m *Metadata) getMethod() string {
     offset := 2
 
-    serviceLen := int(binary.BigEndian.Uint16(p.payload[offset : offset+2]))
+    serviceLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
     offset += 2 + serviceLen
 
-    methodLen := int(binary.BigEndian.Uint16(p.payload[offset : offset+2]))
+    methodLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
     offset += 2
 
-    return string(p.payload[offset : offset+methodLen])
+    return string(m.payload[offset : offset+methodLen])
 }
 
-func (p *Metadata) getTrace() []byte {
+func (m *Metadata) getTrace() []byte {
     offset := 2
 
-    serviceLen := int(binary.BigEndian.Uint16(p.payload[offset : offset+2]))
+    serviceLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
     offset += 2 + serviceLen
 
-    methodLen := int(binary.BigEndian.Uint16(p.payload[offset : offset+2]))
+    methodLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
     offset += 2 + methodLen
 
-    tracingLen := int(binary.BigEndian.Uint16(p.payload[offset : offset+2]))
+    tracingLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
     offset += 2
 
     if tracingLen > 0 {
-        return p.payload[offset : offset+tracingLen]
+        return m.payload[offset : offset+tracingLen]
     } else {
         return nil
     }
 }
 
-func (p *Metadata) getMetadata() []byte {
+func (m *Metadata) getMetadata() []byte {
     offset := 2
 
-    serviceLen := int(binary.BigEndian.Uint16(p.payload[offset : offset+2]))
+    serviceLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
     offset += 2 + serviceLen
 
-    methodLen := int(binary.BigEndian.Uint16(p.payload[offset : offset+2]))
+    methodLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
     offset += 2 + methodLen
 
-    tracingLen := int(binary.BigEndian.Uint16(p.payload[offset : offset+2]))
+    tracingLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
     offset += 2 + tracingLen
 
-    return p.payload[offset:]
+    return m.payload[offset:]
 }
 
 func encodeMetadata(service, method, tracing string, metadata map[string]string) (m []byte, err error) {
@@ -224,7 +223,7 @@ func encodeMetadata(service, method, tracing string, metadata map[string]string)
     return
 }
 
-func decodeMetadata(payload []byte) *Metadata {
+func DecodeMetadata(payload []byte) *Metadata {
 
     m := &Metadata{payload: payload}
 
@@ -233,8 +232,8 @@ func decodeMetadata(payload []byte) *Metadata {
     m.method = m.getMethod()
     m.service = m.getService()
     m.trace = x.BytesToString(m.getTrace())
-    m.version = m.getMeta(namespace.DefaultHeaderVersion)
-    m.address = m.getMeta(namespace.DefaultHeaderAddress)
+    m.version = m.GetMeta(namespace.DefaultHeaderVersion)
+    m.address = m.GetMeta(namespace.DefaultHeaderAddress)
 
     return m
 }

@@ -19,8 +19,6 @@ import (
     "github.com/go-roc/roc/x"
 )
 
-// attention:it's maybe zipkin instead,don't user this for your production Environment.
-
 // Span
 // |---TraceId:1     ----->RPC----->       |---TraceId:1
 //       |---ParentSpanId:0                            |---ParentSpanId:222

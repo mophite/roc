@@ -34,5 +34,6 @@ type Header = string
 const (
     DefaultHeaderVersion     Header = "X-Api-Version"
     DefaultHeaderAddress            = "X-Api-Address"
+    DefaultHeaderSetup              = "X-Api-Setup"
     DefaultHeaderContentType        = "Content-Type"
 )

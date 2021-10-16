@@ -64,6 +64,7 @@ func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit cha
                 //test channel sending frequency
                 rsp <- &phello.SayRsp{Pong: "pong"}
             case <-exit:
+                c.Debug("exit")
                 break QUIT
             }
         }

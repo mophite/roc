@@ -17,15 +17,17 @@ package trace
 
 type Trace interface {
 
-	// Carrier carrier tracked events
-	Carrier()
+    // Carrier carrier tracked events
+    Carrier()
 
-	// Finish trace finish
-	Finish()
+    // Finish trace finish
+    Finish()
 
-	// TraceId get tracing id
-	TraceId() string
+    // TraceId get tracing id
+    TraceId() string
 
-	// Name return trace name like "simple"
-	Name() string
+    SpreadOnce()
+
+    // Name return trace name like "simple"
+    Name() string
 }

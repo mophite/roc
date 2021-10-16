@@ -17,7 +17,6 @@ package rs
 
 import (
     ctx "context"
-    "errors"
     "runtime"
 
     "github.com/jjeffcaii/reactor-go/scheduler"
@@ -96,18 +95,9 @@ func (r *server) Accept(route *router.Router) {
                 var c = context.Background()
 
                 if len(r.dog) > 0 {
-                    //setup meta can set content-type and other header
-                    meta, ok := setup.Metadata()
-                    if !ok {
-                        c.Debug("must metadata")
-                        return nil, errors.New("dog reject you ")
-                    }
 
-                    err := c.WithSetup(setup.Data(), meta)
-                    if err != nil {
-                        c.Errorf("dog reject you |err=%v", err)
-                        return nil, err
-                    }
+                    c.SetSetupData(setup.Data())
+
                     for i := range r.dog {
                         rsp, err := r.dog[i](c)
                         if err != nil {

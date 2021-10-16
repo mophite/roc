@@ -39,6 +39,15 @@ func WithTrace(traceId string) *Simple {
     return &Simple{traceId: traceId}
 }
 
+func (s *Simple) SpreadOnce() {
+    if s.traceId == "" {
+        s.traceId = x.NewXID()
+        return
+    }
+
+    s.traceId += " |" + x.NewXID()
+}
+
 func (s *Simple) Name() string {
     return "simple"
 }
