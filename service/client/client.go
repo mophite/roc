@@ -50,7 +50,7 @@ func (s *Client) InvokeRR(
 ) error {
 
     // new a newInvoke setting
-    newInvoke, err := invoke.NewInvoke(c, method, opts...)
+    cc,newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         c.Error(err)
         return err
@@ -69,7 +69,7 @@ func (s *Client) InvokeRR(
         c.Error(err)
         return err
     }
-    return newInvoke.InvokeRR(c, req, rsp, cnn)
+    return newInvoke.InvokeRR(cc, req, rsp, cnn)
 }
 
 // InvokeRS rpc request requestStream,it's one request and multiple response
@@ -81,7 +81,7 @@ func (s *Client) InvokeRS(
 ) chan []byte {
 
     // new a newInvoke setting
-    newInvoke, err := invoke.NewInvoke(c, method, opts...)
+    cc,newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         // create a chan error response
         c.Error(err)
@@ -99,7 +99,7 @@ func (s *Client) InvokeRS(
     }
 
     //encode req body to roc packet
-    b, err := c.Codec().Encode(req)
+    b, err := cc.Codec().Encode(req)
 
     if err != nil {
         // create a chan error response
@@ -107,7 +107,7 @@ func (s *Client) InvokeRS(
         return nil
     }
 
-    return cnn.Client().RS(c, parcel.Payload(b))
+    return cnn.Client().RS(cc, parcel.Payload(b))
 }
 
 // InvokeRC rpc request requestChannel,it's multiple request and multiple response
@@ -119,7 +119,7 @@ func (s *Client) InvokeRC(
 ) chan []byte {
 
     // new a newInvoke setting
-    newInvoke, err := invoke.NewInvoke(c, method, opts...)
+    cc,newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         c.Error(err)
         // create a chan error response
@@ -136,12 +136,12 @@ func (s *Client) InvokeRC(
         cnn, err = s.strategy.Next(newInvoke.Scope())
     }
     if err != nil {
-        c.Error(err)
+        cc.Error(err)
         // create a chan error response
         return nil
     }
 
-    return cnn.Client().RC(c, req)
+    return cnn.Client().RC(cc, req)
 }
 
 func (s *Client) CloseClient() {

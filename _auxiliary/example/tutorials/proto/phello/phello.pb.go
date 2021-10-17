@@ -671,7 +671,7 @@ func (r *helloHandler) Say(c *context.Context, req *parcel.RocPacket, interrupt 
 	var in SayReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), req.String())
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = SayRsp{}
@@ -690,7 +690,7 @@ func (r *helloHandler) SayGet(c *context.Context, req *parcel.RocPacket, interru
 	var in ApiReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), req.String())
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = ApiRsp{}
@@ -709,7 +709,7 @@ func (r *helloHandler) SayApi(c *context.Context, req *parcel.RocPacket, interru
 	var in SayReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), req.String())
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = SayRsp{}
@@ -757,7 +757,7 @@ func (cc *helloSrvClient) SayStream(c *context.Context, req *SayReq, opts ...inv
 			v := &SayRsp{}
 			err := c.Codec().Decode(b, v)
 			if err != nil {
-				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Metadata.Method(), req.String())
+				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 				continue
 			}
 			rsp <- v
@@ -773,7 +773,7 @@ func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, opts 
 		for b := range req {
 			v, err := c.Codec().Encode(b)
 			if err != nil {
-				c.Errorf("client encode pakcet err=%v |method=%s |data=%s", err, c.Metadata.Method(), b.String())
+				c.Errorf("client encode pakcet err=%v |method=%s |data=%s", err, c.Method(), b.String())
 				continue
 			}
 			in <- v
@@ -788,7 +788,7 @@ func (cc *helloSrvClient) SayChannel(c *context.Context, req chan *SayReq, opts 
 			v := &SayRsp{}
 			err := c.Codec().Decode(b, v)
 			if err != nil {
-				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Metadata.Method(), string(b))
+				c.Errorf("client decode pakcet err=%v |method=%s |data=%s", err, c.Method(), string(b))
 				continue
 			}
 			rsp <- v
@@ -826,7 +826,7 @@ func (r *helloSrvHandler) SaySrv(c *context.Context, req *parcel.RocPacket, inte
 	var in SayReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), req.String())
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = SayRsp{}
@@ -845,7 +845,7 @@ func (r *helloSrvHandler) SayStream(c *context.Context, req *parcel.RocPacket) c
 	var in SayReq
 	err := c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), req.String())
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil
 	}
 
@@ -868,7 +868,7 @@ func (r *helloSrvHandler) SayChannel(c *context.Context, req chan *parcel.RocPac
 			var v = &SayReq{}
 			err := c.Codec().Decode(b.Bytes(), v)
 			if err != nil {
-				c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), b.String())
+				c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), b.String())
 				continue
 			}
 			in <- v
@@ -925,7 +925,7 @@ func (r *fileHandler) Upload(c *context.Context, req *parcel.RocPacket, interrup
 	var in FileReq
 	err = c.Codec().Decode(req.Bytes(), &in)
 	if err != nil {
-		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Metadata.Method(), req.String())
+		c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
 		return nil, err
 	}
 	var out = FileRsp{}

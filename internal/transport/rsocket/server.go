@@ -224,14 +224,14 @@ func setupRequestStream(c *context.Context, router *router.Router) rsocket.OptAb
                     parcel.Recycle(req)
 
                     if err != nil {
-                        c.Errorf("transport CC failure |method=%s |err=%v", c.Metadata.Method(), err)
+                        c.Errorf("transport CC failure |method=%s |err=%v", c.Method(), err)
                         return
                     }
 
                     for b := range rsp {
                         data, e := c.Codec().Encode(b)
                         if e != nil {
-                            c.Errorf("transport CC Encode failure |method=%s |err=%v", c.Metadata.Method(), err)
+                            c.Errorf("transport CC Encode failure |method=%s |err=%v", c.Method(), err)
                             continue
                         }
                         sink.Next(payload.New(data, nil))
@@ -292,14 +292,14 @@ func setupRequestChannel(c *context.Context, router *router.Router, buffSize int
                     rsp, err := router.RCProcess(c, req, exitRead)
 
                     if err != nil {
-                        c.Errorf("transport CC failure |method=%s |err=%v", c.Metadata.Method(), err)
+                        c.Errorf("transport CC failure |method=%s |err=%v", c.Method(), err)
                         return
                     }
 
                     for b := range rsp {
                         data, e := c.Codec().Encode(b)
                         if e != nil {
-                            c.Errorf("transport CC Encode failure |method=%s |err=%v", c.Metadata.Method(), err)
+                            c.Errorf("transport CC Encode failure |method=%s |err=%v", c.Method(), err)
                             continue
                         }
                         sink.Next(payload.New(data, nil))

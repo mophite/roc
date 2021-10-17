@@ -1,1 +1,1 @@
-{"roc.Global":{},"roc.RWRedis":{"Address":"127.0.0.1:6379","Password":"000000","DB":0}}
+{"roc.RWMongo":{"Address":"82.157.14.79:27017","Password":"ojo1QbOygiKjT1uZ","UserName":"root"},"roc.RWRedis":{"Address":"82.157.14.79:6379","Password":"ojo1QbOygiKjT1uZ","DB":1},"roc.test":{"name":"roc","age":18}}

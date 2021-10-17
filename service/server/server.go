@@ -151,7 +151,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
 
     var c = context.Background()
-    c.Metadata.SetMethod(r.URL.Path)
+    c.SetMethod(r.URL.Path)
 
     for k, v := range r.Header {
         if len(v) == 0 {
