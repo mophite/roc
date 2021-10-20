@@ -11,6 +11,7 @@ func main() {
         service.Namespace("api.hello"),
         service.HttpAddress("0.0.0.0:9999"),
         service.TCPAddress("0.0.0.0:8888"),
+        service.WssAddress("0.0.0.0:7777","/test/wss"),
     )
 
     phello.RegisterHelloSrvServer(s.Server(), &hello.Hello{})
