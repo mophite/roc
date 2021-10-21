@@ -29,9 +29,6 @@ type Trace interface {
     // generate a new trace id after
     SpreadOnce()
 
-    // instead trace id
-    With(traceId string)
-
     // Name return trace name like "simple"
     Name() string
 }

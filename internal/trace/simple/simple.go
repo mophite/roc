@@ -24,10 +24,6 @@ type Simple struct {
 	traceId string
 }
 
-func (s *Simple) With(traceId string) {
-	s.traceId = traceId
-}
-
 func (s *Simple) Carrier() {
 	return
 }

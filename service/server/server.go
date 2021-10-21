@@ -162,10 +162,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
 
-	if v := c.GetHeader(namespace.DefaultHeaderTrace); v != "" {
-		c.Trace.With(v)
-	}
-
 	w.Header().Set(namespace.DefaultHeaderContentType, c.ContentType)
 	w.Header().Set(namespace.DefaultHeaderTrace, c.Trace.TraceId())
 
