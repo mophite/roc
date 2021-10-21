@@ -290,7 +290,6 @@ func setupRequestChannel(c *context.Context, router *router.Router, buffSize int
                     //you must close rsp from server handler
                     //this way is very friendly to closing channel transport
                     rsp, err := router.RCProcess(c, req, exitRead)
-                    c.Debug("-----------------------",err)
                     if err != nil {
                         c.Errorf("transport CC failure |method=%s |err=%v", c.Method(), err)
                         return

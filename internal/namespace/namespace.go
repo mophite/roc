@@ -24,16 +24,17 @@ type Scope = string
 type RequestChannel = string
 
 var (
-    DefaultVersion      Service = "v1.0.0"
-    DefaultSchema               = "goroc"
-    DefaultConfigSchema         = "configroc"
+	DefaultVersion      Service = "v1.0.0"
+	DefaultSchema               = "goroc"
+	DefaultConfigSchema         = "configroc"
 )
 
 type Header = string
 
 const (
-    DefaultHeaderVersion     Header = "X-Api-Version"
-    DefaultHeaderAddress            = "X-Api-Address"
-    DefaultHeaderSetup              = "X-Api-Setup"
-    DefaultHeaderContentType        = "Content-Type"
+	DefaultHeaderVersion     Header = "X-Api-Version"
+	DefaultHeaderTrace       Header = "X-Api-Trace"
+	DefaultHeaderAddress            = "X-Api-Address"
+	DefaultHeaderSetup              = "X-Api-Setup"
+	DefaultHeaderContentType        = "Content-Type"
 )
