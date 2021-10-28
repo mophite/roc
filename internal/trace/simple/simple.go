@@ -39,13 +39,13 @@ func WithTrace(traceId string) *Simple {
 	return &Simple{traceId: traceId}
 }
 
-func (s *Simple) SpreadOnce() {
-	if s.traceId == "" {
-		s.traceId = x.NewXID()
+func (s *Simple) SpreadOnce(traceId string) {
+	if traceId == "" {
+		traceId = x.NewXID()
 		return
 	}
 
-	s.traceId += " |" + x.NewXID()
+	s.traceId += " |" + traceId
 }
 
 func (s *Simple) Name() string {

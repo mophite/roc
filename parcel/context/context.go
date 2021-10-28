@@ -62,6 +62,11 @@ func (c *Context) Codec() codec.Codec {
 	return codec.CodecType(c.ContentType)
 }
 
+func (c *Context) Copy() *Context {
+	s := *c
+	return &s
+}
+
 func (c *Context) Clone(service, method string, meta map[string]string) (*Context, error) {
 	m, err := metadata.EncodeMetadata(service, method, c.Trace.TraceId(), meta)
 	if err != nil {
@@ -84,7 +89,7 @@ func (c *Context) GetSetupData() []byte {
 
 func (c *Context) FromMetadata(b []byte) {
 	m := metadata.DecodeMetadata(b)
-	c.Trace.SpreadOnce()
+	c.Trace.SpreadOnce(m.Tracing())
 	c.Metadata = m
 }
 
