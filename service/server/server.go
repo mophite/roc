@@ -239,6 +239,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}()
 		_ = r.Body.Close()
 
+		c.IsPutFile = true
 		err = s.route.RRProcess(c, req, rsp)
 
 		if err == router.ErrNotFoundHandler {

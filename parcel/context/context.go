@@ -48,6 +48,8 @@ type Context struct {
 	////http request body
 	//Body io.ReadCloser
 	data map[string]interface{}
+
+	IsPutFile bool
 }
 
 func Background() *Context {
