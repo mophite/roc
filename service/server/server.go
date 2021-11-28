@@ -244,6 +244,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         err = s.route.RRProcess(c, req, rsp)
 
         if err == router.ErrNotFoundHandler {
+            c.Errorf("err=%v |path=%s", err, c.Method())
             w.Header().Set("Content-type", "text/plain")
             w.WriteHeader(http.StatusNotFound)
             w.Write(s.opts.Err.Error404(c))
@@ -288,6 +289,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         err = s.route.RRProcess(c, req, rsp)
 
         if err == router.ErrNotFoundHandler {
+            c.Errorf("err=%v |path=%s", err, c.Method())
             w.WriteHeader(http.StatusNotFound)
             w.Write(s.opts.Err.Error404(c))
             return

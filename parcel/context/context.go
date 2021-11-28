@@ -68,11 +68,6 @@ func (c *Context) Codec() codec.Codec {
     return codec.CodecType(c.ContentType)
 }
 
-func (c *Context) Copy() *Context {
-    s := *c
-    return &s
-}
-
 func (c *Context) Clone(service, method string, meta map[string]string) (*Context, error) {
     m, err := metadata.EncodeMetadata(service, method, c.Trace.TraceId(), meta)
     if err != nil {
