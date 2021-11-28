@@ -21,11 +21,10 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/service/handler"
-
 	"github.com/go-roc/roc/parcel"
+	"github.com/go-roc/roc/parcel/context"
 	"github.com/go-roc/roc/rlog"
+	"github.com/go-roc/roc/service/handler"
 )
 
 var (
@@ -163,8 +162,11 @@ func (r *Router) interrupt() handler.Interceptor {
 
 		rsp := fire(c, req)
 
-		if !c.IsPutFile {
-			c.Debugf("FROM=%s |TO=%s", c.Codec().MustEncodeString(req), c.Codec().MustEncodeString(rsp))
+		reqData := c.Codec().MustEncodeString(req)
+		rspData := c.Codec().MustEncodeString(rsp)
+
+		if !c.IsPutFile && len(reqData) < 10<<10 && len(rspData) < 10<<10 {
+			c.Debugf("FROM=%s |TO=%s", reqData, rspData)
 		}
 		return rsp, nil
 	}
