@@ -97,6 +97,7 @@ func (r *server) Accept(route *router.Router) {
                 if len(r.dog) > 0 {
 
                     c.SetSetupData(setup.Data())
+                    c.RemoteAddr, _ = rsocket.GetAddr(sendingSocket)
 
                     for i := range r.dog {
                         rsp, err := r.dog[i](c)
@@ -173,8 +174,7 @@ func setupRequestResponse(r *router.Router) rsocket.OptAbstractSocket {
                 parcel.Recycle(req, rsp)
             }()
 
-            c := context.Background()
-            c.FromMetadata(mustGetMetadata(p))
+            var c = context.FromMetadata(mustGetMetadata(p))
 
             err := r.RRProcess(c, req, rsp)
 
@@ -211,8 +211,8 @@ func setupRequestStream(router *router.Router) rsocket.OptAbstractSocket {
                     var (
                         req = parcel.Payload(p.Data())
                     )
-                    c := context.Background()
-                    c.FromMetadata(mustGetMetadata(p))
+
+                    var c = context.FromMetadata(mustGetMetadata(p))
 
                     //if you want to Disconnect channel
                     //you must close rsp from server handler
@@ -285,8 +285,7 @@ func setupRequestChannel(router *router.Router, buffSize int) rsocket.OptAbstrac
                         break
                     }
 
-                    c := context.Background()
-                    c.FromMetadata(meta)
+                    var c = context.FromMetadata(meta)
 
                     //if you want to Disconnect channel
                     //you must close rsp from server handler

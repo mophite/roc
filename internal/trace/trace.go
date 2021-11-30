@@ -27,7 +27,7 @@ type Trace interface {
     TraceId() string
 
     // generate a new trace id after
-    SpreadOnce(traceId string)
+    SpreadOnce()
 
     // Name return trace name like "simple"
     Name() string

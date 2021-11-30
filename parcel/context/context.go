@@ -88,23 +88,31 @@ func (c *Context) GetSetupData() []byte {
     return b
 }
 
-func (c *Context) FromMetadata(b []byte) {
+func FromMetadata(b []byte) *Context {
     m := metadata.DecodeMetadata(b)
-    c.Trace.SpreadOnce(m.Tracing())
-    c.Metadata = m
+    c := &Context{
+        Trace:    simple.WithTrace(m.Tracing()),
+        Metadata: m,
+    }
+    c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
+    c.Trace.SpreadOnce()
+    return c
 }
 
 func (c *Context) ClientIP() string {
     clientIP := c.GetHeader("X-Forwarded-For")
-    s := strings.Split(clientIP, ",")
-    if len(s) > 0 {
-        clientIP = strings.TrimSpace(s[0])
-    }
-    if clientIP == "" {
-        clientIP = strings.TrimSpace(c.GetHeader("X-Real-Ip"))
-    }
     if clientIP != "" {
-        return clientIP
+        s := strings.Split(clientIP, ",")
+        if len(s) > 0 {
+            clientIP = strings.TrimSpace(s[0])
+        }
+        if clientIP == "" {
+            clientIP = strings.TrimSpace(c.GetHeader("X-Real-Ip"))
+        }
+
+        if clientIP != "" {
+            return clientIP
+        }
     }
 
     if ip, _, err := net.SplitHostPort(strings.TrimSpace(c.RemoteAddr)); err == nil {
