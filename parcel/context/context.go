@@ -95,7 +95,7 @@ func FromMetadata(b []byte) *Context {
         Metadata: m,
     }
     c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
-    c.Trace.SpreadOnce()
+    //c.Trace.SpreadOnce()
     return c
 }
 
@@ -106,13 +106,14 @@ func (c *Context) ClientIP() string {
         if len(s) > 0 {
             clientIP = strings.TrimSpace(s[0])
         }
-        if clientIP == "" {
-            clientIP = strings.TrimSpace(c.GetHeader("X-Real-Ip"))
-        }
+    }
 
-        if clientIP != "" {
-            return clientIP
-        }
+    if clientIP == "" {
+        clientIP = strings.TrimSpace(c.GetHeader("X-Real-Ip"))
+    }
+
+    if clientIP != "" {
+        return clientIP
     }
 
     if ip, _, err := net.SplitHostPort(strings.TrimSpace(c.RemoteAddr)); err == nil {

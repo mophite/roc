@@ -93,11 +93,11 @@ func (r *server) Accept(route *router.Router) {
             ) (rsocket.RSocket, error) {
 
                 var c = context.Background()
+                var remoteIp, _ = rsocket.GetAddr(sendingSocket)
 
                 if len(r.dog) > 0 {
 
                     c.SetSetupData(setup.Data())
-                    c.RemoteAddr, _ = rsocket.GetAddr(sendingSocket)
 
                     for i := range r.dog {
                         rsp, err := r.dog[i](c)
@@ -109,9 +109,9 @@ func (r *server) Accept(route *router.Router) {
                 }
 
                 return rsocket.NewAbstractSocket(
-                    setupRequestResponse(route),
-                    setupRequestStream(route),
-                    setupRequestChannel(route, r.buffSize),
+                    setupRequestResponse(route, remoteIp),
+                    setupRequestStream(route, remoteIp),
+                    setupRequestChannel(route, remoteIp, r.buffSize),
                 ), nil
             },
         )
@@ -165,7 +165,7 @@ func mustGetMetadata(p payload.Payload) []byte {
     return b
 }
 
-func setupRequestResponse(r *router.Router) rsocket.OptAbstractSocket {
+func setupRequestResponse(r *router.Router, remoteIp string) rsocket.OptAbstractSocket {
     return rsocket.RequestResponse(
         func(p payload.Payload) mono.Mono {
 
@@ -175,6 +175,7 @@ func setupRequestResponse(r *router.Router) rsocket.OptAbstractSocket {
             }()
 
             var c = context.FromMetadata(mustGetMetadata(p))
+            c.RemoteAddr = remoteIp
 
             err := r.RRProcess(c, req, rsp)
 
@@ -202,7 +203,7 @@ func (r *server) Close() {
     return
 }
 
-func setupRequestStream(router *router.Router) rsocket.OptAbstractSocket {
+func setupRequestStream(router *router.Router, remoteIp string) rsocket.OptAbstractSocket {
     return rsocket.RequestStream(
         func(p payload.Payload) flux.Flux {
 
@@ -213,6 +214,7 @@ func setupRequestStream(router *router.Router) rsocket.OptAbstractSocket {
                     )
 
                     var c = context.FromMetadata(mustGetMetadata(p))
+                    c.RemoteAddr = remoteIp
 
                     //if you want to Disconnect channel
                     //you must close rsp from server handler
@@ -244,7 +246,7 @@ func setupRequestStream(router *router.Router) rsocket.OptAbstractSocket {
     )
 }
 
-func setupRequestChannel(router *router.Router, buffSize int) rsocket.OptAbstractSocket {
+func setupRequestChannel(router *router.Router, remoteIp string, buffSize int) rsocket.OptAbstractSocket {
     return rsocket.RequestChannel(
         func(f flux.Flux) flux.Flux {
             var (
@@ -286,6 +288,7 @@ func setupRequestChannel(router *router.Router, buffSize int) rsocket.OptAbstrac
                     }
 
                     var c = context.FromMetadata(meta)
+                    c.RemoteAddr = remoteIp
 
                     //if you want to Disconnect channel
                     //you must close rsp from server handler
