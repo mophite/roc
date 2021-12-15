@@ -19,6 +19,7 @@ import (
     ctx "context"
     "runtime"
 
+    "github.com/go-roc/roc/x"
     "github.com/jjeffcaii/reactor-go/scheduler"
     "github.com/rsocket/rsocket-go"
     "github.com/rsocket/rsocket-go/payload"
@@ -109,9 +110,9 @@ func (r *server) Accept(route *router.Router) {
                 }
 
                 return rsocket.NewAbstractSocket(
-                    setupRequestResponse(route, remoteIp),
-                    setupRequestStream(route, remoteIp),
-                    setupRequestChannel(route, remoteIp, r.buffSize),
+                    setupRequestResponse(route, remoteIp, setup),
+                    setupRequestStream(route, remoteIp, setup),
+                    setupRequestChannel(route, remoteIp, r.buffSize, setup),
                 ), nil
             },
         )
@@ -165,7 +166,7 @@ func mustGetMetadata(p payload.Payload) []byte {
     return b
 }
 
-func setupRequestResponse(r *router.Router, remoteIp string) rsocket.OptAbstractSocket {
+func setupRequestResponse(r *router.Router, remoteIp string, setup payload.SetupPayload) rsocket.OptAbstractSocket {
     return rsocket.RequestResponse(
         func(p payload.Payload) mono.Mono {
 
@@ -174,10 +175,15 @@ func setupRequestResponse(r *router.Router, remoteIp string) rsocket.OptAbstract
                 parcel.Recycle(req, rsp)
             }()
 
-            var c = context.FromMetadata(mustGetMetadata(p))
+            c, err := context.FromMetadata(mustGetMetadata(p), setup.MetadataMimeType())
+            if err != nil {
+                rlog.Errorf("err=%v |metadata=%s", err, x.BytesToString(mustGetMetadata(p)))
+                return mono.JustOneshot(payload.New(r.Error().Error400(c), nil))
+            }
+
             c.RemoteAddr = remoteIp
 
-            err := r.RRProcess(c, req, rsp)
+            err = r.RRProcess(c, req, rsp)
 
             if err == router.ErrNotFoundHandler {
                 c.Errorf("err=%v |path=%s", err, c.Method())
@@ -203,7 +209,7 @@ func (r *server) Close() {
     return
 }
 
-func setupRequestStream(router *router.Router, remoteIp string) rsocket.OptAbstractSocket {
+func setupRequestStream(router *router.Router, remoteIp string, setup payload.SetupPayload) rsocket.OptAbstractSocket {
     return rsocket.RequestStream(
         func(p payload.Payload) flux.Flux {
 
@@ -213,7 +219,12 @@ func setupRequestStream(router *router.Router, remoteIp string) rsocket.OptAbstr
                         req = parcel.Payload(p.Data())
                     )
 
-                    var c = context.FromMetadata(mustGetMetadata(p))
+                    c, err := context.FromMetadata(mustGetMetadata(p), setup.MetadataMimeType())
+                    if err != nil {
+                        c.Errorf("err=%v |metadata=%s", err, x.BytesToString(mustGetMetadata(p)))
+                        return
+                    }
+
                     c.RemoteAddr = remoteIp
 
                     //if you want to Disconnect channel
@@ -246,7 +257,7 @@ func setupRequestStream(router *router.Router, remoteIp string) rsocket.OptAbstr
     )
 }
 
-func setupRequestChannel(router *router.Router, remoteIp string, buffSize int) rsocket.OptAbstractSocket {
+func setupRequestChannel(router *router.Router, remoteIp string, buffSize int, setup payload.SetupPayload) rsocket.OptAbstractSocket {
     return rsocket.RequestChannel(
         func(f flux.Flux) flux.Flux {
             var (
@@ -287,7 +298,12 @@ func setupRequestChannel(router *router.Router, remoteIp string, buffSize int) r
                         break
                     }
 
-                    var c = context.FromMetadata(meta)
+                    c, err := context.FromMetadata(meta, setup.MetadataMimeType())
+                    if err != nil {
+                        c.Errorf("err=%v |metadata=%s", err, x.BytesToString(meta))
+                        return
+                    }
+
                     c.RemoteAddr = remoteIp
 
                     //if you want to Disconnect channel

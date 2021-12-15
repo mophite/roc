@@ -17,6 +17,7 @@ package parcel
 
 import (
     "github.com/go-roc/roc/parcel/context"
+    "github.com/go-roc/roc/x"
 
     "github.com/go-roc/roc/parcel/packet"
 )
@@ -38,6 +39,9 @@ func (e *ErrorPacket) Error400(c *context.Context) []byte {
     p := new(packet.Packet)
     p.Code = 400
     p.Msg = "Bad Request"
+    if c == nil {
+        return x.MustMarshal(p)
+    }
     return c.Codec().MustEncode(p)
 }
 
@@ -45,6 +49,9 @@ func (e *ErrorPacket) Error500(c *context.Context) []byte {
     p := new(packet.Packet)
     p.Code = 500
     p.Msg = "Internal server error"
+    if c == nil {
+        return x.MustMarshal(p)
+    }
     return c.Codec().MustEncode(p)
 }
 
@@ -52,6 +59,9 @@ func (e *ErrorPacket) Error404(c *context.Context) []byte {
     p := new(packet.Packet)
     p.Code = 404
     p.Msg = "Not Found"
+    if c == nil {
+        return x.MustMarshal(p)
+    }
     return c.Codec().MustEncode(p)
 }
 
@@ -59,6 +69,9 @@ func (e *ErrorPacket) Error405(c *context.Context) []byte {
     p := new(packet.Packet)
     p.Code = 405
     p.Msg = "Method Not Allowed"
+    if c == nil {
+        return x.MustMarshal(p)
+    }
     return c.Codec().MustEncode(p)
 }
 

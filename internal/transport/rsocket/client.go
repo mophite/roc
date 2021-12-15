@@ -61,6 +61,8 @@ func NewClient(connTimeout, interval, tll time.Duration) *client {
 func (cli *client) Dial(e *endpoint.Endpoint, ch chan string) (err error) {
     cli.client, err = rsocket.
         Connect().
+        //MetadataMimeType(extension.ApplicationProtobuf.String()).
+        //DataMimeType(extension.ApplicationProtobuf.String()).
         Scheduler(
             scheduler.NewElastic(runtime.NumCPU()<<8),
             scheduler.NewElastic(runtime.NumCPU()<<8),

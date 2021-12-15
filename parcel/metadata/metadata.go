@@ -20,6 +20,7 @@ package metadata
 import (
     "encoding/binary"
     "encoding/hex"
+    "errors"
     "fmt"
 
     "github.com/go-roc/roc/internal/namespace"
@@ -31,17 +32,17 @@ import (
 const RsocketRpcVersion = uint16(1)
 
 type Metadata struct {
-    version string
-    service string
-    method  string
-    trace   string
-    address string
-    meta    map[string]string
-    payload []byte
+    V  string            `json:"version"`
+    S  string            `json:"service"`
+    M  string            `json:"method"`
+    T  string            `json:"trace"`
+    A  string            `json:"address"`
+    P  []byte            `json:"payload"`
+    Md map[string]string `json:"meta"`
 }
 
 func MallocMetadata() *Metadata {
-    return &Metadata{meta: make(map[string]string, 10)}
+    return &Metadata{Md: make(map[string]string, 10)}
 }
 
 func EncodeMetadata(service, method, tracing string, meta map[string]string) (*Metadata, error) {
@@ -50,43 +51,43 @@ func EncodeMetadata(service, method, tracing string, meta map[string]string) (*M
         return nil, err
     }
 
-    return DecodeMetadata(b), nil
+    return DecodeMetadata(b)
 }
 
 func (m *Metadata) Payload() []byte {
-    return m.payload
+    return m.P
 }
 
 func (m *Metadata) GetMeta(key string) string {
-    return m.meta[key]
+    return m.Md[key]
 }
 
 func (m *Metadata) SetMeta(key, value string) {
-    m.meta[key] = value
+    m.Md[key] = value
 }
 
 func (m *Metadata) Service() string {
-    return m.service
+    return m.S
 }
 
 func (m *Metadata) Method() string {
-    return m.method
+    return m.M
 }
 
 func (m *Metadata) SetMethod(method string) {
-    m.method = method
+    m.M = method
 }
 
 func (m *Metadata) Version() string {
-    return m.version
+    return m.V
 }
 
 func (m *Metadata) Tracing() string {
-    return m.trace
+    return m.T
 }
 
 func (m *Metadata) Address() string {
-    return m.address
+    return m.A
 }
 
 func (m *Metadata) String() string {
@@ -98,7 +99,7 @@ func (m *Metadata) String() string {
     }
 
     var s string
-    if b := m.meta; len(b) < 1 {
+    if b := m.Md; len(b) < 1 {
         s = "<nil>"
     } else {
         s = "0x" + hex.EncodeToString(m.getMetadata())
@@ -114,44 +115,44 @@ func (m *Metadata) String() string {
 }
 
 func (m *Metadata) VersionUint16() uint16 {
-    return binary.BigEndian.Uint16(m.payload)
+    return binary.BigEndian.Uint16(m.P)
 }
 
 func (m *Metadata) getService() string {
     offset := 2
 
-    serviceLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
+    serviceLen := int(binary.BigEndian.Uint16(m.P[offset : offset+2]))
     offset += 2
 
-    return string(m.payload[offset : offset+serviceLen])
+    return string(m.P[offset : offset+serviceLen])
 }
 
 func (m *Metadata) getMethod() string {
     offset := 2
 
-    serviceLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
+    serviceLen := int(binary.BigEndian.Uint16(m.P[offset : offset+2]))
     offset += 2 + serviceLen
 
-    methodLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
+    methodLen := int(binary.BigEndian.Uint16(m.P[offset : offset+2]))
     offset += 2
 
-    return string(m.payload[offset : offset+methodLen])
+    return string(m.P[offset : offset+methodLen])
 }
 
 func (m *Metadata) getTrace() []byte {
     offset := 2
 
-    serviceLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
+    serviceLen := int(binary.BigEndian.Uint16(m.P[offset : offset+2]))
     offset += 2 + serviceLen
 
-    methodLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
+    methodLen := int(binary.BigEndian.Uint16(m.P[offset : offset+2]))
     offset += 2 + methodLen
 
-    tracingLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
+    tracingLen := int(binary.BigEndian.Uint16(m.P[offset : offset+2]))
     offset += 2
 
     if tracingLen > 0 {
-        return m.payload[offset : offset+tracingLen]
+        return m.P[offset : offset+tracingLen]
     } else {
         return nil
     }
@@ -160,16 +161,16 @@ func (m *Metadata) getTrace() []byte {
 func (m *Metadata) getMetadata() []byte {
     offset := 2
 
-    serviceLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
+    serviceLen := int(binary.BigEndian.Uint16(m.P[offset : offset+2]))
     offset += 2 + serviceLen
 
-    methodLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
+    methodLen := int(binary.BigEndian.Uint16(m.P[offset : offset+2]))
     offset += 2 + methodLen
 
-    tracingLen := int(binary.BigEndian.Uint16(m.payload[offset : offset+2]))
+    tracingLen := int(binary.BigEndian.Uint16(m.P[offset : offset+2]))
     offset += 2 + tracingLen
 
-    return m.payload[offset:]
+    return m.P[offset:]
 }
 
 func encodeMetadata(service, method, tracing string, metadata map[string]string) (m []byte, err error) {
@@ -223,17 +224,30 @@ func encodeMetadata(service, method, tracing string, metadata map[string]string)
     return
 }
 
-func DecodeMetadata(payload []byte) *Metadata {
+func DecodeMetadata(payload []byte) (*Metadata, error) {
 
-    m := &Metadata{payload: payload}
+    m := &Metadata{P: payload}
 
-    x.MustUnmarshal(m.getMetadata(), &m.meta)
+    err := x.Jsoniter.Unmarshal(m.getMetadata(), &m.Md)
+    if err != nil {
+        return nil, err
+    }
 
-    m.method = m.getMethod()
-    m.service = m.getService()
-    m.trace = x.BytesToString(m.getTrace())
-    m.version = m.GetMeta(namespace.DefaultHeaderVersion)
-    m.address = m.GetMeta(namespace.DefaultHeaderAddress)
+    m.M = m.getMethod()
+    if m.M == "" {
+        return nil, errors.New("no method")
+    }
 
-    return m
+    m.S = m.getService()
+
+    m.T = x.BytesToString(m.getTrace())
+
+    m.V = m.GetMeta(namespace.DefaultHeaderVersion)
+    if m.V == "" {
+        m.V = namespace.DefaultVersion
+    }
+
+    m.A = m.GetMeta(namespace.DefaultHeaderAddress)
+
+    return m, nil
 }

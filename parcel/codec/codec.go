@@ -17,6 +17,7 @@ package codec
 
 import (
     "github.com/gogo/protobuf/proto"
+    "github.com/rsocket/rsocket-go/extension"
 
     "github.com/go-roc/roc/parcel/codec/jsonc"
     "github.com/go-roc/roc/parcel/codec/protoc"
@@ -25,11 +26,6 @@ import (
 //todo https://github.com/klauspost/compress use compress
 
 var defaultCodec Codec = jsonc.JSCodec
-
-const (
-    ApplicationJson  = "application/json"
-    ApplicationProto = "application/proto"
-)
 
 type Codec interface {
     Encode(message proto.Message) ([]byte, error)
@@ -41,10 +37,8 @@ type Codec interface {
 }
 
 var DefaultCodecs = map[string]Codec{
-    "application/json":     jsonc.JSCodec,
-    "application/proto":    &protoc.Proto{},
-    "application/protobuf": &protoc.Proto{},
-    //"multipart/form-data":  nil,
+    extension.ApplicationJSON.String():     jsonc.JSCodec,
+    extension.ApplicationProtobuf.String(): &protoc.Proto{},
 }
 
 func CodecType(contentType string) Codec {
