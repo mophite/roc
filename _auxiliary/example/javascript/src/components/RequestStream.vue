@@ -30,11 +30,16 @@ export default {
     callServerMethod() {
       console.log("request - stream call...");
       if (this.socket) {
-        const message = { message: "requestStream from JavaScript!" };
+        const message = {ping: "say hello!"};
         this.socket
           .requestStream({
             data: message,
-            metadata: ""
+            metadata: {
+              trace: "123",
+              method: "/hello/hellosrv/saystream",
+              service: "api.hello",
+              version: "v1.0.0"
+            }
           })
           .subscribe({
             onComplete: () => {
@@ -52,7 +57,7 @@ export default {
             // Nothing happens until `request(n)` is called
             onSubscribe: sub => {
               console.log("subscribe request Stream!");
-              sub.request(7);
+              sub.request(3);
               this.sent.push(message);
             }
           });

@@ -35,7 +35,7 @@ func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) chan *phello.S
 
     go func() {
         var count uint32
-        for i := 0; i < 200; i++ {
+        for i := 0; i < 3; i++ {
             rsp <- &phello.SayRsp{Pong: strconv.Itoa(i)}
             atomic.AddUint32(&count, 1)
             time.Sleep(time.Second * 1)

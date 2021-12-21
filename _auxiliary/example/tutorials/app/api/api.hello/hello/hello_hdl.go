@@ -22,6 +22,7 @@ import (
 
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
     "github.com/go-roc/roc/parcel/context"
+    "github.com/go-roc/roc/rlog"
 )
 
 type Hello struct{}
@@ -35,7 +36,7 @@ func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) chan *phello.S
 
     go func() {
         var count uint32
-        for i := 0; i < 200; i++ {
+        for i := 0; i < 3; i++ {
             rsp <- &phello.SayRsp{Pong: strconv.Itoa(i)}
             atomic.AddUint32(&count, 1)
             time.Sleep(time.Second * 1)
@@ -49,22 +50,24 @@ func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) chan *phello.S
     return rsp
 }
 
-func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit chan struct{})  chan *phello.SayRsp{
+func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit chan struct{}) chan *phello.SayRsp {
     var rsp = make(chan *phello.SayRsp)
 
     go func() {
     QUIT:
         for {
             select {
-            case _, ok := <-req:
+            case data, ok := <-req:
                 if !ok {
                     break QUIT
                 }
 
+                rlog.Infof("FROM |req=%s", data.String())
                 //test channel sending frequency
                 time.Sleep(time.Second)
                 rsp <- &phello.SayRsp{Pong: "pong"}
             case <-exit:
+                rlog.Info("exit")
                 break QUIT
             }
         }

@@ -1,7 +1,7 @@
 package main
 
 import (
-    "github.com/go-roc/roc/_auxiliary/example/origin/api.hello/hello"
+    "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/hello"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/say"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/app/api/api.hello/upload"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/internal/ipc"
