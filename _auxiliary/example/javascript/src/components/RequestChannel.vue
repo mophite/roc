@@ -32,41 +32,48 @@ export default {
     callServerMethod() {
       console.log("request - stream call...");
       if (this.socket) {
+
+
         const flowablePayload = new Flowable(subscriber => {
           subscriber.onSubscribe({
             cancel: () => {/* no-op */
             },
             request: n => {
 
-              for (let index = 0; index < n; index++) {
-                let message = {};
-                if (index === 0) {
-                  console.log(0)
-                  message = {
-                    data: {
-                      trace: '123',
-                      method: '/hello/hellosrv/saychannel',
-                      service: 'api.hello',
-                      version: 'v1.0.0'
-                    }
-                  };
-                } else {
-                  console.log("send data after meta")
-                  message = {
-                    data: {ping: "ping data #" + index}
-                  };
-                }
-                console.log(1)
-                subscriber.onNext(message)
+              //The first packet will be sent when the connection is ready
+              if (n === 1) {
+                subscriber.onNext({
+                  data: {
+                    trace: '123',
+                    method: '/hello/hellosrv/saychannel',
+                    service: 'api.hello',
+                    version: 'v1.0.0'
+                  }
+                })
+              }
 
-                if (index > 10) {
-                  subscriber.onComplete();
-                  break
+              if (n !== 1) {
+                for (let index = 0; index < n; index++) {
+
+                  const message = {
+                    data: {ping: "ping data #" + index}
+                  }
+                  subscriber.onNext(message)
+
+                  if (index > 5) {
+                    console.log(8)
+                    break
+                  }
                 }
+
+                setTimeout(function () {
+                  console.log(7)
+                  subscriber.onComplete();
+                }, 4000)
               }
             }
           });
-        });
+        })
         // test flowable payload
         // flowablePayload.subscribe({
         //   onComplete: () => console.log("done"),
@@ -102,7 +109,7 @@ export default {
               onSubscribe: sub => {
                 console.log(6)
                 console.log("subscribe request Channel!");
-                sub.request(2);
+                sub.request(100000);
                 this.sent.push("requestChannel invoke success!");
               }
             });
