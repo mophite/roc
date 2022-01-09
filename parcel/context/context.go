@@ -96,7 +96,7 @@ func (c *Context) GetSetupData() []byte {
     return b
 }
 
-func FromMetadata(b []byte, metadataType string) (*Context, error) {
+func FromMetadata(b []byte, dataTYPE, metadataType string) (*Context, error) {
 
     var m = new(metadata.Metadata)
     var err error
@@ -116,7 +116,12 @@ func FromMetadata(b []byte, metadataType string) (*Context, error) {
         Metadata: m,
         data:     make(map[string]interface{}, 10),
     }
-    c.ContentType = metadataType
+
+    c.ContentType = dataTYPE
+
+    if v := m.Md[namespace.DefaultHeaderContentType]; v != "" {
+        c.ContentType = v
+    }
     //c.Trace.SpreadOnce()
     c.SetCodec()
 

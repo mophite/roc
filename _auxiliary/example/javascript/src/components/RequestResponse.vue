@@ -31,15 +31,14 @@ export default {
     callServerMethod() {
       console.log("request - response call...");
       if (this.socket) {
-        const message = {ping: "say hello!"};
         this.socket
             .requestResponse({
-              data: message,
+              data: {ping: "ping"},
               metadata: {
                 trace: "123",
                 method: "/hello/hello/sayapi",
                 service: "api.hello",
-                version: "v1.0.0"
+                version: "v1.0.0",
               }
             })
             .subscribe({
@@ -52,7 +51,7 @@ export default {
                 console.error(error);
               },
               onSubscribe: cancel => {
-                this.sent.push(message);
+                this.sent.push({ping: "ping"});
                 /* call cancel() to stop onComplete/onError */
               }
             });

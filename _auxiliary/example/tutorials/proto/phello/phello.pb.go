@@ -710,7 +710,7 @@ func (r *helloHandler) SayApi(c *context.Context, req *parcel.RocPacket, interru
     var in SayReq
     err = c.Codec().Decode(req.Bytes(), &in)
     if err != nil {
-        c.Errorf("server decode packet err=%v |method=%s |data=%s", err, c.Method(), req.String())
+        c.Errorf("server decode packet err=%v |method=%s |data=%v |name=%s", err, c.Method(), req.String(),c.Codec().Name())
         return nil, err
     }
     var out = SayRsp{}

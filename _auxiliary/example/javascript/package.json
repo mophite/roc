@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "core-js": "^2.6.5",
+    "google-protobuf": "^3.19.1",
     "rsocket-core": "~0.0.27",
     "rsocket-flowable": "~0.0.27",
     "rsocket-websocket-client": "~0.0.27",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.11.0",
     "@vue/cli-service": "^3.11.0",
+    "protobufjs": "^6.11.2",
     "vue-template-compiler": "^2.6.10"
   },
   "postcss": {

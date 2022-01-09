@@ -4,25 +4,26 @@
     <p>RSocket is connected: {{ isConnected }}</p>
 
     <div class="responses">
-      <RequestResponse :socket="socket" />
-      <hr />
-      <RequestStream :socket="socket" />
-      <hr />
-      <RequestChannel :socket="socket" />
-      <hr />
-      <FlowableTest />
+      <RequestResponse :socket="socket"/>
+      <hr/>
+      <RequestStream :socket="socket"/>
+      <hr/>
+      <RequestChannel :socket="socket"/>
+      <hr/>
+      <FlowableTest/>
     </div>
   </div>
 </template>
 
 <script>
-import { RSocketClient, JsonSerializers } from "rsocket-core";
+import {RSocketClient} from "rsocket-core";
 import RSocketWebSocketClient from "rsocket-websocket-client";
 // @ is an alias to /src
 import RequestResponse from "@/components/RequestResponse.vue";
 import RequestStream from "@/components/RequestStream.vue";
 import RequestChannel from "@/components/RequestChannel.vue";
 import FlowableTest from "@/components/FlowableTest.vue";
+import {JsonSerializer} from "rsocket-core/build/RSocketSerialization";
 
 export default {
   name: "home",
@@ -40,12 +41,15 @@ export default {
   methods: {
     connect() {
       console.log("connecting with RSocket...");
-      const transport = new RSocketWebSocketClient({
-        url: "ws://localhost:7777/hello"
-      });
+      // const transport = new RSocketWebSocketClient({
+      //   url: "ws://localhost:7777/hello"
+      // });
       const client = new RSocketClient({
         // send/receive JSON objects instead of strings/buffers
-        serializers: JsonSerializers,
+        serializers: {
+          data: JsonSerializer,
+          metadata: JsonSerializer
+        },
         setup: {
           // ms btw sending keepalive to server
           keepAlive: 60000,
@@ -54,9 +58,15 @@ export default {
           // format of `data`
           dataMimeType: "application/json",
           // format of `metadata`
-          metadataMimeType: "application/json"
+          metadataMimeType: "application/json",
         },
-        transport
+
+        transport: new RSocketWebSocketClient(
+            {
+              debug: true,
+              url: 'ws://localhost:7777/hello',
+            },
+        ),
       });
       client.connect().subscribe({
         onComplete: socket => {
@@ -70,11 +80,15 @@ export default {
           /* call cancel() to abort */
         }
       });
+
+      setTimeout(() => {
+      }, 30000000);
     }
   },
+
   computed: {
     isConnected() {
-      return this.socket ? true : false;
+      return !!this.socket;
     }
   },
   mounted() {

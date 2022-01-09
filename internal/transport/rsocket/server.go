@@ -175,7 +175,7 @@ func setupRequestResponse(r *router.Router, remoteIp string, setup payload.Setup
                 parcel.Recycle(req, rsp)
             }()
 
-            c, err := context.FromMetadata(mustGetMetadata(p), setup.MetadataMimeType())
+            c, err := context.FromMetadata(mustGetMetadata(p), setup.DataMimeType(), setup.MetadataMimeType())
             if err != nil {
                 rlog.Errorf("err=%v |metadata=%s |mimeType=%s", err, x.BytesToString(mustGetMetadata(p)), setup.MetadataMimeType())
                 return mono.JustOneshot(payload.New(r.Error().Error400(c), nil))
@@ -219,7 +219,7 @@ func setupRequestStream(router *router.Router, remoteIp string, setup payload.Se
                         req = parcel.Payload(p.Data())
                     )
 
-                    c, err := context.FromMetadata(mustGetMetadata(p), setup.MetadataMimeType())
+                    c, err := context.FromMetadata(mustGetMetadata(p), setup.DataMimeType(), setup.MetadataMimeType())
                     if err != nil {
                         rlog.Errorf("err=%v |metadata=%s |mimeType=%s", err, x.BytesToString(mustGetMetadata(p)), setup.MetadataMimeType())
                         return
@@ -299,7 +299,7 @@ func setupRequestChannel(router *router.Router, remoteIp string, buffSize int, s
                         break
                     }
 
-                    c, err := context.FromMetadata(meta, setup.MetadataMimeType())
+                    c, err := context.FromMetadata(meta, setup.DataMimeType(), setup.MetadataMimeType())
                     if err != nil {
                         rlog.Errorf("err=%v |metadata=%s |mimeType=%s", err, x.BytesToString(meta), setup.MetadataMimeType())
                         return
