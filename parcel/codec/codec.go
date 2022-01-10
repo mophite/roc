@@ -21,7 +21,6 @@ import (
 
 	"github.com/go-roc/roc/parcel/codec/jsonc"
 	"github.com/go-roc/roc/parcel/codec/protoc"
-	"github.com/go-roc/roc/rlog"
 )
 
 //todo https://github.com/klauspost/compress use compress
@@ -43,13 +42,10 @@ var DefaultCodecs = map[string]Codec{
 }
 
 func CodecType(contentType string) Codec {
-	rlog.Info("--10---", contentType)
-	rlog.Info("---11--", extension.ApplicationJSON.String())
 	c, ok := DefaultCodecs[contentType]
 	if !ok {
 		return defaultCodec
 	}
-	rlog.Info("---19", c.Name())
 	return c
 }
 
