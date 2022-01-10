@@ -82,7 +82,7 @@ func NewStrategy(
 	s.action = s.registry.Watch()
 
 	//Synchronize all existing services
-	s.lazySync()
+	//s.lazySync()
 
 	//handler registry notify
 	go s.notify()
