@@ -164,7 +164,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if len(v) == 0 {
 			continue
 		}
-		c.Infof("------12---", k, v[0])
+		c.Infof("------12------%s------%s--", k, v[0])
 		c.SetHeader(k, v[0])
 	}
 	c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
