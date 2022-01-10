@@ -43,6 +43,8 @@ var DefaultCodecs = map[string]Codec{
 }
 
 func CodecType(contentType string) Codec {
+	rlog.Infof("--10---", contentType)
+	rlog.Infof("---11--", extension.ApplicationJSON.String())
 	c, ok := DefaultCodecs[contentType]
 	if !ok {
 		return defaultCodec
