@@ -22,7 +22,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/rlog"
 	"github.com/go-roc/roc/service/conn"
 	"github.com/go-roc/roc/x/backoff"
 
@@ -65,9 +64,7 @@ func NewInvoke(c *context.Context, method string, opts ...InvokeOptions) (*conte
 	meta[namespace.DefaultHeaderContentType] = c.ContentType
 
 	// create metadata
-	rlog.Info("--------1---", c.Codec().Name())
 	cc, err := c.Clone(invoke.opts.serviceName, method, meta)
-	rlog.Info("--------2---", c.Codec().Name())
 	return cc, invoke, err
 }
 
@@ -86,7 +83,6 @@ func (invoke *Invoke) Scope() string {
 // InvokeRR invokeRR is invokeRequestResponse
 func (invoke *Invoke) InvokeRR(c *context.Context, req, rsp proto.Message, cnn *conn.Conn) error {
 	// encoding req body to roc packet
-	rlog.Info("----------6---", c.Codec().Name())
 	b, err := c.Codec().Encode(req)
 	if err != nil {
 		return err

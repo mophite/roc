@@ -164,13 +164,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if len(v) == 0 {
 			continue
 		}
-		c.Infof("------12------%s------%s--", k, v[0])
 		c.SetHeader(k, v[0])
 	}
 	c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
-	c.Info("------9-----", c.ContentType)
 	c.SetCodec()
-	c.Info("-------8----", c.Codec().Name())
 
 	c.RemoteAddr = r.RemoteAddr
 
@@ -178,7 +175,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(namespace.DefaultHeaderTrace, c.Trace.TraceId())
 
 	for i := range s.opts.Dog {
-		rlog.Info("---------21------------", c.Codec().Name())
 		rsp, err := s.opts.Dog[i](c)
 		if err != nil {
 			c.Error(err)
@@ -186,7 +182,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Write(c.Codec().MustEncode(rsp))
 			return
 		}
-		rlog.Info("----------22-----------", c.Codec().Name())
 	}
 
 	switch r.Method {
@@ -199,7 +194,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		_ = r.Body.Close()
 
-		rlog.Info("----------23-----------", c.Codec().Name())
 		err := s.route.RRProcess(c, req, rsp)
 
 		if err == router.ErrNotFoundHandler {
