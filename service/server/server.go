@@ -169,6 +169,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
 	c.SetCodec()
+	c.Infof("-------1----", c.Codec())
 
 	c.RemoteAddr = r.RemoteAddr
 

@@ -65,7 +65,9 @@ func NewInvoke(c *context.Context, method string, opts ...InvokeOptions) (*conte
 	meta[namespace.DefaultHeaderContentType] = c.ContentType
 
 	// create metadata
+	rlog.Infof("--------1---", c.Codec())
 	cc, err := c.Clone(invoke.opts.serviceName, method, meta)
+	rlog.Infof("--------2---", c.Codec())
 	return cc, invoke, err
 }
 
@@ -84,9 +86,7 @@ func (invoke *Invoke) Scope() string {
 // InvokeRR invokeRR is invokeRequestResponse
 func (invoke *Invoke) InvokeRR(c *context.Context, req, rsp proto.Message, cnn *conn.Conn) error {
 	// encoding req body to roc packet
-	rlog.Debug("---1----", c)
-	rlog.Debug("---2----", c.Codec())
-	rlog.Debug("---3----", req)
+	rlog.Infof("-------------2---", c.Codec())
 	b, err := c.Codec().Encode(req)
 	if err != nil {
 		return err
