@@ -16,6 +16,8 @@
 package transport
 
 import (
+    "sync"
+
     "github.com/go-roc/roc/internal/endpoint"
     "github.com/go-roc/roc/parcel"
     "github.com/go-roc/roc/parcel/context"
@@ -29,7 +31,7 @@ type Server interface {
 
     Accept(fn *router.Router)
 
-    Run()
+    Run(wg *sync.WaitGroup)
 
     String() string
 

@@ -111,6 +111,11 @@ func NewOpts(opts ...Options) Option {
         opts[i](&opt)
     }
 
+    err := config.NewConfig(opt.ConfigOpt...)
+    if err != nil {
+        panic("config NewConfig occur error: " + err.Error())
+    }
+
     if opt.Name == "" {
         opt.Name = fs.GetProjectName()
     }
@@ -182,11 +187,6 @@ func NewOpts(opts ...Options) Option {
     err = etcd.NewEtcd(time.Second*5, 5, opt.EtcdConfig)
     if err != nil {
         panic("etcdConfig occur error: " + err.Error())
-    }
-
-    err = config.NewConfig(opt.ConfigOpt...)
-    if err != nil {
-        panic("config NewConfig occur error: " + err.Error())
     }
 
     if opt.Registry == nil {

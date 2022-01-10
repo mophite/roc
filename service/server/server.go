@@ -21,6 +21,7 @@ import (
     "io"
     "net/http"
     "strings"
+    "sync"
     "time"
 
     "github.com/rs/cors"
@@ -36,6 +37,10 @@ import (
 )
 
 type Server struct {
+
+    //wait for server init
+    wg *sync.WaitGroup
+
     //run transportServer option
     opts opt.Option
 
@@ -62,6 +67,7 @@ func (s *Server) Name() string {
 
 func NewServer(opts opt.Option) *Server {
     s := &Server{
+        wg:   new(sync.WaitGroup),
         opts: opts,
         exit: make(chan struct{}),
     }
@@ -77,7 +83,7 @@ func (s *Server) Run() {
     // echo method list
     s.route.List()
 
-    s.opts.TransportServer.Run()
+    s.opts.TransportServer.Run(s.wg)
 
     //run http transportServer
     if s.opts.HttpAddress != "" {
@@ -116,6 +122,7 @@ func (s *Server) Run() {
         s.opts.HttpAddress,
     )
 
+    s.wg.Wait()
     err := s.register()
     if err != nil {
         panic(err)

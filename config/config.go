@@ -319,7 +319,7 @@ func DecodePrivate(key string, v interface{}) error {
     gRConfig.cache[key] = v
 
     if gRConfig.opts.logOut {
-        rlog.Infof("DecodePublic |key=%s |value=%s", key, x.MustMarshalString(v))
+        rlog.Infof("DecodePrivate |key=%s |value=%s", key, x.MustMarshalString(v))
     }
 
     return nil

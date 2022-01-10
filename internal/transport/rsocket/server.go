@@ -18,6 +18,7 @@ package rs
 import (
     ctx "context"
     "runtime"
+    "sync"
 
     "github.com/go-roc/roc/x"
     "github.com/jjeffcaii/reactor-go/scheduler"
@@ -36,6 +37,9 @@ import (
 )
 
 type server struct {
+
+    //wait server run success
+    wg *sync.WaitGroup
 
     //given serverName to service discovery to find
     serverName string
@@ -77,7 +81,11 @@ func NewServer(tcpAddress, wssAddress, serverName string, buffSize int, dog ...h
 }
 
 func (r *server) Accept(route *router.Router) {
-    r.serverBuilder = rsocket.Receive()
+    r.serverBuilder = rsocket.Receive().OnStart(
+        func() {
+            r.wg.Done()
+        },
+    )
 
     r.serverBuilder.Scheduler(
         scheduler.NewElastic(runtime.NumCPU()<<8),
@@ -118,12 +126,15 @@ func (r *server) Accept(route *router.Router) {
         )
 }
 
-func (r *server) Run() {
+func (r *server) Run(wg *sync.WaitGroup) {
+    r.wg = wg
     if r.tcpAddress != "" {
+        wg.Add(1)
         r.tcp()
     }
 
     if r.wssAddress != "" {
+        wg.Add(1)
         r.wss()
     }
 }
