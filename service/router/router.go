@@ -98,6 +98,8 @@ func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parce
 	if !ok {
 		return ErrNotFoundHandler
 	}
+
+	rlog.Info("----------24-----------", c.Codec().Name())
 	resp, err := rr(c, req, r.interrupt())
 	if resp != nil {
 		b, err := c.Codec().Encode(resp)
@@ -153,11 +155,13 @@ func (r *Router) interrupt() handler.Interceptor {
 	return func(c *context.Context, req proto.Message, fire handler.Fire) (proto.Message, error) {
 		// interrupt when occur error
 		for i := range r.wrappers {
+			rlog.Info("----------25-----------", c.Codec().Name())
 			rsp, err := r.wrappers[i](c)
 			if err != nil {
 				c.Errorf("wrappers err=%v", err)
 				return rsp, err
 			}
+			rlog.Info("----------26-----------", c.Codec().Name())
 		}
 
 		rsp := fire(c, req)
