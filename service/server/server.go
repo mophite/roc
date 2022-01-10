@@ -168,6 +168,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
+	c.Infof("------9---", c.ContentType)
 	c.SetCodec()
 	c.Infof("-------8----", c.Codec().Name())
 

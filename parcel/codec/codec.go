@@ -16,11 +16,12 @@
 package codec
 
 import (
-    "github.com/gogo/protobuf/proto"
-    "github.com/rsocket/rsocket-go/extension"
+	"github.com/gogo/protobuf/proto"
+	"github.com/rsocket/rsocket-go/extension"
 
-    "github.com/go-roc/roc/parcel/codec/jsonc"
-    "github.com/go-roc/roc/parcel/codec/protoc"
+	"github.com/go-roc/roc/parcel/codec/jsonc"
+	"github.com/go-roc/roc/parcel/codec/protoc"
+	"github.com/go-roc/roc/rlog"
 )
 
 //todo https://github.com/klauspost/compress use compress
@@ -28,27 +29,28 @@ import (
 var defaultCodec Codec = jsonc.JSCodec
 
 type Codec interface {
-    Encode(message proto.Message) ([]byte, error)
-    Decode(b []byte, message proto.Message) error
-    MustEncodeString(message proto.Message) string
-    MustEncode(message proto.Message) []byte
-    MustDecode(b []byte, message proto.Message)
-    Name() string
+	Encode(message proto.Message) ([]byte, error)
+	Decode(b []byte, message proto.Message) error
+	MustEncodeString(message proto.Message) string
+	MustEncode(message proto.Message) []byte
+	MustDecode(b []byte, message proto.Message)
+	Name() string
 }
 
 var DefaultCodecs = map[string]Codec{
-    extension.ApplicationJSON.String():     jsonc.JSCodec,
-    extension.ApplicationProtobuf.String(): &protoc.Proto{},
+	extension.ApplicationJSON.String():     jsonc.JSCodec,
+	extension.ApplicationProtobuf.String(): &protoc.Proto{},
 }
 
 func CodecType(contentType string) Codec {
-    c, ok := DefaultCodecs[contentType]
-    if !ok {
-        return defaultCodec
-    }
-    return c
+	c, ok := DefaultCodecs[contentType]
+	if !ok {
+		return defaultCodec
+	}
+	rlog.Infof("---19", c.Name())
+	return c
 }
 
 func SetCodec(contentType string, c Codec) {
-    DefaultCodecs[contentType] = c
+	DefaultCodecs[contentType] = c
 }
