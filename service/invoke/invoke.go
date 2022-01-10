@@ -22,6 +22,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/go-roc/roc/parcel/context"
+	"github.com/go-roc/roc/rlog"
 	"github.com/go-roc/roc/service/conn"
 	"github.com/go-roc/roc/x/backoff"
 
@@ -43,7 +44,7 @@ func NewInvoke(c *context.Context, method string, opts ...InvokeOptions) (*conte
 	}
 
 	if invoke.opts.serviceName == "" || invoke.opts.scope == "" {
-		return nil,nil, errors.New("not set rpc service name")
+		return nil, nil, errors.New("not set rpc service name")
 	}
 
 	method = invoke.opts.prefix + method
@@ -83,6 +84,9 @@ func (invoke *Invoke) Scope() string {
 // InvokeRR invokeRR is invokeRequestResponse
 func (invoke *Invoke) InvokeRR(c *context.Context, req, rsp proto.Message, cnn *conn.Conn) error {
 	// encoding req body to roc packet
+	rlog.Debug("---1----", c)
+	rlog.Debug("---2----", c.Codec())
+	rlog.Debug("---3----", req)
 	b, err := c.Codec().Encode(req)
 	if err != nil {
 		return err
