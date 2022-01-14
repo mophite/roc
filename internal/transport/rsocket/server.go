@@ -17,6 +17,7 @@ package rs
 
 import (
 	ctx "context"
+	"fmt"
 	"runtime"
 	"sync"
 
@@ -322,8 +323,10 @@ func setupRequestChannel(router *router.Router, remoteIp string, buffSize int, s
 					//if you want to Disconnect channel
 					//you must close rsp from server handler
 					//this way is very friendly to closing channel transport
+					fmt.Println("---1--", c.Trace.TraceId())
 					rsp, err := router.RCProcess(c, req, exitRead)
 					if err != nil {
+						c.Trace.TraceId()
 						c.Errorf("transport CC failure |method=%s |err=%v", c.Method(), err)
 						return
 					}
