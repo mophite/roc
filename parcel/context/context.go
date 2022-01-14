@@ -115,7 +115,8 @@ func FromMetadata(b []byte, dataTYPE, metadataType string) (*Context, error) {
 		}
 	}
 
-	fmt.Println("-------", m)
+	fmt.Println("-----1--", string(b))
+	fmt.Println("-------", m.Tracing())
 
 	c := &Context{
 		Trace:    simple.WithTrace(m.Tracing()),
