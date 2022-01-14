@@ -84,7 +84,6 @@ func NewServer(tcpAddress, wssAddress, serverName string, buffSize int, dog ...h
 func (r *server) Accept(route *router.Router) {
 	r.serverBuilder = rsocket.Receive().OnStart(
 		func() {
-			rlog.Debug("server start success")
 			r.wg.Done()
 		},
 	)

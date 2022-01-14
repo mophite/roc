@@ -167,7 +167,7 @@ func (r *Router) interrupt() handler.Interceptor {
 		rspData := c.Codec().MustEncodeString(rsp)
 
 		if !c.IsPutFile && len(reqData) < 10<<10 && len(rspData) < 10<<10 {
-			c.Debugf("FROM=%s |TO=%s", reqData, rspData)
+			c.Debugf("FROM=%s |TO=%s |PATH=%s", reqData, rspData, c.Method())
 		}
 		return rsp, nil
 	}
