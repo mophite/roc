@@ -120,7 +120,7 @@ func (cli *client) RS(c *context.Context, req *parcel.RocPacket) chan []byte {
 		SubscribeOn(scheduler.Parallel()).
 		DoFinally(
 			func(s rx.SignalType) {
-				//close(rsp)
+				//todo handler SignalType
 			},
 		).DoOnError(
 		func(e error) {
@@ -203,7 +203,6 @@ func (cli *client) RC(c *context.Context, req chan []byte) chan []byte {
 		DoFinally(
 			func(s rx.SignalType) {
 				//todo handler rx.SignalType
-				//close(rsp)
 			},
 		).
 		Subscribe(
