@@ -203,7 +203,7 @@ func (cli *client) RC(c *context.Context, req chan []byte) chan []byte {
 		DoFinally(
 			func(s rx.SignalType) {
 				//todo handler rx.SignalType
-				//close(rsp)
+				close(rsp)
 			},
 		).
 		Subscribe(
