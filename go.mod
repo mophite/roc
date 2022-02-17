@@ -19,7 +19,7 @@ require (
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/rs/cors v1.8.0
 	github.com/rs/xid v1.3.0
-	github.com/rsocket/rsocket-go v0.8.6
+	github.com/rsocket/rsocket-go v0.8.8
 	github.com/stretchr/testify v1.6.1
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
 	github.com/urfave/cli/v2 v2.3.0
