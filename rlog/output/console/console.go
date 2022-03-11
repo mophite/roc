@@ -20,7 +20,6 @@ import (
     "fmt"
 
     "github.com/go-roc/roc/rlog/common"
-    "github.com/go-roc/roc/x/bytesbuffpool"
 )
 
 type Console struct {
@@ -39,7 +38,7 @@ func (s *Console) Out(level common.Level, b *bytes.Buffer) {
 
     fmt.Printf(b.String())
 
-    bytesbuffpool.Put(b)
+    common.Buffer.Put(b)
 }
 
 func (s *Console) Level() common.Level {

@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-    s := service.New(service.Namespace("srv.hello"))
+    s := service.New(service.Namespace("api.test"), service.TCPApiSrvPort(10004))
 
     phello.RegisterHelloSrvServer(s.Server(), &hello.Hello{})
     phello.RegisterImServer(s.Server(), &im.Im{H: im.NewHub()})

@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/jjeffcaii/reactor-go v0.5.1
 	github.com/json-iterator/go v1.1.10
+	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/rs/cors v1.8.0
 	github.com/rs/xid v1.3.0

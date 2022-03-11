@@ -18,7 +18,6 @@ package format
 import (
     "bytes"
 
-    "github.com/go-roc/roc/x/bytesbuffpool"
     jsoniter "github.com/json-iterator/go"
 
     "github.com/go-roc/roc/rlog/common"
@@ -27,33 +26,33 @@ import (
 var _ Formatter = &jsonFormat{}
 
 type jsonFormat struct {
-	layout string
+    layout string
 }
 
 func (j *jsonFormat) Layout() string {
-	if j.layout == "" {
-		return defaultLayout
-	}
-	return j.layout
+    if j.layout == "" {
+        return defaultLayout
+    }
+    return j.layout
 }
 
 func (j *jsonFormat) Format(detail *common.Detail) *bytes.Buffer {
-	b := bytesbuffpool.Get()
-	b.Write(mustMarshal(detail))
-	return b
+    b := common.Buffer.Get()
+    b.Write(mustMarshal(detail))
+    return b
 }
 
 func (j *jsonFormat) SetLayout(layout string) {
-	j.layout = layout
+    j.layout = layout
 }
 
 func (j *jsonFormat) String() string {
-	return "json"
+    return "jsonFormat"
 }
 
 var fastest = jsoniter.ConfigFastest
 
 func mustMarshal(v interface{}) []byte {
-	b, _ := fastest.Marshal(v)
-	return b
+    b, _ := fastest.Marshal(v)
+    return b
 }

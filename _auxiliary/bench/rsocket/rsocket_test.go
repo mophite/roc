@@ -1,4 +1,4 @@
-package rsocket
+package main
 
 import (
     "bytes"
@@ -6,6 +6,7 @@ import (
     "fmt"
     "runtime"
     "sync"
+    "sync/atomic"
     "testing"
     "time"
 
@@ -36,8 +37,11 @@ func init() {
     }
 }
 
+var count int64
+
 // RSocketServer is a simple rsocket server.
 func RSocketServer() error {
+
     return rsocket.Receive().
         Resume().
         Fragment(4096).OnStart(
@@ -55,6 +59,11 @@ func RSocketServer() error {
                     rsocket.RequestResponse(
                         func(msg payload.Payload) mono.Mono {
                             return mono.Just(msg)
+                        },
+                    ),
+                    rsocket.FireAndForget(
+                        func(request payload.Payload) {
+                            atomic.AddInt64(&count, 1)
                         },
                     ),
                 )
@@ -115,4 +124,66 @@ func BenchmarkRsocketServer(b *testing.B) {
     }
 
     wg.Wait()
+}
+
+func TestRsocketRR(t *testing.T) {
+
+    var tps int64
+    for i := 0; i < 100; i++ {
+        go func() {
+            for j := 0; j < 100000; j++ {
+                _, err := c.RequestResponse(payload.NewString("1", "")).Block(context.TODO())
+                if err != nil {
+                    panic(err)
+                }
+                atomic.AddInt64(&tps, 1)
+            }
+        }()
+    }
+
+    var tmp int64
+    for i := 0; i < 10; i++ {
+        time.Sleep(time.Second)
+        t1 := atomic.LoadInt64(&tps)
+        fmt.Println("----------tps--------", t1)
+        tmp += t1
+        atomic.SwapInt64(&tps, 0)
+    }
+}
+
+func BenchmarkRsocketServerNoRsp(b *testing.B) {
+
+    b.ResetTimer()
+
+    for i := 0; i < b.N; i++ {
+        c.FireAndForget(payload.NewString("1", ""))
+    }
+    fmt.Println("--------------", atomic.LoadInt64(&count))
+}
+
+func TestRsocketFF(t *testing.T) {
+
+    var tps int64
+    for i := 0; i < 100; i++ {
+        go func() {
+            for j := 0; j < 10000; j++ {
+                c.FireAndForget(payload.NewString("1", ""))
+                atomic.AddInt64(&tps, 1)
+            }
+        }()
+    }
+
+    var tmp int64
+    for i := 0; i < 3; i++ {
+        time.Sleep(time.Second)
+        t1 := atomic.LoadInt64(&tps)
+        fmt.Println("----------tps--------", t1)
+        tmp += t1
+        atomic.SwapInt64(&tps, 0)
+    }
+
+    time.Sleep(time.Second * 5)
+
+    fmt.Println("-------rsp-------", atomic.LoadInt64(&count))
+    fmt.Println("-------actual-------", tmp)
 }

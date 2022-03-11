@@ -24,7 +24,7 @@ const (
     //default bytes buffer cap size
     defaultCapSize = 512
     //default packet pool size
-    defaultPoolSize = 1024000
+    defaultPoolSize = 10240000
     //default bytes buffer cap max size
     //if defaultCapSize > defaultMaxCapSize ? defaultCapSize
     defaultMaxCapSize = 4096
@@ -32,15 +32,14 @@ const (
 
 //create default pool
 var pool = &packetPool{
-    poolSize:   defaultPoolSize,
     capSize:    defaultCapSize,
     maxCapSize: defaultMaxCapSize,
     packets:    make(chan *RocPacket, defaultPoolSize),
 }
 
 type packetPool struct {
-    poolSize, capSize, maxCapSize int
-    packets                       chan *RocPacket
+    capSize, maxCapSize int
+    packets             chan *RocPacket
 }
 
 type RocPacket struct {
@@ -51,18 +50,16 @@ func newRocPacket() *RocPacket {
     return &RocPacket{B: bytes.NewBuffer(make([]byte, 0, pool.capSize))}
 }
 
-func Recycle(p ...*RocPacket) {
-    for i := range p {
-        p[i].B.Reset()
+func Recycle(p *RocPacket) {
+    p.B.Reset()
 
-        if p[i].B.Cap() > pool.maxCapSize {
-            p[i].B = bytes.NewBuffer(make([]byte, 0, pool.maxCapSize))
-        }
+    if p.B.Cap() > pool.maxCapSize {
+        p.B = bytes.NewBuffer(make([]byte, 0, pool.maxCapSize))
+    }
 
-        select {
-        case pool.packets <- p[i]:
-        default: //if pool full,throw away
-        }
+    select {
+    case pool.packets <- p:
+    default: //if pool full,throw away
     }
 }
 

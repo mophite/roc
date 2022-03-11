@@ -12,9 +12,9 @@ import (
 func main() {
     s := service.New(
         service.Namespace("api.hello"),
-        service.HttpAddress("0.0.0.0:9999"),
-        service.TCPAddress("0.0.0.0:8888"),
-        service.WssAddress("0.0.0.0:7777", "/hello"),
+        service.HttpApiAddr("0.0.0.0:10000"),
+        service.TCPApiSrvPort(10001),
+        service.WssApiAddr("0.0.0.0:10002", "/hello"),
     )
 
     phello.RegisterHelloServer(s.Server(), &say.Say{})

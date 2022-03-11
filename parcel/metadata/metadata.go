@@ -24,8 +24,9 @@ import (
     "fmt"
 
     "github.com/go-roc/roc/internal/namespace"
+    "github.com/go-roc/roc/rlog"
     "github.com/go-roc/roc/x"
-    "github.com/go-roc/roc/x/bytesbuffpool"
+    "github.com/oxtoacart/bpool"
 )
 
 // RsocketRpcVersion rsocket-rpc version
@@ -173,9 +174,12 @@ func (m *Metadata) getMetadata() []byte {
     return m.P[offset:]
 }
 
+var bb = bpool.NewBufferPool(1024000)
+
 func encodeMetadata(service, method, tracing string, metadata map[string]string) (m []byte, err error) {
 
-    w := bytesbuffpool.Get()
+    w := bb.Get()
+
     // write version
     err = binary.Write(w, binary.BigEndian, RsocketRpcVersion)
     if err != nil {
@@ -220,7 +224,7 @@ func encodeMetadata(service, method, tracing string, metadata map[string]string)
     }
     m = w.Bytes()
 
-    bytesbuffpool.Put(w)
+    bb.Put(w)
     return
 }
 
@@ -230,6 +234,7 @@ func DecodeMetadata(payload []byte) (*Metadata, error) {
 
     err := x.Jsoniter.Unmarshal(m.getMetadata(), &m.Md)
     if err != nil {
+        rlog.Error(err)
         return nil, err
     }
 

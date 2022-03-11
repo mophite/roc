@@ -10,7 +10,7 @@ import (
 type Say struct{}
 
 func (h *Say) SayApi(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
-    rsp.Pong="pong"
+    rsp.Pong = "pong"
 }
 
 // SayGet if err!=nil header status code will be 500
@@ -58,7 +58,8 @@ Transfer/sec:      3.17MB
 */
 func (h *Say) Say(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
     //send a rr rpc request
-    sayRsp, err := ipc.SaySrv(c, req)
+    //sayRsp, err := ipc.SaySrvRR(c, req)
+    sayRsp, err := ipc.SaySrvFF(c, req)
     if err != nil {
         rlog.Error(err)
         rsp.Pong = "error"

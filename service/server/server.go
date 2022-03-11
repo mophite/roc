@@ -16,133 +16,133 @@
 package server
 
 import (
-	"bytes"
-	ctx "context"
-	"io"
-	"net/http"
-	"strings"
-	"sync"
-	"time"
+    "bytes"
+    ctx "context"
+    "io"
+    "net/http"
+    "strings"
+    "sync"
+    "time"
 
-	"github.com/rs/cors"
+    "github.com/rs/cors"
 
-	"github.com/go-roc/roc/internal/namespace"
-	"github.com/go-roc/roc/parcel"
-	"github.com/go-roc/roc/parcel/context"
-	"github.com/go-roc/roc/parcel/packet"
-	"github.com/go-roc/roc/rlog"
-	"github.com/go-roc/roc/service/handler"
-	"github.com/go-roc/roc/service/opt"
-	"github.com/go-roc/roc/service/router"
+    "github.com/go-roc/roc/internal/namespace"
+    "github.com/go-roc/roc/parcel"
+    "github.com/go-roc/roc/parcel/context"
+    "github.com/go-roc/roc/parcel/packet"
+    "github.com/go-roc/roc/rlog"
+    "github.com/go-roc/roc/service/handler"
+    "github.com/go-roc/roc/service/opt"
+    "github.com/go-roc/roc/service/router"
 )
 
 type Server struct {
 
-	//wait for server init
-	wg *sync.WaitGroup
+    //wait for server init
+    wg *sync.WaitGroup
 
-	//run transportServer option
-	opts opt.Option
+    //run transportServer option
+    opts opt.Option
 
-	//transportServer exit channel
-	exit chan struct{}
+    //transportServer exit channel
+    exit chan struct{}
 
-	//rpc transportServer router collection
-	route *router.Router
+    //rpc transportServer router collection
+    route *router.Router
 
-	//api http server
-	httpServer *http.Server
+    //api http server
+    httpServer *http.Server
 }
 
 func (s *Server) Name() string {
-	name := s.opts.Name
-	ss := strings.Split(name, ".")
+    name := s.opts.Name
+    ss := strings.Split(name, ".")
 
-	if len(ss) > 1 {
-		name = ss[len(ss)-1]
-	}
+    if len(ss) > 1 {
+        name = ss[len(ss)-1]
+    }
 
-	return name
+    return name
 }
 
 func NewServer(opts opt.Option) *Server {
-	s := &Server{
-		wg:   new(sync.WaitGroup),
-		opts: opts,
-		exit: make(chan struct{}),
-	}
+    s := &Server{
+        wg:   new(sync.WaitGroup),
+        opts: opts,
+        exit: make(chan struct{}),
+    }
 
-	s.route = router.NewRouter(s.opts.Wrappers, s.opts.Err)
+    s.route = router.NewRouter(s.opts.Wrappers, s.opts.Err)
 
-	s.opts.TransportServer.Accept(s.route)
+    s.opts.TransportServer.Accept(s.route)
 
-	return s
+    return s
 }
 
 func (s *Server) Run() {
-	// echo method list
-	s.route.List()
+    // echo method list
+    s.route.List()
 
-	s.opts.TransportServer.Run(s.wg)
+    s.opts.TransportServer.Run(s.wg)
 
-	//run http transportServer
-	if s.opts.HttpAddress != "" {
-		go func() {
+    //run http transportServer
+    if s.opts.HttpAddress != "" {
+        go func() {
 
-			prefix := s.opts.Name
+            prefix := s.opts.Name
 
-			if !strings.HasPrefix(prefix, "/") {
-				prefix = "/" + prefix
-			}
+            if !strings.HasPrefix(prefix, "/") {
+                prefix = "/" + prefix
+            }
 
-			if !strings.HasSuffix(prefix, "/") {
-				prefix = prefix + "/"
-			}
+            if !strings.HasSuffix(prefix, "/") {
+                prefix = prefix + "/"
+            }
 
-			http.Handle(prefix, cors.New(*s.opts.CorsOptions).Handler(s))
+            http.Handle(prefix, cors.New(*s.opts.CorsOptions).Handler(s))
 
-			s.httpServer = &http.Server{
-				Handler:      s,
-				Addr:         s.opts.HttpAddress,
-				WriteTimeout: 15 * time.Second,
-				ReadTimeout:  15 * time.Second,
-				IdleTimeout:  time.Second * 60,
-			}
+            s.httpServer = &http.Server{
+                Handler:      s,
+                Addr:         s.opts.HttpAddress,
+                WriteTimeout: 15 * time.Second,
+                ReadTimeout:  15 * time.Second,
+                IdleTimeout:  time.Second * 60,
+            }
 
-			if err := s.httpServer.ListenAndServe(); err != nil {
-				rlog.Errorf("service %s |err=%v", s.opts.Name, err)
-			}
-		}()
-	}
+            if err := s.httpServer.ListenAndServe(); err != nil {
+                rlog.Errorf("service %s |err=%v", s.opts.Name, err)
+            }
+        }()
+    }
 
-	s.wg.Wait()
+    s.wg.Wait()
 
-	rlog.Infof(
-		"[TCP:%s][WS:%s][HTTP:%s] start success!",
-		s.opts.TcpAddress,
-		s.opts.WssAddress,
-		s.opts.HttpAddress,
-	)
-	err := s.register()
-	if err != nil {
-		panic(err)
-	}
+    rlog.Infof(
+        "[TCP:%s:%d][WS:%s][HTTP:%s] start success!",
+        s.opts.LocalIp, s.opts.TcpAddress,
+        s.opts.WssAddress,
+        s.opts.HttpAddress,
+    )
+    err := s.register()
+    if err != nil {
+        panic(err)
+    }
 }
 
 func (s *Server) register() error {
-	return s.opts.Registry.Register(s.opts.Endpoint)
+    return s.opts.Registry.Register(s.opts.Endpoint)
 }
 
 func (s *Server) RegisterHandler(method string, rr handler.Handler) {
-	s.route.RegisterHandler(method, rr)
+    s.route.RegisterHandler(method, rr)
 }
 
 func (s *Server) RegisterStreamHandler(method string, rs handler.StreamHandler) {
-	s.route.RegisterStreamHandler(method, rs)
+    s.route.RegisterStreamHandler(method, rs)
 }
 
 func (s *Server) RegisterChannelHandler(method string, rs handler.ChannelHandler) {
-	s.route.RegisterChannelHandler(method, rs)
+    s.route.RegisterChannelHandler(method, rs)
 }
 
 //roc don't suggest method like GET,because you can use other http web framework
@@ -152,188 +152,191 @@ func (s *Server) RegisterChannelHandler(method string, rs handler.ChannelHandler
 //suggest just use POST,PUT for your roc service
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
+    if r.Method == http.MethodOptions {
+        w.WriteHeader(http.StatusOK)
+        return
+    }
 
-	var c = context.Background()
-	c.SetMethod(r.URL.Path)
+    var c = context.Background()
+    c.SetMethod(r.URL.Path)
 
-	for k, v := range r.Header {
-		if len(v) == 0 {
-			continue
-		}
-		c.SetHeader(k, v[0])
-	}
-	c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
-	c.SetCodec()
+    for k, v := range r.Header {
+        if len(v) == 0 {
+            continue
+        }
+        c.SetHeader(k, v[0])
+    }
+    c.ContentType = c.GetHeader(namespace.DefaultHeaderContentType)
+    c.SetCodec()
 
-	c.RemoteAddr = r.RemoteAddr
+    c.RemoteAddr = r.RemoteAddr
 
-	w.Header().Set(namespace.DefaultHeaderContentType, c.ContentType)
-	w.Header().Set(namespace.DefaultHeaderTrace, c.Trace.TraceId())
+    w.Header().Set(namespace.DefaultHeaderContentType, c.ContentType)
+    w.Header().Set(namespace.DefaultHeaderTrace, c.Trace.TraceId())
 
-	for i := range s.opts.Dog {
-		rsp, err := s.opts.Dog[i](c)
-		if err != nil {
-			c.Error(err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(c.Codec().MustEncode(rsp))
-			return
-		}
-	}
+    for i := range s.opts.Dog {
+        rsp, err := s.opts.Dog[i](c)
+        if err != nil {
+            c.Error(err)
+            w.WriteHeader(http.StatusBadRequest)
+            w.Write(c.Codec().MustEncode(rsp))
+            return
+        }
+    }
 
-	switch r.Method {
-	case http.MethodPost, http.MethodDelete:
+    switch r.Method {
+    case http.MethodPost, http.MethodDelete:
 
-		var req, rsp = parcel.PayloadIo(r.Body), parcel.NewPacket()
-		defer func() {
-			parcel.Recycle(req, rsp)
-		}()
+        var req, rsp = parcel.PayloadIo(r.Body), parcel.NewPacket()
+        defer func() {
+            parcel.Recycle(req)
+            parcel.Recycle(rsp)
+        }()
 
-		_ = r.Body.Close()
+        _ = r.Body.Close()
 
-		err := s.route.RRProcess(c, req, rsp)
+        err := s.route.RRProcess(c, req, rsp)
 
-		if err == router.ErrNotFoundHandler {
-			c.Errorf("path=%s |service=%s", r.URL.Path, s.opts.Name)
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(s.opts.Err.Error404(c))
-			return
-		}
+        if err == router.ErrNotFoundHandler {
+            c.Errorf("path=%s |service=%s", r.URL.Path, s.opts.Name)
+            w.WriteHeader(http.StatusNotFound)
+            w.Write(s.opts.Err.Error404(c))
+            return
+        }
 
-		if len(rsp.Bytes()) > 0 {
-			w.WriteHeader(http.StatusOK)
-			w.Write(rsp.Bytes())
-		} else if err != nil {
-			rlog.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(s.opts.Err.Error500(c))
-		}
+        if len(rsp.Bytes()) > 0 {
+            w.WriteHeader(http.StatusOK)
+            w.Write(rsp.Bytes())
+        } else if err != nil {
+            rlog.Error(err)
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write(s.opts.Err.Error500(c))
+        }
 
-		return
+        return
 
-	case http.MethodPut:
+    case http.MethodPut:
 
-		f, h, err := r.FormFile("file")
-		if err != nil {
-			rlog.Error(err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(s.opts.Err.Error400(c))
-			return
-		}
+        f, h, err := r.FormFile("file")
+        if err != nil {
+            rlog.Error(err)
+            w.WriteHeader(http.StatusBadRequest)
+            w.Write(s.opts.Err.Error400(c))
+            return
+        }
 
-		var buf = bytes.NewBuffer(make([]byte, 0, 10485760))
+        var buf = bytes.NewBuffer(make([]byte, 0, 10485760))
 
-		io.Copy(buf, f)
+        io.Copy(buf, f)
 
-		var fileReq = &packet.FileReq{}
-		fileReq.Body = buf.Bytes()
-		fileReq.FileSize = h.Size
-		fileReq.FileName = h.Filename
-		fileReq.Extra = r.FormValue("extra")
+        var fileReq = &packet.FileReq{}
+        fileReq.Body = buf.Bytes()
+        fileReq.FileSize = h.Size
+        fileReq.FileName = h.Filename
+        fileReq.Extra = r.FormValue("extra")
 
-		fb, err := c.Codec().Encode(fileReq)
-		if err != nil {
-			rlog.Error(err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(s.opts.Err.Error400(c))
-			return
-		}
+        fb, err := c.Codec().Encode(fileReq)
+        if err != nil {
+            rlog.Error(err)
+            w.WriteHeader(http.StatusBadRequest)
+            w.Write(s.opts.Err.Error400(c))
+            return
+        }
 
-		var req, rsp = parcel.Payload(fb), parcel.NewPacket()
-		defer func() {
-			parcel.Recycle(req, rsp)
-		}()
-		_ = r.Body.Close()
+        var req, rsp = parcel.Payload(fb), parcel.NewPacket()
+        defer func() {
+            parcel.Recycle(req)
+            parcel.Recycle(rsp)
+        }()
+        _ = r.Body.Close()
 
-		c.IsPutFile = true
-		err = s.route.RRProcess(c, req, rsp)
+        c.IsPutFile = true
+        err = s.route.RRProcess(c, req, rsp)
 
-		if err == router.ErrNotFoundHandler {
-			c.Errorf("err=%v |path=%s", err, c.Method())
-			w.Header().Set("Content-type", "text/plain")
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(s.opts.Err.Error404(c))
-			return
-		}
+        if err == router.ErrNotFoundHandler {
+            c.Errorf("err=%v |path=%s", err, c.Method())
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusNotFound)
+            w.Write(s.opts.Err.Error404(c))
+            return
+        }
 
-		if len(rsp.Bytes()) > 0 {
-			w.WriteHeader(http.StatusOK)
-			w.Write(rsp.Bytes())
-		} else if err != nil {
-			rlog.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(s.opts.Err.Error500(c))
-		}
+        if len(rsp.Bytes()) > 0 {
+            w.WriteHeader(http.StatusOK)
+            w.Write(rsp.Bytes())
+        } else if err != nil {
+            rlog.Error(err)
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write(s.opts.Err.Error500(c))
+        }
 
-		return
+        return
 
-	case http.MethodGet:
+    case http.MethodGet:
 
-		values := r.URL.Query()
+        values := r.URL.Query()
 
-		var apiReq = &packet.ApiReq{Params: make(map[string]string, len(values))}
-		for k, v := range values {
-			if len(v) > 0 {
-				apiReq.Params[k] = v[0]
-			}
-		}
+        var apiReq = &packet.ApiReq{Params: make(map[string]string, len(values))}
+        for k, v := range values {
+            if len(v) > 0 {
+                apiReq.Params[k] = v[0]
+            }
+        }
 
-		fb, err := c.Codec().Encode(apiReq)
-		if err != nil {
-			rlog.Error(err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(s.opts.Err.Error400(c))
-			return
-		}
+        fb, err := c.Codec().Encode(apiReq)
+        if err != nil {
+            rlog.Error(err)
+            w.WriteHeader(http.StatusBadRequest)
+            w.Write(s.opts.Err.Error400(c))
+            return
+        }
 
-		var req, rsp = parcel.Payload(fb), parcel.NewPacket()
-		defer func() {
-			parcel.Recycle(req, rsp)
-		}()
+        var req, rsp = parcel.Payload(fb), parcel.NewPacket()
+        defer func() {
+            parcel.Recycle(req)
+            parcel.Recycle(rsp)
+        }()
 
-		err = s.route.RRProcess(c, req, rsp)
+        err = s.route.RRProcess(c, req, rsp)
 
-		if err == router.ErrNotFoundHandler {
-			c.Errorf("err=%v |path=%s", err, c.Method())
-			w.WriteHeader(http.StatusNotFound)
-			w.Write(s.opts.Err.Error404(c))
-			return
-		}
+        if err == router.ErrNotFoundHandler {
+            c.Errorf("err=%v |path=%s", err, c.Method())
+            w.WriteHeader(http.StatusNotFound)
+            w.Write(s.opts.Err.Error404(c))
+            return
+        }
 
-		if len(rsp.Bytes()) > 0 {
-			w.WriteHeader(http.StatusOK)
-			w.Write(rsp.Bytes())
-		} else if err != nil {
-			rlog.Error(err)
-			w.Header().Set("Content-type", "text/plain")
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(s.opts.Err.Error500(c))
-		}
+        if len(rsp.Bytes()) > 0 {
+            w.WriteHeader(http.StatusOK)
+            w.Write(rsp.Bytes())
+        } else if err != nil {
+            rlog.Error(err)
+            w.Header().Set("Content-type", "text/plain")
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write(s.opts.Err.Error500(c))
+        }
 
-		return
+        return
 
-	case http.MethodOptions:
-		w.WriteHeader(http.StatusOK)
-		return
-	}
+    case http.MethodOptions:
+        w.WriteHeader(http.StatusOK)
+        return
+    }
 
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	w.Write(s.opts.Err.Error405(c))
-	return
+    w.WriteHeader(http.StatusMethodNotAllowed)
+    w.Write(s.opts.Err.Error405(c))
+    return
 }
 
-func (s *Server) Close() {
-	cc, cancel := ctx.WithTimeout(ctx.Background(), time.Second*5)
-	defer cancel()
+func (s *Server) CloseServer() {
+    cc, cancel := ctx.WithTimeout(ctx.Background(), time.Second*5)
+    defer cancel()
 
-	if s.httpServer != nil {
-		_ = s.httpServer.Shutdown(cc)
-	}
+    if s.httpServer != nil {
+        _ = s.httpServer.Shutdown(cc)
+    }
 
-	if s.opts.TransportServer != nil {
-		s.opts.TransportServer.Close()
-	}
+    if s.opts.TransportServer != nil {
+        s.opts.TransportServer.Close()
+    }
 }

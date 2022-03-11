@@ -15,6 +15,10 @@
 
 package common
 
+import (
+	"github.com/oxtoacart/bpool"
+)
+
 type Level uint8
 
 const (
@@ -38,3 +42,5 @@ type Detail struct {
 	Level     string `json:"level"`
 	Timestamp string `json:"timestamp"`
 }
+
+var Buffer=bpool.NewBufferPool(10240000)

@@ -81,7 +81,7 @@ func (s *Service) Run() {
 
             rlog.Infof("received signal %s ,service [%s] exit!", c.String(), s.opts.Name)
 
-            s.Close()
+            s.CloseService()
 
             for _, f := range s.opts.Exit {
                 f()
@@ -101,7 +101,7 @@ func (s *Service) Run() {
     os.Exit(0)
 }
 
-func (s *Service) Close() {
+func (s *Service) CloseService() {
     //close registry service discover
     if s.opts.Registry != nil {
         _ = s.opts.Registry.Deregister(s.opts.Endpoint)
@@ -116,7 +116,7 @@ func (s *Service) Close() {
 
     //close service server
     if s.server != nil {
-        s.server.Close()
+        s.server.CloseServer()
     }
 
     //close config setting

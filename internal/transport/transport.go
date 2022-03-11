@@ -41,6 +41,9 @@ type Server interface {
 type Client interface {
     Dial(e *endpoint.Endpoint, closeChan chan string) error
 
+    // FF FireAndForget,ignore response packet
+    FF(c *context.Context, req *parcel.RocPacket)
+
     // RR request/response,through block unsafe method
     RR(c *context.Context, req *parcel.RocPacket, rsp *parcel.RocPacket) (err error)
 

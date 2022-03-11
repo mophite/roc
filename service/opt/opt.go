@@ -53,7 +53,7 @@ type Option struct {
     RandPort *[2]int
 
     //socket tcp ip:port address
-    TcpAddress string
+    TcpAddress int
 
     //websocket ip:port address
     WssAddress string
@@ -102,6 +102,8 @@ type Option struct {
 
     //only need cors middleware on roc http api POST/DELETE/GET/PUT/OPTIONS method
     CorsOptions *cors.Options
+
+    LocalIp string
 }
 
 func NewOpts(opts ...Options) Option {
@@ -130,13 +132,15 @@ func NewOpts(opts ...Options) Option {
         panic(err)
     }
 
+    opt.LocalIp = ip
+
     if opt.RandPort == nil {
         opt.RandPort = &[2]int{10000, 59999}
     }
 
     // NOTICE: api service only support fixed tcpAddress ,not suggest rand tcpAddress in api service
-    if opt.TcpAddress == "" {
-        opt.TcpAddress = ip + ":" + strconv.Itoa(x.RandInt(opt.RandPort[0], opt.RandPort[1]))
+    if opt.TcpAddress == 0 {
+        opt.TcpAddress = x.RandInt(opt.RandPort[0], opt.RandPort[1])
     }
 
     if opt.WssAddress != "" && opt.WssPath == "" {
@@ -161,12 +165,14 @@ func NewOpts(opts ...Options) Option {
         opt.BuffSize = 10
     }
 
+    tcpAddress := ip + ":" + strconv.Itoa(opt.TcpAddress)
+
     if opt.TransportServer == nil {
-        opt.TransportServer = rs.NewServer(opt.TcpAddress, opt.WssAddress, opt.Name, opt.BuffSize)
+        opt.TransportServer = rs.NewServer(tcpAddress, opt.WssAddress, opt.Name, opt.BuffSize)
     }
 
     if opt.Endpoint == nil {
-        opt.Endpoint, err = endpoint.NewEndpoint(opt.Id, opt.Name, opt.TcpAddress)
+        opt.Endpoint, err = endpoint.NewEndpoint(opt.Id, opt.Name, tcpAddress)
         if err != nil {
             panic(err)
         }

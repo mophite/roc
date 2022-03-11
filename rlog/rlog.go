@@ -47,7 +47,6 @@ func Stack(msg ...interface{}) {
 }
 
 func Debugf(f string, msg ...interface{}) {
-
 	log.Debug(fmt.Sprintf(f+"\n", msg...))
 }
 

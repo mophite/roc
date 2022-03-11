@@ -92,14 +92,14 @@ func Error(err parcel.ErrorPackager) opt.Options {
     }
 }
 
-func WssAddress(address, path string) opt.Options {
+func WssApiAddr(address, path string) opt.Options {
     return func(o *opt.Option) {
         o.WssAddress = address
         o.WssPath = path
     }
 }
 
-func HttpAddress(address string) opt.Options {
+func HttpApiAddr(address string) opt.Options {
     return func(o *opt.Option) {
         o.HttpAddress = address
     }
@@ -124,9 +124,9 @@ func EtcdConfig(e *clientv3.Config) opt.Options {
     }
 }
 
-func TCPAddress(address string) opt.Options {
+func TCPApiSrvPort(port int) opt.Options {
     return func(o *opt.Option) {
-        o.TcpAddress = address
+        o.TcpAddress = port
     }
 }
 

@@ -19,42 +19,41 @@ import (
     "bytes"
 
     "github.com/go-roc/roc/rlog/common"
-    "github.com/go-roc/roc/x/bytesbuffpool"
 )
 
 var _ Formatter = &stringFormat{}
 
 type stringFormat struct {
-	layout string
+    layout string
 }
 
 func (s *stringFormat) Layout() string {
-	if s.layout == "" {
-		return defaultLayout
-	}
-	return s.layout
+    if s.layout == "" {
+        return defaultLayout
+    }
+    return s.layout
 }
 
 func (s *stringFormat) Format(detail *common.Detail) *bytes.Buffer {
-	b := bytesbuffpool.Get()
+    b := common.Buffer.Get()
 
-	b.WriteString("[" + detail.Level + "] ")
+    b.WriteString("[" + detail.Level + "] ")
 
-	if detail.Line != "" {
-		b.WriteString(detail.Line + " ")
-	}
+    if detail.Line != "" {
+        b.WriteString(detail.Line + " ")
+    }
 
-	b.WriteString(detail.Timestamp + " ")
+    b.WriteString(detail.Timestamp + " ")
 
-	b.WriteString(detail.Content)
+    b.WriteString(detail.Content)
 
-	return b
+    return b
 }
 
 func (s *stringFormat) SetLayout(layout string) {
-	s.layout = layout
+    s.layout = layout
 }
 
 func (s *stringFormat) String() string {
-	return "str"
+    return "stringFormat"
 }

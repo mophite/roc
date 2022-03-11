@@ -50,11 +50,20 @@ type InvokeOption struct {
 
     //data encoding or decoding
     cc codec.Codec
+
+    //FF
+    ff bool
 }
 
 func Codec(cc codec.Codec) InvokeOptions {
     return func(option *InvokeOption) {
         option.cc = cc
+    }
+}
+
+func FF() InvokeOptions {
+    return func(option *InvokeOption) {
+        option.ff = true
     }
 }
 

@@ -94,53 +94,53 @@ func Close() {
 }
 
 func Debug(content string) {
+    b := defaultLogger.
+        Formatter().
+        Format(defaultLogger.Fire("DBUG", content))
+
     defaultLogger.
         Output().
-        Out(
-            common.DEBUG, defaultLogger.
-                Formatter().
-                Format(defaultLogger.Fire("DBUG", content)),
-        )
+        Out(common.DEBUG, b)
 }
 
 func Info(content string) {
+    b := defaultLogger.
+        Formatter().
+        Format(defaultLogger.Fire("INFO", content))
+
     defaultLogger.
         Output().
-        Out(
-            common.INFO, defaultLogger.
-                Formatter().
-                Format(defaultLogger.Fire("INFO", content)),
-        )
+        Out(common.INFO, b)
 }
 
 func Warn(content string) {
+    b := defaultLogger.
+        Formatter().
+        Format(defaultLogger.Fire("WARN", content))
+
     defaultLogger.
         Output().
-        Out(
-            common.WARN, defaultLogger.
-                Formatter().
-                Format(defaultLogger.Fire("WARN", content)),
-        )
+        Out(common.WARN, b)
 }
 
 func Error(content string) {
+    b := defaultLogger.
+        Formatter().
+        Format(defaultLogger.Fire("ERRO", content))
+
     defaultLogger.
         Output().
-        Out(
-            common.ERR, defaultLogger.
-                Formatter().
-                Format(defaultLogger.Fire("ERRO", content)),
-        )
+        Out(common.ERR, b)
 }
 
 func Fatal(content string) {
+    b := defaultLogger.
+        Formatter().
+        Format(defaultLogger.Fire("FATA", content))
+
     defaultLogger.
         Output().
-        Out(
-            common.FATAL, defaultLogger.
-                Formatter().
-                Format(defaultLogger.Fire("FATA", content)),
-        )
+        Out(common.FATAL, b)
 }
 
 func Stack(content string) {
@@ -149,11 +149,11 @@ func Stack(content string) {
     n := runtime.Stack(buf, true)
     content += string(buf[:n]) + "\n"
 
+    b := defaultLogger.
+        Formatter().
+        Format(defaultLogger.Fire("STAK", content))
+
     defaultLogger.
         Output().
-        Out(
-            common.STACK, defaultLogger.
-                Formatter().
-                Format(defaultLogger.Fire("STAK", content)),
-        )
+        Out(common.STACK, b)
 }

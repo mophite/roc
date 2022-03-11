@@ -11,7 +11,7 @@ import (
 )
 
 func RPC() error {
-    _, err := ipc.SaySrv(context.Background(), &phello.SayReq{})
+    _, err := ipc.SaySrvRR(context.Background(), &phello.SayReq{})
     return err
 }
 

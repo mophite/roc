@@ -27,6 +27,7 @@ import (
 type Hello struct{}
 
 func (h *Hello) SaySrv(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
+    c.Debug("--------", req.Ping)
     rsp.Pong = "pong"
 }
 
@@ -49,7 +50,7 @@ func (h *Hello) SayStream(c *context.Context, req *phello.SayReq) chan *phello.S
     return rsp
 }
 
-func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit chan struct{})  chan *phello.SayRsp{
+func (h *Hello) SayChannel(c *context.Context, req chan *phello.SayReq, exit chan struct{}) chan *phello.SayRsp {
     var rsp = make(chan *phello.SayRsp)
 
     go func() {

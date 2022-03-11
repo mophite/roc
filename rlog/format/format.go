@@ -16,9 +16,9 @@
 package format
 
 import (
-	"bytes"
+    "bytes"
 
-	"github.com/go-roc/roc/rlog/common"
+    "github.com/go-roc/roc/rlog/common"
 )
 
 const defaultLayout = "2006-01-02T15:04:05.0000"
@@ -26,8 +26,8 @@ const defaultLayout = "2006-01-02T15:04:05.0000"
 var DefaultFormat Formatter = &stringFormat{}
 
 type Formatter interface {
-	Layout() string
-	Format(detail *common.Detail) *bytes.Buffer
-	SetLayout(layout string)
-	String() string
+    Layout() string
+    Format(detail *common.Detail) *bytes.Buffer
+    SetLayout(layout string)
+    String() string
 }

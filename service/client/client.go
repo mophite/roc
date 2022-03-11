@@ -50,7 +50,7 @@ func (s *Client) InvokeRR(
 ) error {
 
     // new a newInvoke setting
-    cc,newInvoke, err := invoke.NewInvoke(c, method, opts...)
+    cc, newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         c.Error(err)
         return err
@@ -69,6 +69,12 @@ func (s *Client) InvokeRR(
         c.Error(err)
         return err
     }
+
+    if newInvoke.FF() {
+        newInvoke.InvokeFF(cc, req, cnn)
+        return nil
+    }
+
     return newInvoke.InvokeRR(cc, req, rsp, cnn)
 }
 
@@ -81,7 +87,7 @@ func (s *Client) InvokeRS(
 ) chan []byte {
 
     // new a newInvoke setting
-    cc,newInvoke, err := invoke.NewInvoke(c, method, opts...)
+    cc, newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         // create a chan error response
         c.Error(err)
@@ -119,7 +125,7 @@ func (s *Client) InvokeRC(
 ) chan []byte {
 
     // new a newInvoke setting
-    cc,newInvoke, err := invoke.NewInvoke(c, method, opts...)
+    cc, newInvoke, err := invoke.NewInvoke(c, method, opts...)
     if err != nil {
         c.Error(err)
         // create a chan error response
