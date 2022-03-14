@@ -104,6 +104,9 @@ type Option struct {
     CorsOptions *cors.Options
 
     LocalIp string
+
+    //root router redirect
+    RootRouterRedirect string
 }
 
 func NewOpts(opts ...Options) Option {

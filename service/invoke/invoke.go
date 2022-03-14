@@ -94,14 +94,24 @@ func (invoke *Invoke) InvokeRR(c *context.Context, req, rsp proto.Message, cnn *
     }
     var request, response = parcel.Payload(b), parcel.NewPacket()
 
-    // defer recycle packet to pool
-    defer func() {
-        parcel.Recycle(request)
-        parcel.Recycle(response)
-    }()
+    err = invokeRR(c, cnn, invoke, request, response, rsp)
+
+    parcel.Recycle(request)
+    parcel.Recycle(response)
+
+    return err
+}
+
+func invokeRR(
+    c *context.Context,
+    cnn *conn.Conn,
+    invoke *Invoke,
+    request, response *parcel.RocPacket,
+    rsp proto.Message,
+) error {
 
     // send a request by requestResponse
-    err = cnn.Client().RR(c, request, response)
+    err := cnn.Client().RR(c, request, response)
     if err != nil {
         if invoke.opts.retry > 0 {
             // to retry request with backoff
@@ -137,11 +147,9 @@ func (invoke *Invoke) InvokeFF(c *context.Context, req proto.Message, cnn *conn.
     }
     var request = parcel.Payload(b)
 
-    // defer recycle packet to pool
-    defer func() {
-        parcel.Recycle(request)
-    }()
-
     // send a request by FireAndForget
     cnn.Client().FF(c, request)
+
+    // defer recycle packet to pool
+    parcel.Recycle(request)
 }

@@ -18,6 +18,7 @@ package context
 import (
     "fmt"
     "net"
+    "net/http"
     "strings"
 
     "github.com/rsocket/rsocket-go/extension"
@@ -34,7 +35,7 @@ import (
 type Context struct {
 
     //rpc metadata
-    *metadata.Metadata
+    Metadata *metadata.Metadata
 
     //Trace exists throughout the life cycle of the context
     //trace is request flow trace
@@ -44,11 +45,11 @@ type Context struct {
     //Content-Type
     ContentType string
 
-    ////http writer
-    //Writer http.ResponseWriter
-    //
-    ////http request
-    //Request *http.Request
+    //http writer
+    Writer http.ResponseWriter
+
+    //http request
+    Request *http.Request
     //
     ////http request body
     //Body io.ReadCloser
@@ -61,12 +62,24 @@ type Context struct {
     codec codec.Codec
 }
 
-func Background() *Context {
+func newContext() *Context {
     return &Context{
         Trace:    simple.NewSimple(),
         Metadata: metadata.MallocMetadata(),
         data:     make(map[string]interface{}, 10),
     }
+}
+
+func (c *Context) reset() {
+    c.Writer = nil
+    c.Request = nil
+    c.Metadata = nil
+    c.codec = nil
+    c.ContentType = ""
+    c.RemoteAddr = ""
+    c.Trace = nil
+    c.data = nil
+    c.IsPutFile = false
 }
 
 func (c *Context) SetCodec() {
@@ -115,11 +128,12 @@ func FromMetadata(b []byte, dataTYPE, metadataType string) (*Context, error) {
         }
     }
 
-    c := &Context{
-        Trace:    simple.WithTrace(m.Tracing()),
-        Metadata: m,
-        data:     make(map[string]interface{}, 10),
-    }
+    c := New()
+    c.Trace = nil
+    c.Metadata = nil
+
+    c.Trace = simple.WithTrace(m.Tracing())
+    c.Metadata = m
 
     c.ContentType = dataTYPE
 
@@ -165,11 +179,11 @@ func (c *Context) Set(key string, value interface{}) {
 }
 
 func (c *Context) GetHeader(key string) string {
-    return c.GetMeta(key)
+    return c.Metadata.GetMeta(key)
 }
 
 func (c *Context) SetHeader(key, value string) {
-    c.SetMeta(key, value)
+    c.Metadata.SetMeta(key, value)
 }
 
 func (c *Context) Debug(msg ...interface{}) {

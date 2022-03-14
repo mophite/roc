@@ -66,5 +66,6 @@ func (h *Say) Say(c *context.Context, req *phello.SayReq, rsp *phello.SayRsp) {
         return
     }
 
+    //http.Redirect(c.Writer, c.Request, "https://www.baidu.com", 301)
     rsp.Pong = sayRsp.Pong
 }

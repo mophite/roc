@@ -102,7 +102,7 @@ func (r *server) Accept(route *router.Router) {
                 sendingSocket rsocket.CloseableRSocket,
             ) (rsocket.RSocket, error) {
 
-                var c = context.Background()
+                var c = context.New()
                 var remoteIp, _ = rsocket.GetAddr(sendingSocket)
 
                 if len(r.dog) > 0 {
@@ -117,6 +117,8 @@ func (r *server) Accept(route *router.Router) {
                         }
                     }
                 }
+
+                context.Recycle(c)
 
                 return rsocket.NewAbstractSocket(
                     setupFireAndForget(route, remoteIp, setup),
@@ -183,38 +185,22 @@ func setupRequestResponse(r *router.Router, remoteIp string, setup payload.Setup
     return rsocket.RequestResponse(
         func(p payload.Payload) mono.Mono {
 
-            var req, rsp = parcel.Payload(p.Data()), parcel.NewPacket()
-            defer func() {
-                parcel.Recycle(req)
-                parcel.Recycle(rsp)
-            }()
-
             c, err := context.FromMetadata(mustGetMetadata(p), setup.DataMimeType(), setup.MetadataMimeType())
             if err != nil {
-                rlog.Errorf("err=%v |metadata=%s |mimeType=%s", err, x.BytesToString(mustGetMetadata(p)), setup.MetadataMimeType())
+                rlog.Fatalf("err=%v |metadata=%s |mimeType=%s", err, x.BytesToString(mustGetMetadata(p)), setup.MetadataMimeType())
                 return mono.JustOneshot(payload.New(r.Error().Error400(c), nil))
             }
 
-            c.RemoteAddr = remoteIp
+            var req, rsp = parcel.Payload(p.Data()), parcel.NewPacket()
 
-            err = r.RRProcess(c, req, rsp)
+            m := rr(c, r, remoteIp, req, rsp)
 
-            if err == router.ErrNotFoundHandler {
-                c.Errorf("err=%v |path=%s", err, c.Method())
-                return mono.JustOneshot(payload.New(r.Error().Error404(c), nil))
-            }
+            parcel.Recycle(req)
+            parcel.Recycle(rsp)
 
-            if err != nil && rsp.Len() > 0 {
-                c.Error(err)
-                return mono.JustOneshot(payload.New(rsp.Bytes(), nil))
-            }
+            context.Recycle(c)
 
-            if err != nil {
-                c.Error(err)
-                return mono.JustOneshot(payload.New(r.Error().Error400(c), nil))
-            }
-
-            return mono.JustOneshot(payload.New(rsp.Bytes(), nil))
+            return m
         },
     )
 }
@@ -224,29 +210,17 @@ func setupFireAndForget(r *router.Router, remoteIp string, setup payload.SetupPa
         func(p payload.Payload) {
 
             var req = parcel.Payload(p.Data())
-            defer func() {
-                parcel.Recycle(req)
-            }()
 
             c, err := context.FromMetadata(mustGetMetadata(p), setup.DataMimeType(), setup.MetadataMimeType())
             if err != nil {
-                rlog.Errorf("err=%v |metadata=%s |mimeType=%s", err, x.BytesToString(mustGetMetadata(p)), setup.MetadataMimeType())
+                rlog.Fatalf("err=%v |metadata=%s |mimeType=%s", err, x.BytesToString(mustGetMetadata(p)), setup.MetadataMimeType())
                 return
             }
 
-            c.RemoteAddr = remoteIp
+            ff(c, r, remoteIp, req)
 
-            err = r.FFProcess(c, req)
-
-            if err == router.ErrNotFoundHandler {
-                c.Errorf("err=%v |path=%s", err, c.Method())
-                return
-            }
-
-            if err != nil {
-                c.Error(err)
-                return
-            }
+            parcel.Recycle(req)
+            context.Recycle(c)
         },
     )
 }
@@ -261,42 +235,19 @@ func setupRequestStream(router *router.Router, remoteIp string, setup payload.Se
 
             return flux.Create(
                 func(ctx ctx.Context, sink flux.Sink) {
-                    var (
-                        req = parcel.Payload(p.Data())
-                    )
+
+                    var req = parcel.Payload(p.Data())
 
                     c, err := context.FromMetadata(mustGetMetadata(p), setup.DataMimeType(), setup.MetadataMimeType())
                     if err != nil {
-                        rlog.Errorf("err=%v |metadata=%s |mimeType=%s", err, x.BytesToString(mustGetMetadata(p)), setup.MetadataMimeType())
+                        rlog.Fatalf("err=%v |metadata=%s |mimeType=%s", err, x.BytesToString(mustGetMetadata(p)), setup.MetadataMimeType())
                         return
                     }
 
-                    c.RemoteAddr = remoteIp
-
-                    //if you want to Disconnect channel
-                    //you must close rsp from server handler
-                    //this way is very friendly to closing channel transport
-                    rsp, err := router.RSProcess(c, req)
-
-                    //todo cannot know when socket will close to close(rsp)
-                    //you must close rsp at where send
+                    rs(c, router, remoteIp, req, sink)
 
                     parcel.Recycle(req)
-
-                    if err != nil {
-                        c.Errorf("transport CC failure |method=%s |err=%v", c.Method(), err)
-                        return
-                    }
-
-                    for b := range rsp {
-                        data, e := c.Codec().Encode(b)
-                        if e != nil {
-                            c.Errorf("transport CC Encode failure |method=%s |err=%v", c.Method(), err)
-                            continue
-                        }
-                        sink.Next(payload.New(data, nil))
-                    }
-                    sink.Complete()
+                    context.Recycle(c)
                 },
             )
         },
@@ -351,26 +302,9 @@ func setupRequestChannel(router *router.Router, remoteIp string, buffSize int, s
                         return
                     }
 
-                    c.RemoteAddr = remoteIp
+                    rc(c, router, remoteIp, req, exitRead, sink)
 
-                    //if you want to Disconnect channel
-                    //you must close rsp from server handler
-                    //this way is very friendly to closing channel transport
-                    rsp, err := router.RCProcess(c, req, exitRead)
-                    if err != nil {
-                        c.Errorf("transport CC failure |method=%s |err=%v", c.Method(), err)
-                        return
-                    }
-
-                    for b := range rsp {
-                        data, e := c.Codec().Encode(b)
-                        if e != nil {
-                            c.Errorf("transport CC Encode failure |method=%s |err=%v", c.Method(), err)
-                            continue
-                        }
-                        sink.Next(payload.New(data, nil))
-                    }
-                    sink.Complete()
+                    context.Recycle(c)
                 },
             )
         },

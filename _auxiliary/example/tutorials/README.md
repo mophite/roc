@@ -2,8 +2,8 @@
 
 ```go
 func main() {
-    s := service.New(
-        service.HttpAddress("0.0.0.0:9999"),
+    s := roc.New(
+        roc.HttpAddress("0.0.0.0:9999"),
     )
 
     phello.RegisterHelloWorldServer(s.Server(), &hello.Hello{})

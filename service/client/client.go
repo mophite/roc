@@ -16,9 +16,7 @@
 package client
 
 import (
-    "github.com/go-roc/roc/parcel"
     "github.com/go-roc/roc/parcel/context"
-    "github.com/go-roc/roc/service/conn"
     "github.com/go-roc/roc/service/invoke"
     "github.com/go-roc/roc/service/opt"
     "github.com/go-roc/roc/service/strategy"
@@ -56,26 +54,11 @@ func (s *Client) InvokeRR(
         return err
     }
 
-    var cnn *conn.Conn
+    err = rr(cc, s, req, rsp, newInvoke)
 
-    // if address is nil ,user roundRobin strategy
-    // otherwise straight to newInvoke ip server
-    if newInvoke.Address() != "" {
-        cnn, err = s.strategy.Straight(newInvoke.Scope(), newInvoke.Address())
-    } else {
-        cnn, err = s.strategy.Next(newInvoke.Scope())
-    }
-    if err != nil {
-        c.Error(err)
-        return err
-    }
+    context.Recycle(cc)
 
-    if newInvoke.FF() {
-        newInvoke.InvokeFF(cc, req, cnn)
-        return nil
-    }
-
-    return newInvoke.InvokeRR(cc, req, rsp, cnn)
+    return err
 }
 
 // InvokeRS rpc request requestStream,it's one request and multiple response
@@ -94,26 +77,7 @@ func (s *Client) InvokeRS(
         return nil
     }
 
-    var cnn *conn.Conn
-
-    // if address is nil ,user roundRobin strategy
-    // otherwise straight to newInvoke ip server
-    if newInvoke.Address() != "" {
-        cnn, err = s.strategy.Straight(newInvoke.Scope(), newInvoke.Address())
-    } else {
-        cnn, err = s.strategy.Next(newInvoke.Scope())
-    }
-
-    //encode req body to roc packet
-    b, err := cc.Codec().Encode(req)
-
-    if err != nil {
-        // create a chan error response
-        c.Error(err)
-        return nil
-    }
-
-    return cnn.Client().RS(cc, parcel.Payload(b))
+    return rs(cc, s, req, newInvoke)
 }
 
 // InvokeRC rpc request requestChannel,it's multiple request and multiple response
@@ -132,22 +96,7 @@ func (s *Client) InvokeRC(
         return nil
     }
 
-    var cnn *conn.Conn
-
-    // if address is nil ,user roundRobin strategy
-    // otherwise straight to newInvoke ip server
-    if newInvoke.Address() != "" {
-        cnn, err = s.strategy.Straight(newInvoke.Scope(), newInvoke.Address())
-    } else {
-        cnn, err = s.strategy.Next(newInvoke.Scope())
-    }
-    if err != nil {
-        cc.Error(err)
-        // create a chan error response
-        return nil
-    }
-
-    return cnn.Client().RC(cc, req)
+    return rc(cc, s, req, newInvoke)
 }
 
 func (s *Client) CloseClient() {

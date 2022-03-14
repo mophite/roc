@@ -94,7 +94,7 @@ func (cli *client) Dial(e *endpoint.Endpoint, ch chan string) (err error) {
 func (cli *client) RR(c *context.Context, req *parcel.RocPacket, rsp *parcel.RocPacket) (err error) {
     pl, release, err := cli.
         client.
-        RequestResponse(payload.New(req.Bytes(), c.Payload())).
+        RequestResponse(payload.New(req.Bytes(), c.Metadata.Payload())).
         BlockUnsafe(ctx.Background())
 
     if err != nil {
@@ -110,13 +110,13 @@ func (cli *client) RR(c *context.Context, req *parcel.RocPacket, rsp *parcel.Roc
 }
 
 func (cli *client) FF(c *context.Context, req *parcel.RocPacket) {
-    cli.client.FireAndForget(payload.New(req.Bytes(), c.Payload()))
+    cli.client.FireAndForget(payload.New(req.Bytes(), c.Metadata.Payload()))
 }
 
 // RS requestStream
 func (cli *client) RS(c *context.Context, req *parcel.RocPacket) chan []byte {
     var (
-        f   = cli.client.RequestStream(payload.New(req.Bytes(), c.Payload()))
+        f   = cli.client.RequestStream(payload.New(req.Bytes(), c.Metadata.Payload()))
         rsp = make(chan []byte, 2<<5)
     )
 
@@ -125,6 +125,8 @@ func (cli *client) RS(c *context.Context, req *parcel.RocPacket) chan []byte {
         DoFinally(
             func(s rx.SignalType) {
                 close(rsp)
+                parcel.Recycle(req)
+                context.Recycle(c)
             },
         ).DoOnError(
         func(e error) {
@@ -146,8 +148,6 @@ func (cli *client) RS(c *context.Context, req *parcel.RocPacket) chan []byte {
             ),
         )
 
-    parcel.Recycle(req)
-
     return rsp
 }
 
@@ -158,7 +158,7 @@ func (cli *client) RC(c *context.Context, req chan []byte) chan []byte {
     )
 
     go func() {
-        sendPayload <- payload.New(c.Payload(), nil)
+        sendPayload <- payload.New(c.Metadata.Payload(), nil)
     QUIT:
         for {
             select {
@@ -208,6 +208,7 @@ func (cli *client) RC(c *context.Context, req chan []byte) chan []byte {
             func(s rx.SignalType) {
                 //todo handler rx.SignalType
                 close(rsp)
+                context.Recycle(c)
             },
         ).
         Subscribe(

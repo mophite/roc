@@ -1,17 +1,17 @@
 package main
 
 import (
+    "github.com/go-roc/roc"
     "github.com/go-roc/roc/_auxiliary/example/origin/api.hello/hello"
     "github.com/go-roc/roc/_auxiliary/example/tutorials/proto/phello"
-    "github.com/go-roc/roc/service"
 )
 
 func main() {
-    s := service.New(
-        service.Namespace("api.hello"),
-        service.HttpApiAddr("0.0.0.0:9999"),
-        service.TCPApiSrvPort("0.0.0.0:8888"),
-        service.WssApiAddr("0.0.0.0:7777","/test/wss"),
+    s := roc.New(
+        roc.Namespace("api.hello"),
+        roc.HttpApiAddr("0.0.0.0:9999"),
+        roc.TCPApiSrvPort(8888),
+        roc.WssApiAddr("0.0.0.0:7777","/test/wss"),
     )
 
     phello.RegisterHelloSrvServer(s.Server(), &hello.Hello{})

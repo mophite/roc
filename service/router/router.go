@@ -94,7 +94,7 @@ func (r *Router) RegisterChannelHandler(service string, rc handler.ChannelHandle
 }
 
 func (r *Router) FFProcess(c *context.Context, req *parcel.RocPacket) error {
-    rr, ok := r.rrRoute[c.Method()]
+    rr, ok := r.rrRoute[c.Metadata.Method()]
     if !ok {
         return ErrNotFoundHandler
     }
@@ -104,7 +104,7 @@ func (r *Router) FFProcess(c *context.Context, req *parcel.RocPacket) error {
 }
 
 func (r *Router) RRProcess(c *context.Context, req *parcel.RocPacket, rsp *parcel.RocPacket) error {
-    rr, ok := r.rrRoute[c.Method()]
+    rr, ok := r.rrRoute[c.Metadata.Method()]
     if !ok {
         return ErrNotFoundHandler
     }
@@ -134,7 +134,7 @@ func (r *Router) RSProcess(c *context.Context, req *parcel.RocPacket) (chan prot
         }
     }
 
-    rs, ok := r.rsRoute[c.Method()]
+    rs, ok := r.rsRoute[c.Metadata.Method()]
     if !ok {
         return nil, ErrNotFoundHandler
     }
@@ -152,7 +152,7 @@ func (r *Router) RCProcess(c *context.Context, req chan *parcel.RocPacket, exit 
         }
     }
 
-    rc, ok := r.rcRoute[c.Method()]
+    rc, ok := r.rcRoute[c.Metadata.Method()]
     if !ok {
         return nil, ErrNotFoundHandler
     }
@@ -177,7 +177,7 @@ func (r *Router) rrInterrupt() handler.Interceptor {
         rspData := c.Codec().MustEncodeString(rsp)
 
         if !c.IsPutFile && len(reqData) < 10<<10 && len(rspData) < 10<<10 {
-            c.Debugf("FROM=%s |TO=%s |PATH=%s", reqData, rspData, c.Method())
+            c.Debugf("FROM=%s |TO=%s |PATH=%s", reqData, rspData, c.Metadata.Method())
         }
         return rsp, nil
     }
@@ -199,7 +199,7 @@ func (r *Router) ffInterrupt() handler.Interceptor {
         reqData := c.Codec().MustEncodeString(req)
 
         if !c.IsPutFile && len(reqData) < 10<<10 {
-            c.Debugf("FROM=%s |PATH=%s", reqData, c.Method())
+            c.Debugf("FROM=%s |PATH=%s", reqData, c.Metadata.Method())
         }
         return nil, nil
     }

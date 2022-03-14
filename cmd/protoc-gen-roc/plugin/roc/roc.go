@@ -53,7 +53,7 @@ const generatedCodeVersion = 1
 // relative to the import_prefix of the generator.Generator.
 const (
 	contextPkgPath    = "github.com/go-roc/roc/parcel/context"
-	rocServicePkgPath = "github.com/go-roc/roc/service"
+	rocServicePkgPath = "github.com/go-roc/roc"
 	parcelPkgPath     = "github.com/go-roc/roc/parcel"
 	handlerPkgPath    = "github.com/go-roc/roc/service/handler"
 	invokePkgPath     = "github.com/go-roc/roc/service/invoke"
@@ -343,7 +343,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 		r.P("v := &", outType, "{}")
 		r.P("err :=  c.Codec().Decode(b, v)")
 		r.P("if err != nil {")
-		r.P(" c.Errorf(\"client decode pakcet err=%v |method=%s |data=%s\", err, c.Method(), req.String())")
+		r.P(" c.Errorf(\"client decode pakcet err=%v |method=%s |data=%s\", err, c.Metadata.Method(), req.String())")
 		r.P("continue")
 		r.P("}")
 		r.P("rsp <- v")
@@ -362,7 +362,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 		r.P("for b := range req {")
 		r.P("v, err := c.Codec().Encode(b)")
 		r.P("if err != nil {")
-		r.P(" c.Errorf(\"client encode pakcet err=%v |method=%s |data=%s\", err, c.Method(), b.String())")
+		r.P(" c.Errorf(\"client encode pakcet err=%v |method=%s |data=%s\", err, c.Metadata.Method(), b.String())")
 		r.P("continue")
 		r.P("}")
 		r.P("in <- v")
@@ -377,7 +377,7 @@ func (r *roc) generateClientMethod(serverName string, method *pb.MethodDescripto
 		r.P("v := &", outType, "{}")
 		r.P("err := c.Codec().Decode(b, v)")
 		r.P("if err != nil {")
-		r.P(" c.Errorf(\"client decode pakcet err=%v |method=%s |data=%s\", err, c.Method(), string(b))")
+		r.P(" c.Errorf(\"client decode pakcet err=%v |method=%s |data=%s\", err, c.Metadata.Method(), string(b))")
 		r.P("continue")
 		r.P("}")
 		r.P("rsp <- v")
@@ -450,7 +450,7 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
 		r.P("var in ", inType)
 		r.P("err = c.Codec().Decode(req.Bytes(), &in)")
 		r.P("if err != nil {")
-		r.P(" c.Errorf(\"server decode packet err=%v |method=%s |data=%s\", err, c.Method(), req.String())")
+		r.P(" c.Errorf(\"server decode packet err=%v |method=%s |data=%s\", err, c.Metadata.Method(), req.String())")
 		r.P("return nil,err")
 		r.P("}")
 		r.P("var out = ", outType, "{}")
@@ -481,7 +481,7 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
 		r.P("var in ", inType)
 		r.P("err := c.Codec().Decode(req.Bytes(), &in)")
 		r.P("if err != nil {")
-		r.P(" c.Errorf(\"server decode packet err=%v |method=%s |data=%s\", err, c.Method(), req.String())")
+		r.P(" c.Errorf(\"server decode packet err=%v |method=%s |data=%s\", err, c.Metadata.Method(), req.String())")
 		r.P("return nil")
 		r.P("}")
 		r.P()
@@ -516,7 +516,7 @@ func (r *roc) generateServerMethod(serverName string, method *pb.MethodDescripto
 		r.P("var v = &", inType, "{}")
 		r.P("err := c.Codec().Decode(b.Bytes(), v)")
 		r.P("if err != nil {")
-		r.P("c.Errorf(\"server decode packet err=%v |method=%s |data=%s\", err, c.Method(), b.String())")
+		r.P("c.Errorf(\"server decode packet err=%v |method=%s |data=%s\", err, c.Metadata.Method(), b.String())")
 		r.P("continue")
 		r.P("}")
 		r.P("in <- v")

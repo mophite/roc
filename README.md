@@ -45,15 +45,15 @@ package main
 import (
     "tutorials/app/api/api.hello/say"
     "tutorials/proto/phello"
-    "github.com/go-roc/roc/service"
+    "github.com/go-roc/roc"
 )
 
 func main() {
-    s := service.New(
-        service.HttpAddress("0.0.0.0:9999"),
-        service.Namespace("api.hello"),
-        service.TCPAddress("0.0.0.0:8888"),
-        service.WssAddress("0.0.0.0:10000", "/hello"),
+    s := roc.New(
+        roc.HttpAddress("0.0.0.0:9999"),
+        roc.Namespace("api.hello"),
+        roc.TCPAddress("0.0.0.0:8888"),
+        roc.WssAddress("0.0.0.0:10000", "/hello"),
     )
 
     phello.RegisterHelloServer(s.Server(), &say.Say{})
