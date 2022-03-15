@@ -91,6 +91,8 @@ func (c *Context) Codec() codec.Codec {
 }
 
 func (c *Context) Clone(service, method string, meta map[string]string) (*Context, error) {
+    c.Debugf("--1--",c)
+    c.Debugf("--2--",c.Trace)
     m, err := metadata.EncodeMetadata(service, method, c.Trace.TraceId(), meta)
     if err != nil {
         return nil, err
