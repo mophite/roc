@@ -16,44 +16,43 @@
 package context
 
 import (
-    "github.com/go-roc/roc/internal/trace/simple"
-    "github.com/go-roc/roc/parcel/metadata"
+	"github.com/go-roc/roc/internal/trace/simple"
+	"github.com/go-roc/roc/parcel/metadata"
 )
 
 const (
-    //default packet pool size
-    defaultPoolSize = 10240000
+	//default packet pool size
+	defaultPoolSize = 10240000
 )
 
 //create default pool
 var pool = &contextPool{
-    c: make(chan *Context, defaultPoolSize),
+	c: make(chan *Context, defaultPoolSize),
 }
 
 type contextPool struct {
-    c chan *Context
+	c chan *Context
 }
 
 func Recycle(p *Context) {
 
-    p.reset()
+	p.reset()
 
-    select {
-    case pool.c <- p:
-    default: //if pool full,throw away
-    }
+	select {
+	case pool.c <- p:
+	default: //if pool full,throw away
+	}
 }
 
 func New() (p *Context) {
-    select {
-    case p = <-pool.c:
-    default:
-        p = newContext()
-    }
+	select {
+	case p = <-pool.c:
+		p.Trace = simple.NewSimple()
+		p.Metadata = metadata.MallocMetadata()
+		p.data = make(map[string]interface{}, 10)
+	default:
+		p = newContext()
+	}
 
-    p.Trace = simple.NewSimple()
-    p.Metadata = metadata.MallocMetadata()
-    p.data = make(map[string]interface{}, 10)
-
-    return
+	return
 }
