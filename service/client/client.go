@@ -56,8 +56,6 @@ func (s *Client) InvokeRR(
 
     err = rr(cc, s, req, rsp, newInvoke)
 
-    //context.Recycle(cc)
-
     return err
 }
 

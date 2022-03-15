@@ -196,7 +196,7 @@ func setupRequestResponse(r *router.Router, remoteIp string, setup payload.Setup
             parcel.Recycle(req)
             parcel.Recycle(rsp)
 
-            //context.Recycle(c)
+            context.Recycle(c)
 
             return m
         },
@@ -218,7 +218,8 @@ func setupFireAndForget(r *router.Router, remoteIp string, setup payload.SetupPa
             ff(c, r, remoteIp, req)
 
             parcel.Recycle(req)
-            //context.Recycle(c)
+
+            context.Recycle(c)
         },
     )
 }
@@ -245,7 +246,6 @@ func setupRequestStream(router *router.Router, remoteIp string, setup payload.Se
                     rs(c, router, remoteIp, req, sink)
 
                     parcel.Recycle(req)
-                    //context.Recycle(c)
                 },
             )
         },
@@ -301,8 +301,6 @@ func setupRequestChannel(router *router.Router, remoteIp string, buffSize int, s
                     }
 
                     rc(c, router, remoteIp, req, exitRead, sink)
-
-                    //context.Recycle(c)
                 },
             )
         },

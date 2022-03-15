@@ -126,7 +126,6 @@ func (cli *client) RS(c *context.Context, req *parcel.RocPacket) chan []byte {
             func(s rx.SignalType) {
                 close(rsp)
                 parcel.Recycle(req)
-                //context.Recycle(c)
             },
         ).DoOnError(
         func(e error) {
@@ -208,7 +207,6 @@ func (cli *client) RC(c *context.Context, req chan []byte) chan []byte {
             func(s rx.SignalType) {
                 //todo handler rx.SignalType
                 close(rsp)
-                //context.Recycle(c)
             },
         ).
         Subscribe(
