@@ -29,7 +29,6 @@ import (
     "github.com/go-roc/roc/service/handler"
     "github.com/go-roc/roc/service/opt"
     "github.com/go-roc/roc/service/router"
-    "github.com/go-roc/roc/x"
 )
 
 type Server struct {
@@ -154,12 +153,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
 
     var c = context.New()
-    rlog.Debugf("---1--%s",x.MustMarshalString(c))
 
     handlerServerHttp(c, s, w, r)
-    rlog.Debugf("--2---%s",x.MustMarshalString(c))
+
     context.Recycle(c)
-    rlog.Debugf("--3---%s",x.MustMarshalString(c))
 }
 
 func (s *Server) CloseServer() {
