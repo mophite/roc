@@ -90,7 +90,7 @@ func (c *Context) Codec() codec.Codec {
 	return c.codec
 }
 
-func (c *Context) Clone(service, method string, meta map[string]string) (*Context, error) {
+func (c *Context) WithMetadata(service, method string, meta map[string]string) (*Context, error) {
 	m, err := metadata.EncodeMetadata(service, method, c.Trace.TraceId(), meta)
 	if err != nil {
 		return nil, err
@@ -99,6 +99,11 @@ func (c *Context) Clone(service, method string, meta map[string]string) (*Contex
 	s.Metadata = m
 
 	return &s, nil
+}
+
+func (c *Context) Clone() *Context {
+	s := *c
+	return &s
 }
 
 func (c *Context) SetSetupData(value []byte) {

@@ -64,7 +64,7 @@ func NewInvoke(c *context.Context, method string, opts ...InvokeOptions) (*conte
     meta[namespace.DefaultHeaderContentType] = c.ContentType
 
     // clone context metadata
-    cc, err := c.Clone(invoke.opts.serviceName, method, meta)
+    cc, err := c.WithMetadata(invoke.opts.serviceName, method, meta)
     return cc, invoke, err
 }
 
