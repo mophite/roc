@@ -16,113 +16,131 @@
 package invoke
 
 import (
-    "strings"
+	"strings"
 
-    "github.com/go-roc/roc/internal/namespace"
-    "github.com/go-roc/roc/parcel/codec"
+	"github.com/go-roc/roc/internal/namespace"
+	"github.com/go-roc/roc/parcel/codec"
 )
 
 type InvokeOptions func(*InvokeOption)
 
 type InvokeOption struct {
 
-    //scope is the service discovery prefix key
-    scope string
+	//scope is the service discovery prefix key
+	scope string
 
-    //address is witch server you want to call
-    address string
+	//address is witch server you want to call
+	address string
 
-    //serviceName is witch server by service serviceName
-    serviceName string
+	id string
 
-    //version is witch server by version
-    version string
+	//serviceName is witch server by service serviceName
+	serviceName string
 
-    //buffSize effective only requestChannel
-    buffSize int
+	//version is witch server by version
+	version string
 
-    trace string
+	//buffSize effective only requestChannel
+	buffSize int
 
-    prefix string
+	trace string
 
-    //for requestResponse try to retry request
-    retry int
+	prefix string
 
-    //data encoding or decoding
-    cc codec.Codec
+	//for requestResponse try to retry request
+	retry int
 
-    //FF
-    ff bool
+	//data encoding or decoding
+	cc codec.Codec
+
+	//FF
+	ff bool
 }
 
 func Codec(cc codec.Codec) InvokeOptions {
-    return func(option *InvokeOption) {
-        option.cc = cc
-    }
+	return func(option *InvokeOption) {
+		option.cc = cc
+	}
 }
 
 func FF() InvokeOptions {
-    return func(option *InvokeOption) {
-        option.ff = true
-    }
+	return func(option *InvokeOption) {
+		option.ff = true
+	}
 }
 
 // WithTracing set tracing
 func WithTracing(t string) InvokeOptions {
-    return func(invokeOption *InvokeOption) {
-        invokeOption.trace = t
-    }
+	return func(invokeOption *InvokeOption) {
+		invokeOption.trace = t
+	}
 }
 
 // InvokeBuffSize set buff size for requestChannel
 func InvokeBuffSize(buffSize int) InvokeOptions {
-    return func(invokeOption *InvokeOption) {
-        invokeOption.buffSize = buffSize
-    }
+	return func(invokeOption *InvokeOption) {
+		invokeOption.buffSize = buffSize
+	}
 }
 
 // WithName set service discover prefix with service serviceName
 func WithName(name string, version ...string) InvokeOptions {
-    return func(invokeOption *InvokeOption) {
-        var ver = namespace.DefaultVersion
+	return func(invokeOption *InvokeOption) {
+		var ver = namespace.DefaultVersion
 
-        // if no version ,use default version number
-        if len(version) == 1 {
-            ver = version[0]
-        }
+		// if no version ,use default version number
+		if len(version) == 1 {
+			ver = version[0]
+		}
 
-        invokeOption.scope = name + "/" + ver
-        invokeOption.serviceName = name
-        invokeOption.version = ver
+		invokeOption.scope = name + "/" + ver
+		invokeOption.serviceName = name
+		invokeOption.version = ver
 
-        invokeOption.prefix = name
+		invokeOption.prefix = name
 
-        ss := strings.Split(invokeOption.prefix, ".")
-        invokeOption.prefix = ss[len(ss)-1]
+		ss := strings.Split(invokeOption.prefix, ".")
+		invokeOption.prefix = ss[len(ss)-1]
 
-        if strings.HasSuffix(invokeOption.prefix, "/") {
-            invokeOption.prefix = strings.TrimSuffix(invokeOption.prefix, "/")
-        }
+		if strings.HasSuffix(invokeOption.prefix, "/") {
+			invokeOption.prefix = strings.TrimSuffix(invokeOption.prefix, "/")
+		}
 
-        if !strings.HasPrefix(invokeOption.prefix, "/") {
-            invokeOption.prefix = "/" + invokeOption.prefix
-        }
-    }
+		if !strings.HasPrefix(invokeOption.prefix, "/") {
+			invokeOption.prefix = "/" + invokeOption.prefix
+		}
+	}
 }
 
 // WithAddress set service discover prefix with both service serviceName and address
 func WithAddress(name, address string, version ...string) InvokeOptions {
-    return func(invokeOption *InvokeOption) {
-        var ver = namespace.DefaultVersion
+	return func(invokeOption *InvokeOption) {
+		var ver = namespace.DefaultVersion
 
-        // if no version ,use default version number
-        if len(version) == 1 {
-            ver = version[0]
-        }
+		// if no version ,use default version number
+		if len(version) == 1 {
+			ver = version[0]
+		}
 
-        invokeOption.scope = name + "/" + ver
-        invokeOption.address = address
-        invokeOption.serviceName = name
-        invokeOption.version = ver
-    }
+		invokeOption.scope = name + "/" + ver
+		invokeOption.address = address
+		invokeOption.serviceName = name
+		invokeOption.version = ver
+	}
+}
+
+func WithId(name, id string, version ...string) InvokeOptions {
+	return func(invokeOption *InvokeOption) {
+		var ver = namespace.DefaultVersion
+
+		// if no version ,use default version number
+		if len(version) == 1 {
+			ver = version[0]
+		}
+
+		invokeOption.scope = name + "/" + ver
+		invokeOption.id = id
+		invokeOption.serviceName = name
+		invokeOption.version = ver
+	}
 }

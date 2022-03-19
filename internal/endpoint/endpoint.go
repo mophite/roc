@@ -16,43 +16,47 @@
 package endpoint
 
 import (
-    "errors"
+	"errors"
 
-    "github.com/go-roc/roc/internal/namespace"
+	"github.com/go-roc/roc/internal/namespace"
 )
 
 type Endpoint struct {
-    //endpoint unique id
-    Id string
+	//endpoint unique id
+	Id string
 
-    //endpoint name
-    Name string
+	//endpoint name
+	Name string
 
-    //endpoint version
-    Version string
+	//endpoint version
+	Version string
 
-    // schema/name/version/id
-    Absolute string
+	// schema/name/version/id
+	Absolute string
 
-    //service server ip address
-    Address string
+	//service server ip address
+	Address string
 
-    // name.version
-    // eg. api.hello/v.1.0.0
-    Scope string
+	// name.version
+	// eg. api.hello/v.1.0.0
+	Scope string
 }
 
 // NewEndpoint new a endpoint with schema,id,name,version,address
 func NewEndpoint(id, name, address string) (*Endpoint, error) {
-    if name == "" || address == "" || id == "" {
-        return nil, errors.New("not complete")
-    }
-    e := new(Endpoint)
-    e.Id = id
-    e.Name = name
-    e.Version = namespace.DefaultVersion
-    e.Address = address
-    e.Scope = e.Name + "/" + e.Version
-    e.Absolute = namespace.DefaultSchema + "/" + e.Scope + "/" + e.Address
-    return e, nil
+	if name == "" || address == "" || id == "" {
+		return nil, errors.New("not complete")
+	}
+	e := new(Endpoint)
+	e.Id = id
+	e.Name = name
+	e.Version = namespace.DefaultVersion
+	e.Address = address
+	e.Scope = e.Name + "/" + e.Version
+	e.Absolute = namespace.DefaultSchema + "/" + e.Scope + "/" + e.Id
+	return e, nil
+}
+
+func (e *Endpoint) String() string {
+	return e.Name + " |" + e.Id + " |" + e.Address
 }

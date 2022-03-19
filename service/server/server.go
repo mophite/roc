@@ -16,128 +16,132 @@
 package server
 
 import (
-    ctx "context"
-    "net/http"
-    "strings"
-    "sync"
-    "time"
+	ctx "context"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
 
-    "github.com/rs/cors"
+	"github.com/rs/cors"
 
-    "github.com/go-roc/roc/parcel/context"
-    "github.com/go-roc/roc/rlog"
-    "github.com/go-roc/roc/service/handler"
-    "github.com/go-roc/roc/service/opt"
-    "github.com/go-roc/roc/service/router"
+	"github.com/go-roc/roc/parcel/context"
+	"github.com/go-roc/roc/rlog"
+	"github.com/go-roc/roc/service/handler"
+	"github.com/go-roc/roc/service/opt"
+	"github.com/go-roc/roc/service/router"
 )
 
 type Server struct {
 
-    //wait for server init
-    wg *sync.WaitGroup
+	//wait for server init
+	wg *sync.WaitGroup
 
-    //run transportServer option
-    opts opt.Option
+	//run transportServer option
+	opts opt.Option
 
-    //transportServer exit channel
-    exit chan struct{}
+	//transportServer exit channel
+	exit chan struct{}
 
-    //rpc transportServer router collection
-    route *router.Router
+	//rpc transportServer router collection
+	route *router.Router
 
-    //api http server
-    httpServer *http.Server
+	//api http server
+	httpServer *http.Server
+}
+
+func (s *Server) Id() string {
+	return s.opts.Id
 }
 
 func (s *Server) Name() string {
-    name := s.opts.Name
-    ss := strings.Split(name, ".")
+	name := s.opts.Name
+	ss := strings.Split(name, ".")
 
-    if len(ss) > 1 {
-        name = ss[len(ss)-1]
-    }
+	if len(ss) > 1 {
+		name = ss[len(ss)-1]
+	}
 
-    return name
+	return name
 }
 
 func NewServer(opts opt.Option) *Server {
-    s := &Server{
-        wg:   new(sync.WaitGroup),
-        opts: opts,
-        exit: make(chan struct{}),
-    }
+	s := &Server{
+		wg:   new(sync.WaitGroup),
+		opts: opts,
+		exit: make(chan struct{}),
+	}
 
-    s.route = router.NewRouter(s.opts.Wrappers, s.opts.Err)
+	s.route = router.NewRouter(s.opts.Wrappers, s.opts.Err)
 
-    s.opts.TransportServer.Accept(s.route)
+	s.opts.TransportServer.Accept(s.route)
 
-    return s
+	return s
 }
 
 func (s *Server) Run() {
-    // echo method list
-    s.route.List()
+	// echo method list
+	s.route.List()
 
-    s.opts.TransportServer.Run(s.wg)
+	s.opts.TransportServer.Run(s.wg)
 
-    //run http transportServer
-    if s.opts.HttpAddress != "" {
-        go func() {
+	//run http transportServer
+	if s.opts.HttpAddress != "" {
+		go func() {
 
-            prefix := s.opts.Name
+			prefix := s.opts.Name
 
-            if !strings.HasPrefix(prefix, "/") {
-                prefix = "/" + prefix
-            }
+			if !strings.HasPrefix(prefix, "/") {
+				prefix = "/" + prefix
+			}
 
-            if !strings.HasSuffix(prefix, "/") {
-                prefix = prefix + "/"
-            }
+			if !strings.HasSuffix(prefix, "/") {
+				prefix = prefix + "/"
+			}
 
-            http.Handle(prefix, cors.New(*s.opts.CorsOptions).Handler(s))
+			http.Handle(prefix, cors.New(*s.opts.CorsOptions).Handler(s))
 
-            s.httpServer = &http.Server{
-                Handler:      s,
-                Addr:         s.opts.HttpAddress,
-                WriteTimeout: 15 * time.Second,
-                ReadTimeout:  15 * time.Second,
-                IdleTimeout:  time.Second * 60,
-            }
+			s.httpServer = &http.Server{
+				Handler:      s,
+				Addr:         s.opts.HttpAddress,
+				WriteTimeout: 15 * time.Second,
+				ReadTimeout:  15 * time.Second,
+				IdleTimeout:  time.Second * 60,
+			}
 
-            if err := s.httpServer.ListenAndServe(); err != nil {
-                rlog.Errorf("service %s |err=%v", s.opts.Name, err)
-            }
-        }()
-    }
+			if err := s.httpServer.ListenAndServe(); err != nil {
+				rlog.Errorf("service %s |err=%v", s.opts.Name, err)
+			}
+		}()
+	}
 
-    s.wg.Wait()
+	s.wg.Wait()
 
-    rlog.Infof(
-        "[TCP:%s:%d][WS:%s][HTTP:%s] start success!",
-        s.opts.LocalIp, s.opts.TcpAddress,
-        s.opts.WssAddress,
-        s.opts.HttpAddress,
-    )
-    err := s.register()
-    if err != nil {
-        panic(err)
-    }
+	rlog.Infof(
+		"[TCP:%s:%d][WS:%s][HTTP:%s] start success!",
+		s.opts.LocalIp, s.opts.TcpAddress,
+		s.opts.WssAddress,
+		s.opts.HttpAddress,
+	)
+	err := s.register()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (s *Server) register() error {
-    return s.opts.Registry.Register(s.opts.Endpoint)
+	return s.opts.Registry.Register(s.opts.Endpoint)
 }
 
 func (s *Server) RegisterHandler(method string, rr handler.Handler) {
-    s.route.RegisterHandler(method, rr)
+	s.route.RegisterHandler(method, rr)
 }
 
 func (s *Server) RegisterStreamHandler(method string, rs handler.StreamHandler) {
-    s.route.RegisterStreamHandler(method, rs)
+	s.route.RegisterStreamHandler(method, rs)
 }
 
 func (s *Server) RegisterChannelHandler(method string, rs handler.ChannelHandler) {
-    s.route.RegisterChannelHandler(method, rs)
+	s.route.RegisterChannelHandler(method, rs)
 }
 
 //roc don't suggest method like GET,because you can use other http web framework
@@ -147,27 +151,27 @@ func (s *Server) RegisterChannelHandler(method string, rs handler.ChannelHandler
 //suggest just use POST,PUT for your roc service
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-    if r.Method == http.MethodOptions {
-        w.WriteHeader(http.StatusOK)
-        return
-    }
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
-    var c = context.New()
+	var c = context.New()
 
-    handlerServerHttp(c, s, w, r)
+	handlerServerHttp(c, s, w, r)
 
-    context.Recycle(c)
+	context.Recycle(c)
 }
 
 func (s *Server) CloseServer() {
-    cc, cancel := ctx.WithTimeout(ctx.Background(), time.Second*5)
-    defer cancel()
+	cc, cancel := ctx.WithTimeout(ctx.Background(), time.Second*5)
+	defer cancel()
 
-    if s.httpServer != nil {
-        _ = s.httpServer.Shutdown(cc)
-    }
+	if s.httpServer != nil {
+		_ = s.httpServer.Shutdown(cc)
+	}
 
-    if s.opts.TransportServer != nil {
-        s.opts.TransportServer.Close()
-    }
+	if s.opts.TransportServer != nil {
+		s.opts.TransportServer.Close()
+	}
 }
