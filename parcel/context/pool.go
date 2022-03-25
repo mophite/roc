@@ -16,6 +16,8 @@
 package context
 
 import (
+	"context"
+
 	"github.com/go-roc/roc/internal/trace/simple"
 	"github.com/go-roc/roc/parcel/metadata"
 )
@@ -50,6 +52,7 @@ func New() (p *Context) {
 		p.Trace = simple.NewSimple()
 		p.Metadata = metadata.MallocMetadata()
 		p.data = make(map[string]interface{}, 10)
+		p.Context = context.Background()
 	default:
 		p = newContext()
 	}

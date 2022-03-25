@@ -16,6 +16,7 @@
 package context
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -60,6 +61,8 @@ type Context struct {
 	RemoteAddr string
 
 	codec codec.Codec
+
+	context.Context
 }
 
 func newContext() *Context {
@@ -67,6 +70,7 @@ func newContext() *Context {
 		Trace:    simple.NewSimple(),
 		Metadata: metadata.MallocMetadata(),
 		data:     make(map[string]interface{}, 10),
+		Context:  context.Background(),
 	}
 }
 
@@ -80,6 +84,7 @@ func (c *Context) reset() {
 	c.Trace = nil
 	c.data = nil
 	c.IsPutFile = false
+	c.Context = nil
 }
 
 func (c *Context) SetCodec() {
